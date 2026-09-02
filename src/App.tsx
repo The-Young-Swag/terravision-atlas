@@ -125,7 +125,11 @@ export default function App() {
     setShowTerrainContours,
   } = useMapStore();
 
-  const isBrightBasemap = basemap === 'streets' || basemap === 'terrain';
+  // Dynamic foreground contrast for bright/light map backgrounds
+  // Vector is a Map Type with a light style, Streets/Terrain are bright Base Maps
+  // Keep glassmorphism — only adjust font/text color where needed
+  const isBrightBasemap =
+    viewMode === 'vector' || ['streets', 'terrain'].includes(basemap);
 
   const filteredDisasterEvents = useMemo(() => {
     if (!alertQuery.trim()) return disasterEvents;
@@ -190,11 +194,7 @@ export default function App() {
     <div className="relative h-screen w-screen overflow-hidden bg-[#0A0E19] text-slate-100 selection:bg-[#5500a4]/30">
       {/* Real 2D map or 3D placeholder — map is the primary workspace */}
       <div className="absolute inset-0">
-        {viewMode === '2d' ? (
-          <OpenLayersMap />
-        ) : viewMode === 'vector' ? (
-          <MapLibreMap />
-        ) : (
+        {viewMode === '3d' ? (
           <Suspense
             fallback={
               <div className="flex h-full w-full items-center justify-center bg-[#0A0E19]">
@@ -208,6 +208,10 @@ export default function App() {
           >
             <CesiumGlobe />
           </Suspense>
+        ) : viewMode === 'vector' ? (
+          <MapLibreMap />
+        ) : (
+          <OpenLayersMap />
         )}
 
         {/* Subtle overlay for depth when in 2D — keeps glass panels legible without obscuring map */}
@@ -236,9 +240,6 @@ export default function App() {
             placeholder="Search place, coordinate, or event…"
             aria-label="Search"
           />
-          <kbd className="hidden rounded border border-white/10 px-1.5 py-0.5 font-mono text-[10px] text-slate-400 sm:block">
-            ⌘K
-          </kbd>
         </div>
 
         {/* Mode switcher — Explore / Monitor / Survey with per-mode colors */}
@@ -247,9 +248,8 @@ export default function App() {
             <button
               key={mode}
               onClick={() => setActiveMode(mode)}
-              className={`relative rounded-full px-4 py-1.5 capitalize transition ${
-                activeMode === mode ? 'text-white' : 'hover:text-white'
-              }`}
+              className={`relative rounded-full px-4 py-1.5 capitalize transition ${activeMode === mode ? 'text-white' : 'hover:text-white'
+                }`}
               aria-pressed={activeMode === mode}
             >
               {activeMode === mode && (
@@ -303,9 +303,8 @@ export default function App() {
             <button
               key={mode}
               onClick={() => setActiveMode(mode)}
-              className={`rounded-full px-3 py-1.5 capitalize transition ${
-                activeMode === mode ? `${getModeColor(mode)} text-white shadow` : 'hover:text-white'
-              }`}
+              className={`rounded-full px-3 py-1.5 capitalize transition ${activeMode === mode ? `${getModeColor(mode)} text-white shadow` : 'hover:text-white'
+                }`}
             >
               {mode}
             </button>
@@ -380,20 +379,16 @@ export default function App() {
                   onClick={() => setBasemap(option.id)}
                   aria-label={`Basemap ${option.label}`}
                   aria-pressed={isActive}
-                  className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
-                    isActive
+                  className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${isActive
                       ? 'border-[#5500a4] bg-[#5500a4]/10 text-white'
-                      : isBrightBasemap
-                        ? 'border-black/10 bg-white/60 text-slate-700 hover:border-black/15 hover:bg-white/80 hover:text-slate-900'
-                        : 'border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/15 hover:bg-white/[0.07] hover:text-white'
-                  }`}
+                      : 'border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/15 hover:bg-white/[0.07] hover:text-white'
+                    }`}
                 >
                   <span
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[12px] transition ${
-                      isActive
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[12px] transition ${isActive
                         ? 'border-[#5500a4]/30 bg-[#5500a4] text-white'
                         : 'border-white/10 bg-white/5 text-slate-400 group-hover:text-slate-200'
-                    }`}
+                      }`}
                     style={!isActive ? { background: option.preview } : undefined}
                   >
                     <Icon className="h-4 w-4" />
@@ -410,9 +405,8 @@ export default function App() {
                     </span>
                   ) : (
                     <span
-                      className={`h-5 w-5 shrink-0 rounded-full border group-hover:border-white/20 ${
-                        isBrightBasemap ? 'border-black/10' : 'border-white/10'
-                      }`}
+                      className={`h-5 w-5 shrink-0 rounded-full border group-hover:border-white/20 ${isBrightBasemap ? 'border-black/10' : 'border-white/10'
+                        }`}
                     />
                   )}
                 </button>
@@ -453,7 +447,7 @@ export default function App() {
 
           <div className="border-t border-white/10 pt-3">
             <p className={`mb-2 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-500'}`}>View</p>
-            <div className={`glass flex rounded-xl p-1 text-[11px] ${isBrightBasemap ? 'bg-white/40' : ''} text-slate-300`}>
+            <div className="glass flex rounded-xl p-1 text-[11px] text-slate-300">
               <button
                 onClick={() => setViewMode('2d')}
                 className={`flex-1 rounded-lg py-1.5 ${viewMode === '2d' ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-700 hover:bg-black/5' : 'hover:bg-white/5'}`}
@@ -505,11 +499,10 @@ export default function App() {
               <select
                 value={targetEpsg}
                 onChange={(e) => setTargetEpsg(e.target.value)}
-                className={`w-full rounded-xl border px-3 py-2 font-mono text-[12px] outline-none focus:border-[#5500a4]/50 ${
-                  isBrightBasemap
+                className={`w-full rounded-xl border px-3 py-2 font-mono text-[12px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap
                     ? 'border-black/10 bg-white/70 text-slate-800'
                     : 'border-white/10 bg-white/5 text-slate-200'
-                }`}
+                  }`}
               >
                 {getEpsgList().map((epsg) => (
                   <option key={epsg.code} value={epsg.code} className="bg-[#0D1B2A]">
@@ -519,7 +512,7 @@ export default function App() {
               </select>
             </div>
 
-            <div className={`rounded-xl border p-3 ${isBrightBasemap ? 'border-black/10 bg-white/60' : 'border-white/10 bg-white/[0.04]'}`}>
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
               <p className={`mb-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-500'}`}>{targetEpsg}</p>
               {geodeticTransformed.error ? (
                 <p className="font-mono text-[11px] text-[#E63946]">{geodeticTransformed.error}</p>
@@ -565,11 +558,10 @@ export default function App() {
               onChange={(e) => setAlertQuery(e.target.value)}
               placeholder="Search by country, city, town…"
               aria-label="Search alerts by location"
-              className={`w-full rounded-xl border py-2 pl-8 pr-3 text-[12.5px] outline-none focus:border-[#5500a4]/50 ${
-                isBrightBasemap
+              className={`w-full rounded-xl border py-2 pl-8 pr-3 text-[12.5px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap
                   ? 'border-black/10 bg-white/70 text-slate-800 placeholder:text-slate-500'
                   : 'border-white/10 bg-white/5 text-slate-200 placeholder:text-slate-400'
-              }`}
+                }`}
             />
           </div>
 
@@ -578,15 +570,14 @@ export default function App() {
               {['All', 'High', 'Medium', 'Low'].map((c, i) => (
                 <span
                   key={c}
-                  className={`rounded-full border px-2.5 py-1 text-[11px] ${
-                    i === 0
+                  className={`rounded-full border px-2.5 py-1 text-[11px] ${i === 0
                       ? isBrightBasemap
                         ? 'border-black/10 bg-slate-800 text-white'
                         : 'border-white/10 bg-white/15 text-white'
                       : isBrightBasemap
                         ? 'border-black/10 bg-white/60 text-slate-700'
                         : 'border-white/10 bg-white/5 text-slate-300'
-                  }`}
+                    }`}
                 >
                   {c}
                 </span>
@@ -611,11 +602,7 @@ export default function App() {
                 return (
                   <div
                     key={event.id}
-                    className={`cursor-pointer rounded-xl border p-3 transition ${
-                      isBrightBasemap
-                        ? 'border-black/10 bg-white/60 hover:bg-white/80'
-                        : 'border-white/10 bg-white/5 hover:bg-white/[0.08]'
-                    }`}
+                    className="cursor-pointer rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/[0.08]"
                   >
                     <div className="mb-1 flex items-center justify-between">
                       <span className="text-[11px] font-semibold" style={{ color: cfg.color }}>
@@ -784,11 +771,10 @@ export default function App() {
                           fuelType: profile.fuelType,
                         }))
                       }
-                      className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-center transition ${
-                        isActive
+                      className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-center transition ${isActive
                           ? 'border-[#5500a4] bg-[#5500a4]/15 text-white'
                           : 'border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/15 hover:bg-white/[0.07] hover:text-white'
-                      }`}
+                        }`}
                     >
                       <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                       <span className="text-[11px] font-medium leading-none">{profile.name}</span>
@@ -1025,3 +1011,4 @@ export default function App() {
     </div>
   );
 }
+// UX fix verified Wed Sep  2 13:19:49 UTC 2026 - Vector as Map Type, font contrast fixed
