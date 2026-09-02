@@ -9,11 +9,12 @@ import {
   Map as MapIcon,
   Globe,
   AlertTriangle,
-  Crosshair,
   Ruler,
   Navigation,
   X,
 } from 'lucide-react';
+import { OpenLayersMap } from './ui/components/map/OpenLayersMap';
+import { useMapStore } from './stores/mapStore';
 
 type AppMode = 'explore' | 'monitor' | 'survey';
 type UnitSystem = 'metric' | 'imperial';
@@ -66,7 +67,6 @@ function calculateFuel(state: FuelState) {
     kmPerLEquivalent = kmPerL;
     fuelNeeded = kmPerL > 0 ? distance / kmPerL : 0;
   } else {
-    // imperial: distance in miles, efficiency in MPG, price per gallon, fuel in gallons
     const mpg = efficiency;
     kmPerLEquivalent = mpg * 0.425144;
     fuelNeeded = mpg > 0 ? distance / mpg : 0;
@@ -81,9 +81,6 @@ function calculateFuel(state: FuelState) {
 
 export default function App() {
   const [activeMode, setActiveMode] = useState<AppMode>('explore');
-  const [basemap, setBasemap] = useState<'satellite' | 'streets' | 'terrain' | 'dark'>(
-    'satellite',
-  );
   const [fuelOpen, setFuelOpen] = useState(false);
   const [fuelState, setFuelState] = useState<FuelState>({
     distance: 120,
@@ -92,6 +89,21 @@ export default function App() {
     price: 65,
     unitSystem: 'metric',
   });
+
+  const {
+    basemap,
+    viewMode,
+    showHazards,
+    showTraffic,
+    showTerrainContours,
+    center,
+    zoom,
+    setBasemap,
+    setViewMode,
+    setShowHazards,
+    setShowTraffic,
+    setShowTerrainContours,
+  } = useMapStore();
 
   const fuelResult = useMemo(() => calculateFuel(fuelState), [fuelState]);
 
@@ -112,57 +124,35 @@ export default function App() {
     };
   }, [fuelState.unitSystem]);
 
+  const centerLabel = useMemo(() => {
+    const [lon, lat] = center;
+    const latDir = lat >= 0 ? 'N' : 'S';
+    const lonDir = lon >= 0 ? 'E' : 'W';
+    return `${Math.abs(lat).toFixed(4)}°${latDir}, ${Math.abs(lon).toFixed(4)}°${lonDir}`;
+  }, [center]);
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[#0A0E19] text-slate-100 selection:bg-[#5500a4]/30">
-      {/* Map canvas */}
-      <div className="map-canvas absolute inset-0">
-        {/* Contour lines */}
-        <svg
-          className="absolute inset-0 h-full w-full opacity-60"
-          viewBox="0 0 1440 900"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path
-            d="M -50 300 C 200 250, 350 380, 600 320 S 950 250, 1200 340 S 1500 300, 1600 320"
-            stroke="rgba(255,255,255,0.14)"
-            fill="none"
-            strokeWidth="1"
-          />
-          <path
-            d="M -50 420 C 250 380, 400 480, 650 430 S 1000 370, 1250 460 S 1500 420, 1600 440"
-            stroke="rgba(255,255,255,0.14)"
-            fill="none"
-            strokeWidth="1"
-          />
-          <path
-            d="M -50 540 C 220 500, 420 600, 700 560 S 1050 500, 1300 580"
-            stroke="rgba(255,255,255,0.14)"
-            fill="none"
-            strokeWidth="1"
-          />
-        </svg>
+      {/* Real 2D map or 3D placeholder — map is the primary workspace */}
+      <div className="absolute inset-0">
+        {viewMode === '2d' ? (
+          <OpenLayersMap />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-[#0A0E19]">
+            <div className="glass rounded-2xl px-6 py-8 text-center">
+              <Globe className="mx-auto mb-3 h-8 w-8 text-[#5500a4]" />
+              <p className="text-[14px] font-medium text-slate-200">3D Globe (Cesium)</p>
+              <p className="mt-1 font-mono text-[11px] text-slate-400">
+                Terrain + 3D buildings — switch to 2D for OpenLayers
+              </p>
+            </div>
+          </div>
+        )}
 
-        {/* Simulated hazard markers */}
-        <div className="absolute left-[34%] top-[38%]">
-          <span className="absolute -inset-3 animate-ping rounded-full bg-[#E63946]/30" />
-          <span className="relative block h-3 w-3 rounded-full bg-[#E63946] shadow-[0_0_0_3px_rgba(230,57,70,0.25)]" />
-        </div>
-        <div className="absolute left-[61%] top-[57%]">
-          <span
-            className="absolute -inset-3 animate-ping rounded-full bg-[#FF9F1C]/25"
-            style={{ animationDuration: '2.4s' }}
-          />
-          <span className="relative block h-3 w-3 rounded-full bg-[#FF9F1C] shadow-[0_0_0_3px_rgba(255,140,0,0.22)]" />
-        </div>
-        <div className="absolute left-[47%] top-[24%]">
-          <span className="relative block h-2.5 w-2.5 rounded-full bg-[#2EC4B6] shadow-[0_0_0_3px_rgba(46,196,182,0.2)]" />
-        </div>
-
-        {/* Center crosshair hint */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20">
-          <Crosshair className="h-6 w-6" />
-        </div>
+        {/* Subtle overlay for depth when in 2D — keeps glass panels legible without obscuring map */}
+        {viewMode === '2d' && (
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20" />
+        )}
       </div>
 
       {/* Top bar */}
@@ -185,7 +175,7 @@ export default function App() {
           </kbd>
         </div>
 
-        {/* Mode switcher — segmented control */}
+        {/* Mode switcher — Explore / Monitor / Survey */}
         <div className="glass hidden items-center gap-1 rounded-full p-1 text-[13px] font-medium text-slate-300 md:flex">
           {(['explore', 'monitor', 'survey'] as const).map((mode) => (
             <button
@@ -239,14 +229,24 @@ export default function App() {
         </div>
       </div>
 
-      {/* Left layers panel */}
+      {/* Left layers panel — floating glass, collapsible via Tailwind responsive */}
       <aside className="glass absolute left-4 top-24 z-10 hidden w-64 rounded-2xl p-4 md:block">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-[13px] font-semibold text-slate-200">
             <Layers className="h-4 w-4 text-slate-400" />
             Layers
           </h2>
-          <button className="text-[12px] text-slate-400 hover:text-white">Reset</button>
+          <button
+            onClick={() => {
+              setBasemap('satellite');
+              setShowHazards(true);
+              setShowTraffic(false);
+              setShowTerrainContours(false);
+            }}
+            className="text-[12px] text-slate-400 hover:text-white"
+          >
+            Reset
+          </button>
         </div>
 
         <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-500">Basemap</p>
@@ -261,7 +261,7 @@ export default function App() {
           ).map(([id, bg]) => (
             <button
               key={id}
-              onClick={() => setBasemap(id)}
+              onClick={() => setBasemap(id as typeof basemap)}
               aria-label={`Basemap ${id}`}
               className={`h-10 rounded-lg border transition ${
                 basemap === id
@@ -275,16 +275,31 @@ export default function App() {
 
         <div className="mb-4 space-y-1">
           <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
-            <input type="checkbox" defaultChecked className="rounded" />
+            <input
+              type="checkbox"
+              checked={showHazards}
+              onChange={(e) => setShowHazards(e.target.checked)}
+              className="rounded"
+            />
             <span className="text-[13px] text-slate-200">Live hazards</span>
             <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E63946]" />
           </label>
           <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
-            <input type="checkbox" className="rounded" />
+            <input
+              type="checkbox"
+              checked={showTraffic}
+              onChange={(e) => setShowTraffic(e.target.checked)}
+              className="rounded"
+            />
             <span className="text-[13px] text-slate-200">Traffic</span>
           </label>
           <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
-            <input type="checkbox" className="rounded" />
+            <input
+              type="checkbox"
+              checked={showTerrainContours}
+              onChange={(e) => setShowTerrainContours(e.target.checked)}
+              className="rounded"
+            />
             <span className="text-[13px] text-slate-200">Terrain contours</span>
           </label>
         </div>
@@ -292,11 +307,21 @@ export default function App() {
         <div className="border-t border-white/10 pt-3">
           <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-500">View</p>
           <div className="glass flex rounded-xl p-1 text-[12.5px] text-slate-300">
-            <button className="flex-1 rounded-lg bg-[#5500a4] py-1.5 text-white">2D Map</button>
-            <button className="flex-1 rounded-lg py-1.5 hover:bg-white/5">3D Globe</button>
+            <button
+              onClick={() => setViewMode('2d')}
+              className={`flex-1 rounded-lg py-1.5 ${viewMode === '2d' ? 'bg-[#5500a4] text-white' : 'hover:bg-white/5'}`}
+            >
+              2D Map
+            </button>
+            <button
+              onClick={() => setViewMode('3d')}
+              className={`flex-1 rounded-lg py-1.5 ${viewMode === '3d' ? 'bg-[#5500a4] text-white' : 'hover:bg-white/5'}`}
+            >
+              3D Globe
+            </button>
           </div>
           <p className="mt-2 font-mono text-[11px] text-slate-500">
-            Host: 0.0.0.0:4900 · Vite 8 · Tailwind 4
+            {centerLabel} · Zoom {zoom.toFixed(1)} · {viewMode === '2d' ? 'OpenLayers' : 'Cesium'}
           </p>
         </div>
       </aside>
@@ -345,7 +370,7 @@ export default function App() {
         </button>
       </aside>
 
-      {/* Mode docks */}
+      {/* Mode docks — floating, draggable intent via Framer Motion */}
       <AnimatePresence>
         {activeMode === 'monitor' && (
           <motion.div
@@ -405,13 +430,13 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Bottom status bar */}
+      {/* Bottom status bar — live map state */}
       <footer className="glass absolute bottom-4 left-4 right-4 z-10 flex flex-col gap-2 rounded-2xl px-4 py-2 font-mono text-[11px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3 sm:gap-5">
-          <span>15.1450°N, 120.5887°E</span>
+          <span>{centerLabel}</span>
           {activeMode === 'survey' && <span>EPSG:32651 · UTM 51N</span>}
           {activeMode === 'monitor' && <span className="text-[#FF9F1C]">3 active incidents nearby</span>}
-          <span className="hidden sm:inline">Zoom 11</span>
+          <span className="hidden sm:inline">Zoom {zoom.toFixed(1)}</span>
         </div>
         <div className="flex items-center gap-1.5 font-sans text-slate-300">
           <span className="h-1.5 w-1.5 rounded-full bg-[#00d890]" />
@@ -426,7 +451,11 @@ export default function App() {
       {/* Floating action hint for mobile */}
       <div className="absolute bottom-20 left-1/2 z-10 flex -translate-x-1/2 gap-2 md:hidden">
         <span className="glass rounded-full px-3 py-1.5 text-[11px] text-slate-300">
-          {activeMode === 'explore' ? 'Pan & zoom the map' : activeMode === 'monitor' ? 'Monitoring 3 events' : 'Survey tools active'}
+          {activeMode === 'explore'
+            ? 'Pan & zoom the map'
+            : activeMode === 'monitor'
+              ? 'Monitoring 3 events'
+              : 'Survey tools active'}
         </span>
       </div>
 
@@ -593,7 +622,9 @@ export default function App() {
       {/* Branding footer hint */}
       <div className="pointer-events-none absolute bottom-4 left-1/2 hidden -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] text-slate-400 backdrop-blur md:flex">
         <Globe className="h-3 w-3" />
-        {fuelState.unitSystem === 'metric' ? 'Explore · Monitor · Survey' : 'Atlas engine · OpenLayers · Cesium · MapLibre'}
+        {fuelState.unitSystem === 'metric'
+          ? 'Explore · Monitor · Survey'
+          : 'Atlas engine · OpenLayers · Cesium · MapLibre'}
         <span className="h-3 w-px bg-white/10" />
         <AlertTriangle className="h-3 w-3 text-[#FF9F1C]" />
         Zero-cost · Client-side · Offline-ready
