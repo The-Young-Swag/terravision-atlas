@@ -744,9 +744,10 @@ export default function App() {
           id="fuel"
           title="Fuel efficiency calculator"
           icon={<Fuel className="h-3.5 w-3.5" />}
-          initialPosition={{ x: 500, y: 120 }}
+          initialPosition={{ x: 350, y: 80 }}
           onClose={() => setFuelOpen(false)}
           bubbleLabel="Fuel calculator"
+          className="!w-[380px] md:!w-[440px]"
         >
           <div>
             <div className="mb-4 flex rounded-xl border border-white/10 bg-white/5 p-1 text-[13px] text-slate-300">
