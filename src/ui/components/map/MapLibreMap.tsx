@@ -51,9 +51,10 @@ export function MapLibreMap() {
       map.remove();
       mapRef.current = null;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync center/zoom when store changes externally
+  // Sync center/zoom when store changes externally — only fly when meaningfully different
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;

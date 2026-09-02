@@ -2,7 +2,9 @@
 // Use OSM raster for reliability — vector styles from OpenFreeMap can be flaky on slow networks
 // This raster style is guaranteed to work without API keys
 
-export const MAPLIBRE_DEMO_STYLE: string | object = {
+import type { StyleSpecification } from 'maplibre-gl';
+
+export const MAPLIBRE_DEMO_STYLE: StyleSpecification = {
   version: 8,
   sources: {
     osm: {
