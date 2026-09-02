@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-brand-primary: #5500a4;
+  --color-brand-secondary: #00d890;
+  --color-brand-accent: #3572ff;
+  --color-brand-success: #2ec4b6;
+  --color-brand-warning: #ff9f1c;
+  --color-brand-danger: #e63946;
+  --color-brand-dark: #0d1b2a;
+  --color-brand-light: #f8f9fa;
+
+  --font-display: 'Fraunces', serif;
+  --font-ui: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}

@@ -1,0 +1,48 @@
+/* Global base — keep custom CSS minimal; prefer Tailwind utilities elsewhere. */
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  background: #0d1b2a;
+  color: #f8f9fa;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Map canvas subtle grid — matches mockup intent without heavy imagery */
+.map-canvas {
+  background-color: #0a0e19;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    radial-gradient(600px 400px at 30% 35%, rgba(85, 0, 164, 0.12), transparent 60%),
+    radial-gradient(500px 380px at 78% 68%, rgba(0, 216, 144, 0.08), transparent 60%);
+  background-size:
+    42px 42px,
+    42px 42px,
+    100% 100%,
+    100% 100%;
+}
+
+/* Glass utilities — use via Tailwind + these where backdrop-filter needed */
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
