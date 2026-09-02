@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { motion, useDragControls } from 'framer-motion';
 import { Grip, Minimize2, Maximize2, X } from 'lucide-react';
+import { useMapStore } from '../../../stores/mapStore';
 
 interface FloatingPanelProps {
   id: string;
@@ -32,6 +33,10 @@ export function FloatingPanel({
 }: FloatingPanelProps) {
   const [isMinimized, setIsMinimized] = useState(defaultMinimized);
   const dragControls = useDragControls();
+  // Bright basemap: only adjust text/icon color, preserve glassmorphism/borders/backgrounds
+  const basemap = useMapStore((s) => s.basemap);
+  const viewMode = useMapStore((s) => s.viewMode);
+  const isBrightBasemap = viewMode === 'vector' || ['streets', 'terrain'].includes(basemap);
   // Track whether the last interaction was a drag vs a tap — prevents
   // the bubble from reopening immediately after a drag release
   const hasDraggedRef = useState(() => ({ current: false }))[0];
@@ -129,17 +134,17 @@ export function FloatingPanel({
             className="flex cursor-grab touch-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-4 py-3 active:cursor-grabbing"
           >
             <div className="flex items-center gap-2">
-              <Grip className="h-3.5 w-3.5 text-white/30" aria-hidden />
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white">
+              <Grip className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-500' : 'text-white/30'}`} aria-hidden />
+              <span className={`flex h-6 w-6 items-center justify-center rounded-full bg-white/10 ${isBrightBasemap ? 'text-slate-700' : 'text-white'}`}>
                 {icon}
               </span>
-              <h2 className="text-[13px] font-semibold text-slate-100">{title}</h2>
+              <h2 className={`text-[13px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>{title}</h2>
             </div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setIsMinimized(true)}
               onPointerDown={(e) => e.stopPropagation()}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-white/60 transition hover:bg-white/10 hover:text-white"
+              className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'}`}
               aria-label={`Minimize ${title}`}
             >
               <Minimize2 className="h-3.5 w-3.5" />
@@ -148,7 +153,7 @@ export function FloatingPanel({
               <button
                 onClick={onClose}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-white/60 transition hover:bg-white/10 hover:text-white"
+                className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'}`}
                 aria-label={`Close ${title}`}
               >
                 <X className="h-3.5 w-3.5" />
