@@ -16,6 +16,8 @@ import {
   Mountain,
   Moon,
   Check,
+  BookOpen,
+  Box,
 } from 'lucide-react';
 import { OpenLayersMap } from './ui/components/map/OpenLayersMap';
 import { CoordinatePanel } from './ui/components/geodetic/CoordinatePanel';
@@ -34,6 +36,8 @@ import { calculateFuel as calcFuel, formatCarbon } from './features/fuel/calcula
 import type { EfficiencyUnit, UnitSystem } from './features/fuel/calculator/fuelMath';
 import { VEHICLE_PROFILES } from './features/fuel/profiles/vehicleProfiles';
 import { FuelChart } from './ui/components/fuel/FuelChart';
+import { StoryBuilder } from './features/storytelling/builder/StoryBuilder';
+import { MinecraftExport } from './features/export/minecraft/MinecraftExport';
 import { Car, Truck, Bike, Bus } from 'lucide-react';
 
 type AppMode = 'explore' | 'monitor' | 'survey';
@@ -74,6 +78,8 @@ function getVehicleIcon(icon: string) {
 export default function App() {
   const [activeMode, setActiveMode] = useState<AppMode>('explore');
   const [fuelOpen, setFuelOpen] = useState(false);
+  const [storyOpen, setStoryOpen] = useState(false);
+  const [minecraftOpen, setMinecraftOpen] = useState(false);
   const { events: disasterEvents, loading: disasterLoading, lastUpdated, refresh: refreshDisasters } =
     useDisaster();
   const disasterCount = disasterEvents.length;
@@ -209,6 +215,22 @@ export default function App() {
             </button>
           ))}
         </div>
+
+        <button
+          onClick={() => setStoryOpen(true)}
+          className="glass flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-slate-300 transition hover:text-white"
+          aria-label="Open storytelling"
+        >
+          <BookOpen className="h-[18px] w-[18px]" />
+        </button>
+
+        <button
+          onClick={() => setMinecraftOpen(true)}
+          className="glass flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-slate-300 transition hover:text-white"
+          aria-label="Open Minecraft export"
+        >
+          <Box className="h-[18px] w-[18px]" />
+        </button>
 
         <button
           onClick={() => setFuelOpen(true)}
@@ -787,6 +809,90 @@ export default function App() {
                   {formatCarbon(2.1 * 2.31)}
                 </p>
               </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Storytelling modal */}
+      <AnimatePresence>
+        {storyOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setStoryOpen(false);
+            }}
+          >
+            <motion.div
+              initial={{ y: 16, scale: 0.98 }}
+              animate={{ y: 0, scale: 1 }}
+              exit={{ y: 16, scale: 0.98 }}
+              className="glass-strong max-h-[85vh] w-full max-w-md overflow-hidden rounded-3xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="shrink-0 border-b border-white/10 bg-[#0D1B2A]/95 px-5 py-3 backdrop-blur">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <BookOpen className="h-5 w-5 text-[#5500a4]" />
+                    <h2 className="text-[15px] font-semibold">Storytelling</h2>
+                  </div>
+                  <button
+                    onClick={() => setStoryOpen(false)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white"
+                    aria-label="Close storytelling"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="max-h-[60vh] overflow-y-auto p-5">
+                <StoryBuilder />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Minecraft export modal */}
+      <AnimatePresence>
+        {minecraftOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setMinecraftOpen(false);
+            }}
+          >
+            <motion.div
+              initial={{ y: 16, scale: 0.98 }}
+              animate={{ y: 0, scale: 1 }}
+              exit={{ y: 16, scale: 0.98 }}
+              className="glass-strong max-h-[85vh] w-full max-w-md overflow-hidden rounded-3xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="shrink-0 border-b border-white/10 bg-[#0D1B2A]/95 px-5 py-3 backdrop-blur">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Box className="h-5 w-5 text-[#00d890]" />
+                    <h2 className="text-[15px] font-semibold">Minecraft Export</h2>
+                  </div>
+                  <button
+                    onClick={() => setMinecraftOpen(false)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white"
+                    aria-label="Close Minecraft export"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="max-h-[60vh] overflow-y-auto p-5">
+                <MinecraftExport />
               </div>
             </motion.div>
           </motion.div>
