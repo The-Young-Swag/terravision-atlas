@@ -22,6 +22,7 @@ import {
 import { OpenLayersMap } from './ui/components/map/OpenLayersMap';
 import { CoordinatePanel } from './ui/components/geodetic/CoordinatePanel';
 import { useMapStore } from './stores/mapStore';
+import { MapLibreMap } from './ui/components/map/MapLibreMap';
 import { useDisaster } from './hooks/useDisaster';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -151,6 +152,8 @@ export default function App() {
       <div className="absolute inset-0">
         {viewMode === '2d' ? (
           <OpenLayersMap />
+        ) : viewMode === 'vector' ? (
+          <MapLibreMap />
         ) : (
           <Suspense
             fallback={
@@ -390,12 +393,18 @@ export default function App() {
 
         <div className="border-t border-white/10 pt-3">
           <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-500">View</p>
-          <div className="glass flex rounded-xl p-1 text-[12.5px] text-slate-300">
+          <div className="glass flex rounded-xl p-1 text-[11px] text-slate-300">
             <button
               onClick={() => setViewMode('2d')}
               className={`flex-1 rounded-lg py-1.5 ${viewMode === '2d' ? 'bg-[#5500a4] text-white' : 'hover:bg-white/5'}`}
             >
               2D Map
+            </button>
+            <button
+              onClick={() => setViewMode('vector')}
+              className={`flex-1 rounded-lg py-1.5 ${viewMode === 'vector' ? 'bg-[#5500a4] text-white' : 'hover:bg-white/5'}`}
+            >
+              Vector
             </button>
             <button
               onClick={() => setViewMode('3d')}
@@ -405,7 +414,8 @@ export default function App() {
             </button>
           </div>
           <p className="mt-2 font-mono text-[11px] text-slate-500">
-            {centerLabel} · Zoom {zoom.toFixed(1)} · {viewMode === '2d' ? 'OpenLayers' : 'Cesium'}
+            {centerLabel} · Zoom {zoom.toFixed(1)} ·{' '}
+            {viewMode === '2d' ? 'OpenLayers' : viewMode === 'vector' ? 'MapLibre' : 'Cesium'}
           </p>
         </div>
       </aside>

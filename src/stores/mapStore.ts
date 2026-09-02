@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export type BasemapId = 'satellite' | 'streets' | 'terrain' | 'dark';
-export type MapViewMode = '2d' | '3d';
+export type MapViewMode = '2d' | '3d' | 'vector';
 
 interface MapState {
   center: [number, number]; // [lon, lat]
