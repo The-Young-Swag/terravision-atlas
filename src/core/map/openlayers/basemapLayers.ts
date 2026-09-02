@@ -36,12 +36,12 @@ export function createBasemapLayer(basemap: BasemapId): TileLayer<XYZ | OSM> {
       });
 
     case 'dark':
-      // CartoDB Dark Matter — dark mode for night/low-light
+      // Grayscale OSM — dark-friendly, zero-cost, no API key (Carto now requires key)
       return new TileLayer({
         source: new XYZ({
-          url: 'https://{a-c}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-          maxZoom: 19,
-          attributions: '© CARTO © OpenStreetMap contributors',
+          url: 'https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png',
+          maxZoom: 18,
+          attributions: '© OpenStreetMap contributors, Tiles © Wikimedia',
         }),
         properties: { basemap },
       });

@@ -280,7 +280,7 @@ export default function App() {
               {
                 id: 'dark' as const,
                 label: 'Dark',
-                desc: 'Carto Dark Matter',
+                desc: 'Grayscale · Wikimedia',
                 icon: Moon,
                 preview: 'linear-gradient(135deg,#111726 0%,#050810 100%)',
               },
