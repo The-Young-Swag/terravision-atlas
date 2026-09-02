@@ -1,6 +1,5 @@
 import axios from 'axios';
 import type { DisasterEvent } from '../../../types';
-import { nanoid } from 'nanoid';
 
 // NASA EONET — open, no key, global disaster events
 // Docs: https://eonet.gsfc.nasa.gov/docs/v3
@@ -62,29 +61,4 @@ export async function fetchEonetEvents(): Promise<DisasterEvent[]> {
     });
 }
 
-export function mockEonetEvents(): DisasterEvent[] {
-  return [
-    {
-      id: nanoid(),
-      type: 'wildfire',
-      severity: 'medium',
-      title: 'Wildfire — Zambales foothills (FIRMS)',
-      description: 'Mock — NASA FIRMS offline',
-      latitude: 15.35,
-      longitude: 119.9,
-      occurredAt: new Date(Date.now() - 14 * 60 * 1000).toISOString(),
-      source: 'NASA FIRMS (mock)',
-    },
-    {
-      id: nanoid(),
-      type: 'flood',
-      severity: 'low',
-      title: 'Flood watch — Pampanga River basin',
-      description: 'Mock — GloFAS forecast',
-      latitude: 15.05,
-      longitude: 120.7,
-      occurredAt: new Date(Date.now() - 41 * 60 * 1000).toISOString(),
-      source: 'GloFAS (mock)',
-    },
-  ];
-}
+

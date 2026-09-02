@@ -1,11 +1,12 @@
 import { useCallback, useEffect } from 'react';
 import { useDisasterStore } from '../stores/disasterStore';
-import { fetchUsgsEarthquakes, mockEarthquakes } from '../core/data/fetchers/usgsFetcher';
-import { fetchEonetEvents, mockEonetEvents } from '../core/data/fetchers/eonetFetcher';
+import { fetchUsgsEarthquakes } from '../core/data/fetchers/usgsFetcher';
+import { fetchEonetEvents } from '../core/data/fetchers/eonetFetcher';
 import { cacheDisasterEvents, getCachedDisasterEvents } from '../core/data/cache/disasterCache';
 import type { DisasterEvent } from '../types';
 
-// Aggregates USGS + EONET, caches to IndexedDB, falls back to mocks + cache when offline.
+// Aggregates USGS + EONET, caches to IndexedDB, shows real data only.
+// No fake fallback — if APIs fail and cache is empty, UI shows empty/error state.
 export function useDisaster() {
   const { events, loading, lastUpdated, error, setEvents, setLoading, setError, setLastUpdated } =
     useDisasterStore();
@@ -15,16 +16,26 @@ export function useDisaster() {
     setError(null);
 
     try {
-      const [usgs, eonet] = await Promise.all([
-        fetchUsgsEarthquakes().catch(() => mockEarthquakes()),
-        fetchEonetEvents().catch(() => mockEonetEvents()),
+      const [usgsResult, eonetResult] = await Promise.allSettled([
+        fetchUsgsEarthquakes(),
+        fetchEonetEvents(),
       ]);
+
+      const usgs = usgsResult.status === 'fulfilled' ? usgsResult.value : [];
+      const eonet = eonetResult.status === 'fulfilled' ? eonetResult.value : [];
+
+      // Collect errors for UI if both fail
+      if (usgsResult.status === 'rejected' && eonetResult.status === 'rejected') {
+        const msg = 'Live disaster feeds unavailable — showing cached data if available';
+        setError(msg);
+      } else if (usgsResult.status === 'rejected' || eonetResult.status === 'rejected') {
+        setError('One or more disaster feeds temporarily unavailable');
+      }
 
       const combined: DisasterEvent[] = [...usgs, ...eonet]
         .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
         .slice(0, 30);
 
-      // If both sources fell back to mocks and returned empty, try cache
       if (combined.length === 0) {
         const cached = await getCachedDisasterEvents();
         if (cached.length > 0) {
@@ -32,9 +43,8 @@ export function useDisaster() {
           setLastUpdated(new Date().toISOString());
           return;
         }
-        // Final fallback: mocks
-        const mocks = [...mockEarthquakes(), ...mockEonetEvents()];
-        setEvents(mocks);
+        // No fake data — show empty state, keep error visible
+        setEvents([]);
       } else {
         setEvents(combined);
         await cacheDisasterEvents(combined);
@@ -44,13 +54,12 @@ export function useDisaster() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch disaster data';
       setError(message);
-      // Try cache on error
       try {
         const cached = await getCachedDisasterEvents();
         if (cached.length > 0) setEvents(cached);
-        else setEvents([...mockEarthquakes(), ...mockEonetEvents()]);
+        else setEvents([]);
       } catch {
-        setEvents([...mockEarthquakes(), ...mockEonetEvents()]);
+        setEvents([]);
       }
     } finally {
       setLoading(false);

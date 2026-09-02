@@ -1,6 +1,5 @@
 import axios from 'axios';
 import type { DisasterEvent } from '../../../types';
-import { nanoid } from 'nanoid';
 
 // USGS Earthquake feed — public, no key, real-time
 // Docs: https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php
@@ -49,30 +48,4 @@ export async function fetchUsgsEarthquakes(): Promise<DisasterEvent[]> {
   });
 }
 
-// Fallback mock when offline or API fails — keeps UI alive
-export function mockEarthquakes(): DisasterEvent[] {
-  return [
-    {
-      id: nanoid(),
-      type: 'earthquake',
-      severity: 'high',
-      title: 'M6.1 — 40km NE of Baguio City',
-      description: 'Mock — USGS offline',
-      latitude: 15.145,
-      longitude: 120.5887,
-      occurredAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-      source: 'USGS (mock)',
-    },
-    {
-      id: nanoid(),
-      type: 'earthquake',
-      severity: 'medium',
-      title: 'M5.2 — 12km S of Zambales',
-      description: 'Mock — aftershock',
-      latitude: 15.02,
-      longitude: 119.93,
-      occurredAt: new Date(Date.now() - 14 * 60 * 1000).toISOString(),
-      source: 'USGS (mock)',
-    },
-  ];
-}
+
