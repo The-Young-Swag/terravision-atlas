@@ -560,22 +560,25 @@ export default function App() {
               initial={{ y: 16, scale: 0.98 }}
               animate={{ y: 0, scale: 1 }}
               exit={{ y: 16, scale: 0.98 }}
-              className="glass-strong w-full max-w-[420px] rounded-3xl p-6"
+              className="glass-strong flex max-h-[75vh] w-full max-w-[420px] flex-col overflow-hidden rounded-3xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Fuel className="h-5 w-5 text-[#5500a4]" />
-                  <h2 className="text-[15px] font-semibold">Fuel efficiency calculator</h2>
+              <div className="shrink-0 border-b border-white/10 bg-[#0D1B2A]/95 px-5 py-3 backdrop-blur">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Fuel className="h-5 w-5 text-[#5500a4]" />
+                    <h2 className="text-[15px] font-semibold">Fuel efficiency calculator</h2>
+                  </div>
+                  <button
+                    onClick={() => setFuelOpen(false)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white"
+                    aria-label="Close fuel calculator"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setFuelOpen(false)}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white"
-                  aria-label="Close fuel calculator"
-                >
-                  <X className="h-4 w-4" />
-                </button>
               </div>
+              <div className="flex-1 overflow-y-auto p-5">
 
               <div className="mb-4 flex rounded-xl border border-white/10 bg-white/5 p-1 text-[13px] text-slate-300">
                 <button
@@ -779,6 +782,7 @@ export default function App() {
                   Example: 25 km · 8.5 L/100km · ₱1.60/L → 2.1 L · ₱3.40 ·{' '}
                   {formatCarbon(2.1 * 2.31)}
                 </p>
+              </div>
               </div>
             </motion.div>
           </motion.div>
