@@ -57,8 +57,8 @@ const mockAlerts = [
 function calculateFuel(state: FuelState) {
   const { distance, efficiency, efficiencyUnit, price, unitSystem } = state;
 
-  let fuelNeeded = 0;
-  let kmPerLEquivalent = 0;
+  let fuelNeeded: number;
+  let kmPerLEquivalent: number;
 
   if (unitSystem === 'metric') {
     const kmPerL =
