@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -15,6 +15,10 @@ import {
 } from 'lucide-react';
 import { OpenLayersMap } from './ui/components/map/OpenLayersMap';
 import { useMapStore } from './stores/mapStore';
+
+const CesiumGlobe = lazy(() =>
+  import('./ui/components/map/CesiumGlobe').then((m) => ({ default: m.CesiumGlobe })),
+);
 
 type AppMode = 'explore' | 'monitor' | 'survey';
 type UnitSystem = 'metric' | 'imperial';
@@ -138,15 +142,19 @@ export default function App() {
         {viewMode === '2d' ? (
           <OpenLayersMap />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[#0A0E19]">
-            <div className="glass rounded-2xl px-6 py-8 text-center">
-              <Globe className="mx-auto mb-3 h-8 w-8 text-[#5500a4]" />
-              <p className="text-[14px] font-medium text-slate-200">3D Globe (Cesium)</p>
-              <p className="mt-1 font-mono text-[11px] text-slate-400">
-                Terrain + 3D buildings — switch to 2D for OpenLayers
-              </p>
-            </div>
-          </div>
+          <Suspense
+            fallback={
+              <div className="flex h-full w-full items-center justify-center bg-[#0A0E19]">
+                <div className="glass rounded-2xl px-6 py-8 text-center">
+                  <Globe className="mx-auto mb-3 h-8 w-8 animate-pulse text-[#5500a4]" />
+                  <p className="text-[14px] font-medium text-slate-200">Loading 3D Globe…</p>
+                  <p className="mt-1 font-mono text-[11px] text-slate-400">Cesium engine initializing</p>
+                </div>
+              </div>
+            }
+          >
+            <CesiumGlobe />
+          </Suspense>
         )}
 
         {/* Subtle overlay for depth when in 2D — keeps glass panels legible without obscuring map */}
