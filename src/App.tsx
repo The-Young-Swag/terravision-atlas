@@ -12,9 +12,18 @@ import {
   Ruler,
   Navigation,
   X,
+  Satellite,
+  Mountain,
+  Moon,
+  Check,
 } from 'lucide-react';
 import { OpenLayersMap } from './ui/components/map/OpenLayersMap';
 import { useMapStore } from './stores/mapStore';
+import { useDisaster } from './hooks/useDisaster';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
 
 const CesiumGlobe = lazy(() =>
   import('./ui/components/map/CesiumGlobe').then((m) => ({ default: m.CesiumGlobe })),
@@ -32,32 +41,15 @@ interface FuelState {
   unitSystem: UnitSystem;
 }
 
-const mockAlerts = [
-  {
-    id: '1',
-    severity: 'high' as const,
-    label: 'HIGH · Earthquake',
-    color: '#E63946',
-    title: 'M6.1 — 40km NE of Baguio City',
-    time: '2m ago',
-  },
-  {
-    id: '2',
-    severity: 'medium' as const,
-    label: 'MEDIUM · Wildfire',
-    color: '#FF9F1C',
-    title: 'Detected via FIRMS — Zambales foothills',
-    time: '14m ago',
-  },
-  {
-    id: '3',
-    severity: 'low' as const,
-    label: 'LOW · Flood watch',
-    color: '#2EC4B6',
-    title: 'GloFAS forecast — Pampanga River basin',
-    time: '41m ago',
-  },
-];
+const severityConfig = {
+  high: { label: 'HIGH', color: '#E63946' },
+  medium: { label: 'MEDIUM', color: '#FF9F1C' },
+  low: { label: 'LOW', color: '#2EC4B6' },
+} as const;
+
+function formatTimeAgo(iso: string): string {
+  return dayjs(iso).fromNow();
+}
 
 function calculateFuel(state: FuelState) {
   const { distance, efficiency, efficiencyUnit, price, unitSystem } = state;
@@ -86,6 +78,9 @@ function calculateFuel(state: FuelState) {
 export default function App() {
   const [activeMode, setActiveMode] = useState<AppMode>('explore');
   const [fuelOpen, setFuelOpen] = useState(false);
+  const { events: disasterEvents, loading: disasterLoading, lastUpdated, refresh: refreshDisasters } =
+    useDisaster();
+  const disasterCount = disasterEvents.length;
   const [fuelState, setFuelState] = useState<FuelState>({
     distance: 120,
     efficiency: 14,
@@ -258,27 +253,77 @@ export default function App() {
         </div>
 
         <p className="mb-2 text-[11px] uppercase tracking-wide text-slate-500">Basemap</p>
-        <div className="mb-4 grid grid-cols-4 gap-2">
+        <div className="mb-4 space-y-1.5">
           {(
             [
-              ['satellite', 'linear-gradient(135deg,#1b3a2e,#0c1f18)'],
-              ['streets', 'linear-gradient(135deg,#3a3f4b,#20232b)'],
-              ['terrain', 'linear-gradient(135deg,#5a4a2f,#2c2416)'],
-              ['dark', 'linear-gradient(135deg,#111726,#050810)'],
+              {
+                id: 'satellite' as const,
+                label: 'Satellite',
+                desc: 'Esri World Imagery',
+                icon: Satellite,
+                preview: 'linear-gradient(135deg,#1e3a2e 0%,#0f1f18 100%)',
+              },
+              {
+                id: 'streets' as const,
+                label: 'Streets',
+                desc: 'OpenStreetMap',
+                icon: MapIcon,
+                preview: 'linear-gradient(135deg,#3a3f4b 0%,#20232b 100%)',
+              },
+              {
+                id: 'terrain' as const,
+                label: 'Terrain',
+                desc: 'OpenTopoMap',
+                icon: Mountain,
+                preview: 'linear-gradient(135deg,#5a4a2f 0%,#2c2416 100%)',
+              },
+              {
+                id: 'dark' as const,
+                label: 'Dark',
+                desc: 'Carto Dark Matter',
+                icon: Moon,
+                preview: 'linear-gradient(135deg,#111726 0%,#050810 100%)',
+              },
             ] as const
-          ).map(([id, bg]) => (
-            <button
-              key={id}
-              onClick={() => setBasemap(id as typeof basemap)}
-              aria-label={`Basemap ${id}`}
-              className={`h-10 rounded-lg border transition ${
-                basemap === id
-                  ? 'border-[#6EB4FF] ring-2 ring-[#6EB4FF]/30'
-                  : 'border-white/10 hover:border-white/20'
-              }`}
-              style={{ background: bg }}
-            />
-          ))}
+          ).map((option) => {
+            const Icon = option.icon;
+            const isActive = basemap === option.id;
+            return (
+              <button
+                key={option.id}
+                onClick={() => setBasemap(option.id)}
+                aria-label={`Basemap ${option.label}`}
+                aria-pressed={isActive}
+                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
+                  isActive
+                    ? 'border-[#5500a4] bg-[#5500a4]/10 text-white'
+                    : 'border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/15 hover:bg-white/[0.07] hover:text-white'
+                }`}
+              >
+                <span
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[12px] transition ${
+                    isActive
+                      ? 'border-[#5500a4]/30 bg-[#5500a4] text-white'
+                      : 'border-white/10 bg-white/5 text-slate-400 group-hover:text-slate-200'
+                  }`}
+                  style={!isActive ? { background: option.preview } : undefined}
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="flex-1">
+                  <span className="block text-[13px] font-medium leading-none">{option.label}</span>
+                  <span className="block text-[11px] text-slate-400">{option.desc}</span>
+                </span>
+                {isActive ? (
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#5500a4] text-white">
+                    <Check className="h-3 w-3" />
+                  </span>
+                ) : (
+                  <span className="h-5 w-5 shrink-0 rounded-full border border-white/10 group-hover:border-white/20" />
+                )}
+              </button>
+            );
+          })}
         </div>
 
         <div className="mb-4 space-y-1">
@@ -340,7 +385,9 @@ export default function App() {
           <h2 className="text-[13px] font-semibold text-slate-200">
             {activeMode === 'monitor' ? 'Incident center' : 'Live alerts'}
           </h2>
-          <span className="font-mono text-[10px] text-slate-400">3 active</span>
+          <span className="font-mono text-[10px] text-slate-400">
+            {disasterLoading ? 'updating…' : `${disasterCount} active`}
+          </span>
         </div>
 
         {activeMode === 'monitor' && (
@@ -357,25 +404,45 @@ export default function App() {
         )}
 
         <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
-          {mockAlerts.map((alert) => (
-            <div
-              key={alert.id}
-              className="cursor-pointer rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/[0.08]"
-            >
-              <div className="mb-1 flex items-center justify-between">
-                <span className="text-[11px] font-semibold" style={{ color: alert.color }}>
-                  {alert.label}
-                </span>
-                <span className="font-mono text-[10px] text-slate-500">{alert.time}</span>
-              </div>
-              <p className="text-[12.5px] text-slate-300">{alert.title}</p>
-            </div>
-          ))}
+          {disasterLoading && disasterEvents.length === 0 ? (
+            <div className="py-8 text-center font-mono text-[11px] text-slate-400">Loading live data…</div>
+          ) : disasterEvents.length === 0 ? (
+            <div className="py-8 text-center text-[12px] text-slate-400">No active events</div>
+          ) : (
+            disasterEvents.slice(0, 5).map((event) => {
+              const cfg = severityConfig[event.severity];
+              return (
+                <div
+                  key={event.id}
+                  className="cursor-pointer rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/[0.08]"
+                >
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold" style={{ color: cfg.color }}>
+                      {cfg.label} · {event.type}
+                    </span>
+                    <span className="font-mono text-[10px] text-slate-500">
+                      {formatTimeAgo(event.occurredAt)}
+                    </span>
+                  </div>
+                  <p className="text-[12.5px] text-slate-300">{event.title}</p>
+                  <p className="mt-1 font-mono text-[10px] text-slate-500">{event.source}</p>
+                </div>
+              );
+            })
+          )}
         </div>
 
-        <button className="mt-3 w-full rounded-xl bg-[#5500a4] py-2 text-[12.5px] font-medium text-white transition hover:brightness-110">
-          Open disaster dashboard
+        <button
+          onClick={() => refreshDisasters()}
+          className="mt-3 w-full rounded-xl bg-[#5500a4] py-2 text-[12.5px] font-medium text-white transition hover:brightness-110"
+        >
+          {disasterLoading ? 'Refreshing…' : 'Refresh live data'}
         </button>
+        {lastUpdated && (
+          <p className="mt-2 text-center font-mono text-[10px] text-slate-500">
+            Updated {formatTimeAgo(lastUpdated)}
+          </p>
+        )}
       </aside>
 
       {/* Mode docks — floating, draggable intent via Framer Motion */}
@@ -443,7 +510,9 @@ export default function App() {
         <div className="flex flex-wrap items-center gap-3 sm:gap-5">
           <span>{centerLabel}</span>
           {activeMode === 'survey' && <span>EPSG:32651 · UTM 51N</span>}
-          {activeMode === 'monitor' && <span className="text-[#FF9F1C]">3 active incidents nearby</span>}
+          {activeMode === 'monitor' && (
+            <span className="text-[#FF9F1C]">{disasterCount} active incidents nearby</span>
+          )}
           <span className="hidden sm:inline">Zoom {zoom.toFixed(1)}</span>
         </div>
         <div className="flex items-center gap-1.5 font-sans text-slate-300">
@@ -462,7 +531,7 @@ export default function App() {
           {activeMode === 'explore'
             ? 'Pan & zoom the map'
             : activeMode === 'monitor'
-              ? 'Monitoring 3 events'
+              ? `Monitoring ${disasterCount} events`
               : 'Survey tools active'}
         </span>
       </div>
