@@ -18,6 +18,7 @@ import {
   Check,
 } from 'lucide-react';
 import { OpenLayersMap } from './ui/components/map/OpenLayersMap';
+import { CoordinatePanel } from './ui/components/geodetic/CoordinatePanel';
 import { useMapStore } from './stores/mapStore';
 import { useDisaster } from './hooks/useDisaster';
 import dayjs from 'dayjs';
@@ -386,6 +387,9 @@ export default function App() {
           </p>
         </div>
       </aside>
+
+      {/* Geodetic panel — only in Survey mode */}
+      {activeMode === 'survey' && <CoordinatePanel />}
 
       {/* Right alerts / incident center */}
       <aside className="glass absolute right-4 top-24 z-10 hidden w-72 rounded-2xl p-4 md:block">
