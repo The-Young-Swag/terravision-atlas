@@ -5,6 +5,8 @@ import { useMapStore } from '../../../stores/mapStore';
 import { useDisasterStore } from '../../../stores/disasterStore';
 import { createMap, updateBasemap } from '../../../core/map/openlayers/createMap';
 import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';
+import { createRouteLayer } from '../../../core/map/openlayers/routeLayer';
+import { useRouteStore } from '../../../stores/routeStore';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'ol/ol.css';
 
@@ -12,10 +14,12 @@ export function OpenLayersMap() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const hazardLayerRef = useRef<ReturnType<typeof createHazardLayer> | null>(null);
+  const routeLayerRef = useRef<ReturnType<typeof createRouteLayer> | null>(null);
   const isProgrammaticRef = useRef(false);
 
   const { center, zoom, basemap, showHazards, setCenter, setZoom } = useMapStore();
   const { events: disasterEvents } = useDisasterStore();
+  const { route, avoidRing } = useRouteStore();
 
   // Adaptive contrast for in-map overlays (hazard markers, etc.)
   const { markerStroke } = useMapOverlayContrast();
@@ -122,6 +126,23 @@ export function OpenLayersMap() {
       hazardLayerRef.current = layer;
     }
   }, [showHazards, hazardFeatures, markerStroke]);
+
+  // Evacuation route overlay — rebuilt whenever the route or avoid area changes
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (routeLayerRef.current) {
+      map.removeLayer(routeLayerRef.current);
+      routeLayerRef.current = null;
+    }
+
+    if (route && avoidRing) {
+      const layer = createRouteLayer(route, avoidRing);
+      map.addLayer(layer);
+      routeLayerRef.current = layer;
+    }
+  }, [route, avoidRing]);
 
   // Keep view in sync if store center/zoom changes externally (e.g., search fly-to)
   // Compare with current view to avoid animating when the change originated from the map itself
