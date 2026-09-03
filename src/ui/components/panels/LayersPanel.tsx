@@ -9,15 +9,11 @@ export function LayersPanel() {
     basemap,
     viewMode,
     showHazards,
-    showTraffic,
-    showTerrainContours,
     center,
     zoom,
     setBasemap,
     setViewMode,
     setShowHazards,
-    setShowTraffic,
-    setShowTerrainContours,
   } = useMapStore();
 
   const isBrightBasemap = useBrightBasemap();
@@ -44,8 +40,6 @@ export function LayersPanel() {
             onClick={() => {
               setBasemap('satellite');
               setShowHazards(true);
-              setShowTraffic(false);
-              setShowTerrainContours(false);
             }}
             className={`text-[12px] ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'}`}
           >
@@ -124,19 +118,8 @@ export function LayersPanel() {
             <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Live hazards</span>
             <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E63946]" />
           </label>
-          <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
-            <input type="checkbox" checked={showTraffic} onChange={(e) => setShowTraffic(e.target.checked)} className="rounded" />
-            <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Traffic</span>
-          </label>
-          <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
-            <input
-              type="checkbox"
-              checked={showTerrainContours}
-              onChange={(e) => setShowTerrainContours(e.target.checked)}
-              className="rounded"
-            />
-            <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Terrain contours</span>
-          </label>
+          <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>Traffic — not implemented (no free global real-time source)</p>
+          <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>Terrain contours — not implemented</p>
         </div>
 
         <div className="border-t border-white/10 pt-3">

@@ -44,12 +44,14 @@ export function TopBar({
           <span className={`text-[11px] font-medium tracking-widest ${isBrightBasemap ? 'text-slate-700' : 'text-slate-400'}`}>ATLAS</span>
         </div>
 
-        <div className="glass flex max-w-md flex-1 items-center gap-2.5 rounded-2xl px-4 py-2.5">
+        <div className="glass flex max-w-md flex-1 items-center gap-2.5 rounded-2xl px-4 py-2.5 opacity-60">
           <Search className={`h-4 w-4 shrink-0 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`} aria-hidden />
           <input
             className={`flex-1 bg-transparent text-[13.5px] focus:outline-none ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-400'}`}
-            placeholder="Search place, coordinate, or event…"
+            placeholder="Place search — not implemented (no free geocoder wired)"
             aria-label="Search"
+            disabled
+            title="Place search not implemented"
           />
         </div>
 
@@ -99,8 +101,10 @@ export function TopBar({
         </button>
 
         <button
-          className={`glass hidden h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition md:flex ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+          className={`glass hidden h-10 w-10 shrink-0 cursor-not-allowed items-center justify-center rounded-2xl opacity-60 transition md:flex ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
           aria-label="Settings"
+          disabled
+          title="Settings — not implemented"
         >
           <Settings2 className="h-[18px] w-[18px]" />
         </button>

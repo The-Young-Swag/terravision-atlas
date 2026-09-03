@@ -8,13 +8,13 @@ export function MinecraftExport() {
 
   const handleExport = async () => {
     setIsExporting(true);
-    // Simulate export — in real implementation, this would use the Minecraft export engine
-    // with terrain, roads, buildings → blocks conversion
+    // Honest placeholder — Java Edition NBT/Anvil is achievable client-side (e.g. prismarine-nbt) but not yet implemented;
+    // Bedrock LevelDB is not practically exportable from browser without native bindings (out of scope per spec).
     await new Promise((resolve) => setTimeout(resolve, 1500));
     setIsExporting(false);
 
-    // Create a placeholder download — real implementation would generate a .zip with world files
-    const csv = `minecraft_export,center_lon,center_lat,width,height,format\n120.5887,15.145,${area.width},${area.height},${format}`;
+    // Placeholder CSV — not a valid world; shows what would be exported
+    const csv = `minecraft_export,center_lon,center_lat,width,height,format,status\n120.5887,15.145,${area.width},${area.height},${format},placeholder-not-a-valid-world`;
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -61,15 +61,14 @@ export function MinecraftExport() {
         </button>
         <button
           onClick={() => setFormat('bedrock')}
-          className={`flex-1 rounded-xl border px-3 py-2 text-[12px] font-medium ${
-            format === 'bedrock'
-              ? 'border-[#5500a4] bg-[#5500a4] text-white'
-              : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-          }`}
+          disabled
+          title="Bedrock LevelDB not practically exportable from browser — out of scope"
+          className="flex-1 cursor-not-allowed rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-medium text-slate-500 opacity-60"
         >
-          Bedrock
+          Bedrock — not supported
         </button>
       </div>
+      <p className="mb-3 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">Java export is currently a placeholder CSV, not a valid NBT/Anvil world. Real Java export via prismarine-nbt is achievable client-side but not yet implemented. Bedrock export is out of scope per spec.</p>
 
       <button
         onClick={handleExport}
