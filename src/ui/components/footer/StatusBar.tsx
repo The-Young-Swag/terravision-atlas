@@ -10,7 +10,7 @@ interface StatusBarProps {
 }
 
 export function StatusBar({ activeMode }: StatusBarProps) {
-  const { center, zoom } = useMapStore();
+  const { center, zoom, viewMode } = useMapStore();
   const { events: disasterEvents } = useDisaster();
   const disasterCount = disasterEvents.length;
   const isBrightBasemap = useBrightBasemap();
@@ -24,7 +24,10 @@ export function StatusBar({ activeMode }: StatusBarProps) {
 
   return (
     <>
-      <footer className={`glass absolute bottom-4 left-4 right-4 z-10 flex flex-col gap-2 rounded-2xl px-4 py-2 font-mono text-[11px] sm:flex-row sm:items-center sm:justify-between ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+      {/* In Vector mode the right edge pulls in (animated) to clear the
+          MapLibre zoom control bottom-right. Same element, same bottom/left
+          anchor — only the width transitions, so no state is lost. */}
+      <footer className={`glass absolute bottom-4 left-4 z-10 flex flex-col gap-2 rounded-2xl px-4 py-2 font-mono text-[11px] transition-[right] duration-300 ease-in-out sm:flex-row sm:items-center sm:justify-between ${viewMode === 'vector' ? 'right-20' : 'right-4'} ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
         <div className="flex flex-wrap items-center gap-3 sm:gap-5">
           <span>{centerLabel}</span>
           {activeMode === 'survey' && <span>EPSG:32651 · UTM 51N</span>}
