@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Map as MapLibre, NavigationControl, AttributionControl, setWorkerUrl } from 'maplibre-gl';
 import { useMapStore } from '../../../stores/mapStore';
-import { MAPLIBRE_DEMO_STYLE } from '../../../core/map/maplibre/style';
+import { MAPLIBRE_STYLES } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { setTrafficVisible } from '../../../core/map/maplibre/traffic';
 import { useTrafficStore } from '../../../stores/trafficStore';
@@ -23,7 +23,7 @@ export function MapLibreMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibre | null>(null);
 
-  const { center, zoom, showTerrainContours, showTraffic } = useMapStore();
+  const { center, zoom, basemap, showTerrainContours, showTraffic } = useMapStore();
   const trafficStatus = useTrafficStore((s) => s.status);
 
   // Adaptive contrast for in-map UI (controls, attribution)
@@ -35,7 +35,7 @@ export function MapLibreMap() {
 
     const map = new MapLibre({
       container,
-      style: MAPLIBRE_DEMO_STYLE,
+      style: MAPLIBRE_STYLES[basemap],
       center,
       zoom,
       attributionControl: false,
@@ -162,6 +162,26 @@ export function MapLibreMap() {
     if (!map || !map.isStyleLoaded()) return;
     setTrafficVisible(map, showTraffic && trafficStatus === 'ok', tomtomApiKey());
   }, [showTraffic, trafficStatus]);
+
+  // Base Map reactivity — the four Vector styles mirror the 2D basemaps.
+  // setStyle drops runtime sources, so contour/traffic overlays are
+  // re-applied from live store state once the new style loads.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const currentTiles = (map.getStyle()?.sources?.basemap as { tiles?: string[] } | undefined)?.tiles;
+    const targetTiles = (MAPLIBRE_STYLES[basemap].sources.basemap as { tiles?: string[] }).tiles;
+    if (JSON.stringify(currentTiles) === JSON.stringify(targetTiles)) return;
+    map.setStyle(MAPLIBRE_STYLES[basemap]);
+    map.once('style.load', () => {
+      const liveMap = mapRef.current;
+      if (!liveMap) return;
+      const mapState = useMapStore.getState();
+      const trafficState = useTrafficStore.getState();
+      setContoursVisible(liveMap, mapState.showTerrainContours);
+      setTrafficVisible(liveMap, mapState.showTraffic && trafficState.status === 'ok', tomtomApiKey());
+    });
+  }, [basemap]);
 
   // Sync center/zoom when store changes externally — only fly when meaningfully different
   useEffect(() => {
