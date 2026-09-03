@@ -4,7 +4,10 @@
   "type": "module",
   "description": "TerraVision: Atlas — Explore. Monitor. Plan. Visualize. A zero-cost, client-side geospatial platform.",
   "scripts": {
+    "sync:maplibre-worker": "mkdir -p public/maplibre && cp node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs public/maplibre/",
+    "predev": "npm run sync:maplibre-worker",
     "dev": "vite --host 0.0.0.0 --port 4900",
+    "prebuild": "npm run sync:maplibre-worker",
     "build": "tsc && vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4900",
     "test": "vitest",
@@ -25,6 +28,7 @@
     "framer-motion": "^13.1.1",
     "idb": "^8.0.3",
     "lucide-react": "^1.33.0",
+    "maplibre-contour": "^0.1.0",
     "maplibre-gl": "^6.5.0",
     "mathjs": "^15.2.0",
     "nanoid": "^6.0.1",

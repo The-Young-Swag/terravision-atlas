@@ -9,11 +9,13 @@ export function LayersPanel() {
     basemap,
     viewMode,
     showHazards,
+    showTerrainContours,
     center,
     zoom,
     setBasemap,
     setViewMode,
     setShowHazards,
+    setShowTerrainContours,
   } = useMapStore();
 
   const isBrightBasemap = useBrightBasemap();
@@ -119,7 +121,11 @@ export function LayersPanel() {
             <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E63946]" />
           </label>
           <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>Traffic — not implemented (no free global real-time source)</p>
-          <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>Terrain contours — not implemented</p>
+          <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
+            <input type="checkbox" checked={showTerrainContours} onChange={(e) => setShowTerrainContours(e.target.checked)} className="rounded" />
+            <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Terrain contours</span>
+            <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Vector</span>
+          </label>
         </div>
 
         <div className="border-t border-white/10 pt-3">

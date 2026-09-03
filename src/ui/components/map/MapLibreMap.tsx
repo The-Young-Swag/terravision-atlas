@@ -1,15 +1,25 @@
 import { useEffect, useRef } from 'react';
-import { Map as MapLibre, NavigationControl, AttributionControl } from 'maplibre-gl';
+import { Map as MapLibre, NavigationControl, AttributionControl, setWorkerUrl } from 'maplibre-gl';
 import { useMapStore } from '../../../stores/mapStore';
 import { MAPLIBRE_DEMO_STYLE } from '../../../core/map/maplibre/style';
+import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'maplibre-gl/dist/maplibre-gl.css';
+
+// MapLibre loads its vector-tile parser in a Web Worker whose URL defaults
+// to a sibling of the bundled main module — a file Vite neither pre-bundles
+// nor emits, so it 404s and every vector source stalls in "loading" forever
+// (raster tiles are unaffected, which is why this went unnoticed while the
+// style was raster-only). The worker files are vendored under public/maplibre
+// (kept in sync via `npm run sync:maplibre-worker`, wired into predev and
+// prebuild) and served as static siblings, which works in both dev and build.
+setWorkerUrl(`${import.meta.env.BASE_URL}maplibre/maplibre-gl-worker.mjs`);
 
 export function MapLibreMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibre | null>(null);
 
-  const { center, zoom } = useMapStore();
+  const { center, zoom, showTerrainContours } = useMapStore();
 
   // Adaptive contrast for in-map UI (controls, attribution)
   const { theme, textPrimary, attributionText } = useMapOverlayContrast();
@@ -107,6 +117,22 @@ export function MapLibreMap() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Terrain contour overlay — generated client-side from AWS Terrarium tiles.
+  // The map style is never replaced after creation, so dynamically added
+  // sources survive for the life of the map; removal on toggle-off keeps
+  // tile fetching to zero when the overlay is hidden.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (map.isStyleLoaded()) {
+      setContoursVisible(map, showTerrainContours);
+    } else if (showTerrainContours) {
+      map.once('load', () => {
+        if (mapRef.current) setContoursVisible(map, true);
+      });
+    }
+  }, [showTerrainContours]);
 
   // Sync center/zoom when store changes externally — only fly when meaningfully different
   useEffect(() => {
