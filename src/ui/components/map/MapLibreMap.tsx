@@ -1,12 +1,20 @@
 import { useEffect, useRef } from 'react';
-import { Map as MapLibre, NavigationControl, AttributionControl, setWorkerUrl } from 'maplibre-gl';
+import { Map as MapLibre, NavigationControl, AttributionControl, Popup, setWorkerUrl } from 'maplibre-gl';
+import type { MapLayerMouseEvent } from 'maplibre-gl';
 import { useMapStore } from '../../../stores/mapStore';
 import { MAPLIBRE_STYLES } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
-import { setTrafficVisible } from '../../../core/map/maplibre/traffic';
+import {
+  TRAFFIC_INCIDENT_LAYER_ID,
+  addIncidentLayers,
+  removeIncidentLayers,
+  setTrafficVisible,
+} from '../../../core/map/maplibre/traffic';
 import { useTrafficStore } from '../../../stores/trafficStore';
 import { tomtomApiKey } from '../../../features/traffic/tomtom';
 import { refreshTraffic } from '../../../features/traffic/refresh';
+import { incidentPopupHtml } from '../../../features/traffic/incidentPopup';
+import '../../../features/traffic/incidentPopup.css';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -25,6 +33,8 @@ export function MapLibreMap() {
 
   const { center, zoom, basemap, showTerrainContours, showTraffic } = useMapStore();
   const trafficStatus = useTrafficStore((s) => s.status);
+  const trafficIncidents = useTrafficStore((s) => s.incidents);
+  const incidentPopupRef = useRef<Popup | null>(null);
 
   // Adaptive contrast for in-map UI (controls, attribution)
   const { theme, textPrimary, attributionText } = useMapOverlayContrast();
@@ -157,11 +167,37 @@ export function MapLibreMap() {
 
   // Traffic flow overlay — same TomTom tiles as the 2D view, shown only
   // while the shared status is ok so quota failures hide it everywhere.
+  // Incident markers ride along; clicking one pops up its TomTom details.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
-    setTrafficVisible(map, showTraffic && trafficStatus === 'ok', tomtomApiKey());
-  }, [showTraffic, trafficStatus]);
+    const visible = showTraffic && trafficStatus === 'ok';
+    setTrafficVisible(map, visible, tomtomApiKey());
+    incidentPopupRef.current?.remove();
+    incidentPopupRef.current = null;
+    if (!visible) {
+      removeIncidentLayers(map);
+      return undefined;
+    }
+    addIncidentLayers(map, trafficIncidents);
+    const handleIncidentClick = (event: MapLayerMouseEvent) => {
+      const incidentId = event.features?.[0]?.properties?.incidentId;
+      if (typeof incidentId !== 'string') return;
+      const incident = useTrafficStore.getState().incidents.find((item) => item.id === incidentId);
+      if (!incident) return;
+      incidentPopupRef.current?.remove();
+      incidentPopupRef.current = new Popup({ closeButton: true, maxWidth: '260px' })
+        .setLngLat([incident.lon, incident.lat])
+        .setHTML(incidentPopupHtml(incident))
+        .addTo(map);
+    };
+    map.on('click', TRAFFIC_INCIDENT_LAYER_ID, handleIncidentClick);
+    return () => {
+      map.off('click', TRAFFIC_INCIDENT_LAYER_ID, handleIncidentClick);
+      incidentPopupRef.current?.remove();
+      incidentPopupRef.current = null;
+    };
+  }, [showTraffic, trafficStatus, trafficIncidents]);
 
   // Base Map reactivity — the four Vector styles mirror the 2D basemaps.
   // setStyle drops runtime sources, so contour/traffic overlays are

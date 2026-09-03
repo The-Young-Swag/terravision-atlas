@@ -1,5 +1,7 @@
 import { useEffect, useRef, useMemo } from 'react';
 import Map from 'ol/Map';
+import type MapBrowserEvent from 'ol/MapBrowserEvent';
+import Point from 'ol/geom/Point';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { useMapStore } from '../../../stores/mapStore';
 import { useDisasterStore } from '../../../stores/disasterStore';
@@ -13,6 +15,9 @@ import { createTrafficFlowLayer, createTrafficIncidentLayer } from '../../../cor
 import { useTrafficStore } from '../../../stores/trafficStore';
 import { tomtomApiKey } from '../../../features/traffic/tomtom';
 import { refreshTraffic } from '../../../features/traffic/refresh';
+import { incidentPopupHtml } from '../../../features/traffic/incidentPopup';
+import '../../../features/traffic/incidentPopup.css';
+import Overlay from 'ol/Overlay';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'ol/ol.css';
 
@@ -25,6 +30,7 @@ export function OpenLayersMap() {
   const trafficFlowLayerRef = useRef<ReturnType<typeof createTrafficFlowLayer> | null>(null);
   const trafficIncidentLayerRef = useRef<ReturnType<typeof createTrafficIncidentLayer> | null>(null);
   const trafficRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const incidentPopupRef = useRef<Overlay | null>(null);
   const isProgrammaticRef = useRef(false);
 
   const { center, zoom, basemap, showHazards, showTraffic, setCenter, setZoom } = useMapStore();
@@ -118,6 +124,39 @@ export function OpenLayersMap() {
       hazardLayerRef.current = hazardLayer;
     }
 
+    // Incident popup — shows real TomTom incident fields on marker click.
+    const popupElement = document.createElement('div');
+    const popup = new Overlay({
+      element: popupElement,
+      positioning: 'bottom-center',
+      offset: [0, -10],
+      stopEvent: true,
+    });
+    map.addOverlay(popup);
+    incidentPopupRef.current = popup;
+
+    const handleMapClick = (event: MapBrowserEvent) => {
+      const feature = map.forEachFeatureAtPixel(event.pixel, (found) => found, {
+        layerFilter: (layer) => layer.get('layerId') === 'traffic-incidents',
+      });
+      const geometry = feature?.getGeometry();
+      const incidentId = feature?.get('incidentId');
+      if (typeof incidentId !== 'string' || !(geometry instanceof Point)) {
+        popup.setPosition(undefined);
+        return;
+      }
+      const incident = useTrafficStore.getState().incidents.find((item) => item.id === incidentId);
+      if (!incident) {
+        popup.setPosition(undefined);
+        return;
+      }
+      popupElement.innerHTML = incidentPopupHtml(incident);
+      popup.setPosition(geometry.getCoordinates());
+    };
+    map.on('click', handleMapClick);
+
+    // Store for external sync (mirrors MapLibreMap's __maplibre handle).
+    (mapRef.current as unknown as { __olmap?: Map }).__olmap = map;
     mapInstanceRef.current = map;
 
     // Handle resize — OpenLayers needs explicit update when container changes
@@ -206,6 +245,7 @@ export function OpenLayersMap() {
       map.removeLayer(trafficIncidentLayerRef.current);
       trafficIncidentLayerRef.current = null;
     }
+    incidentPopupRef.current?.setPosition(undefined);
 
     if (showTraffic && trafficStatus === 'ok') {
       const key = tomtomApiKey();

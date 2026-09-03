@@ -1,5 +1,6 @@
 import { Layers, Satellite, Map as MapIcon, Mountain, Moon, Check } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
+import { TrafficLegend } from './TrafficLegend';
 import { useMapStore } from '../../../stores/mapStore';
 import { useTrafficStore } from '../../../stores/trafficStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
@@ -138,6 +139,11 @@ export function LayersPanel() {
               )}
               {showTraffic && trafficStatus === 'no-key' && (
                 <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>traffic unavailable — API key not configured</p>
+              )}
+              {showTraffic && trafficStatus === 'ok' && (
+                <div className="px-1.5 py-1">
+                  <TrafficLegend />
+                </div>
               )}
             </>
           )}

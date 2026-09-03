@@ -1,0 +1,30 @@
+/* Incident popup content (OpenLayers overlay + MapLibre popup share this).
+ * Plain CSS because the markup is built as an HTML string outside JSX, where
+ * Tailwind class detection does not reliably apply. Colors follow the app's
+ * dark-glass panels; no gradients, matching the look-and-feel rules. */
+.incident-popup {
+  background: rgba(13, 27, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-width: 180px;
+  max-width: 240px;
+  font-family: inherit;
+}
+.incident-title {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+.incident-desc {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #e2e8f0;
+}
+.incident-meta {
+  margin: 2px 0 0;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  color: #94a3b8;
+}

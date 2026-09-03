@@ -20,6 +20,51 @@ export interface TrafficIncident {
   category: string;
   description: string | null;
   delaySeconds: number;
+  severity: string | null;
+  from: string | null;
+  to: string | null;
+  lengthMeters: number | null;
+  startTime: string | null;
+  endTime: string | null;
+}
+
+// Display labels straight from the TomTom Incident Details documentation:
+// iconCategory codes and magnitudeOfDelay codes. Unlisted codes fall back to
+// a neutral label — never invented.
+const INCIDENT_CATEGORY_LABELS: Record<number, string> = {
+  0: 'Unknown',
+  1: 'Accident',
+  2: 'Fog',
+  3: 'Dangerous conditions',
+  4: 'Rain',
+  5: 'Ice',
+  6: 'Jam',
+  7: 'Lane closed',
+  8: 'Road closed',
+  9: 'Road works',
+  10: 'Wind',
+  11: 'Flooding',
+  14: 'Broken-down vehicle',
+};
+
+const DELAY_SEVERITY_LABELS: Record<number, string> = {
+  0: 'Unknown severity',
+  1: 'Minor delay',
+  2: 'Moderate delay',
+  3: 'Major delay',
+  4: 'Indefinite delay',
+};
+
+export function incidentCategoryLabel(code: number | undefined, fallbackType: string | undefined): string {
+  if (code !== undefined && INCIDENT_CATEGORY_LABELS[code] !== undefined) {
+    return INCIDENT_CATEGORY_LABELS[code];
+  }
+  return fallbackType ?? 'Incident';
+}
+
+export function delaySeverityLabel(code: number | undefined): string | null {
+  if (code === undefined) return null;
+  return DELAY_SEVERITY_LABELS[code] ?? null;
 }
 
 export interface TrafficBBox {
@@ -60,10 +105,15 @@ interface TomTomIncident {
   geometry?: { type?: string; coordinates?: unknown };
   properties?: {
     id?: string | number;
-    iconCategory?: string;
+    iconCategory?: number;
     delay?: number;
     magnitudeOfDelay?: number;
     events?: { description?: string }[];
+    from?: string;
+    to?: string;
+    length?: number;
+    startTime?: string;
+    endTime?: string;
   };
 }
 
@@ -95,9 +145,15 @@ export function parseIncidents(data: { incidents?: TomTomIncident[] }): TrafficI
       id: String(properties.id ?? `${point.lon},${point.lat}`),
       lon: point.lon,
       lat: point.lat,
-      category: properties.iconCategory ?? item.type ?? 'Unknown',
+      category: incidentCategoryLabel(properties.iconCategory, item.type),
       description: properties.events?.[0]?.description ?? null,
       delaySeconds: properties.delay ?? 0,
+      severity: delaySeverityLabel(properties.magnitudeOfDelay),
+      from: properties.from ?? null,
+      to: properties.to ?? null,
+      lengthMeters: properties.length ?? null,
+      startTime: properties.startTime ?? null,
+      endTime: properties.endTime ?? null,
     });
     if (incidents.length >= MAX_INCIDENTS) break;
   }
@@ -122,7 +178,8 @@ export async function fetchTrafficIncidents(bbox: TrafficBBox): Promise<TrafficI
   const params = new URLSearchParams({
     key,
     bbox: `${bbox.minLon},${bbox.minLat},${bbox.maxLon},${bbox.maxLat}`,
-    fields: '{incidents{type,geometry{type,coordinates},properties{id,iconCategory,delay,events{description}}}}',
+    fields:
+      '{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,delay,events{description},from,to,length,startTime,endTime}}}',
     language: 'en-US',
     timeValidityFilter: 'present',
   });
