@@ -57,7 +57,7 @@ export function GeodeticPanel() {
           )}
         </div>
 
-        <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-500'}`}>Powered by Proj4js · 5,000+ EPSG via custom grids</p>
+        <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-500'}`}>Powered by Proj4js · 7 EPSG bundled (WGS84/UTM/NAD83/ETRS89/OSGB36) · NTv2</p>
       </div>
     </FloatingPanel>
   );

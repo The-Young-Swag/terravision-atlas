@@ -103,7 +103,7 @@ export function CoordinatePanel() {
       </div>
 
       <p className="mt-3 text-center font-mono text-[10px] text-slate-500">
-        Powered by Proj4js · 5,000+ EPSG · NTv2 precise
+        Powered by Proj4js · 7 EPSG bundled · NTv2 precise (full 5k+ requires proj4-epsg fetch)
       </p>
     </div>
   );
