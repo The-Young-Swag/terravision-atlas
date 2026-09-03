@@ -11,6 +11,7 @@ import { LiveAlertsPanel } from './ui/components/panels/LiveAlertsPanel';
 import { FuelPanel } from './ui/components/fuel/FuelPanel';
 import { ModeDocks } from './ui/components/docks/ModeDocks';
 import { EvacuationPanel } from './ui/components/routing/EvacuationPanel';
+import { ShelterPanel } from './ui/components/shelters/ShelterPanel';
 import { StatusBar } from './ui/components/footer/StatusBar';
 import { StoryBuilder } from './features/storytelling/builder/StoryBuilder';
 import { MinecraftExport } from './features/export/minecraft/MinecraftExport';
@@ -65,6 +66,7 @@ export default function App() {
       <LayersPanel />
       {activeMode === 'survey' && <GeodeticPanel />}
       {activeMode === 'monitor' && <EvacuationPanel />}
+      {activeMode === 'monitor' && <ShelterPanel />}
       <LiveAlertsPanel activeMode={activeMode} />
       <ModeDocks activeMode={activeMode} />
       <StatusBar activeMode={activeMode} />

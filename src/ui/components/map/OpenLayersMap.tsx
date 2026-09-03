@@ -7,6 +7,8 @@ import { createMap, updateBasemap } from '../../../core/map/openlayers/createMap
 import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';
 import { createRouteLayer } from '../../../core/map/openlayers/routeLayer';
 import { useRouteStore } from '../../../stores/routeStore';
+import { createShelterLayer } from '../../../core/map/openlayers/shelterLayer';
+import { useShelterStore } from '../../../stores/shelterStore';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'ol/ol.css';
 
@@ -15,11 +17,13 @@ export function OpenLayersMap() {
   const mapInstanceRef = useRef<Map | null>(null);
   const hazardLayerRef = useRef<ReturnType<typeof createHazardLayer> | null>(null);
   const routeLayerRef = useRef<ReturnType<typeof createRouteLayer> | null>(null);
+  const shelterLayerRef = useRef<ReturnType<typeof createShelterLayer> | null>(null);
   const isProgrammaticRef = useRef(false);
 
   const { center, zoom, basemap, showHazards, setCenter, setZoom } = useMapStore();
   const { events: disasterEvents } = useDisasterStore();
   const { route, avoidRing } = useRouteStore();
+  const shelters = useShelterStore((s) => s.shelters);
 
   // Adaptive contrast for in-map overlays (hazard markers, etc.)
   const { markerStroke } = useMapOverlayContrast();
@@ -143,6 +147,23 @@ export function OpenLayersMap() {
       routeLayerRef.current = layer;
     }
   }, [route, avoidRing]);
+
+  // Shelter markers — rebuilt whenever the shelter list changes
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (shelterLayerRef.current) {
+      map.removeLayer(shelterLayerRef.current);
+      shelterLayerRef.current = null;
+    }
+
+    if (shelters.length > 0) {
+      const layer = createShelterLayer(shelters);
+      map.addLayer(layer);
+      shelterLayerRef.current = layer;
+    }
+  }, [shelters]);
 
   // Keep view in sync if store center/zoom changes externally (e.g., search fly-to)
   // Compare with current view to avoid animating when the change originated from the map itself
