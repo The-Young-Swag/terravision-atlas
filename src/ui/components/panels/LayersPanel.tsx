@@ -126,16 +126,20 @@ export function LayersPanel() {
               <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E63946]" />
             </label>
           )}
-          <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
-            <input type="checkbox" checked={showTraffic} onChange={(e) => setShowTraffic(e.target.checked)} className="rounded" />
-            <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Traffic</span>
-            <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>TomTom</span>
-          </label>
-          {showTraffic && trafficStatus === 'unavailable' && (
-            <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>traffic data unavailable</p>
-          )}
-          {showTraffic && trafficStatus === 'no-key' && (
-            <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>traffic unavailable — API key not configured</p>
+          {(viewMode === '2d' || viewMode === 'vector') && (
+            <>
+              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
+                <input type="checkbox" checked={showTraffic} onChange={(e) => setShowTraffic(e.target.checked)} className="rounded" />
+                <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Traffic</span>
+                <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>TomTom</span>
+              </label>
+              {showTraffic && trafficStatus === 'unavailable' && (
+                <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>traffic data unavailable</p>
+              )}
+              {showTraffic && trafficStatus === 'no-key' && (
+                <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>traffic unavailable — API key not configured</p>
+              )}
+            </>
           )}
           {viewMode === 'vector' && (
             <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
