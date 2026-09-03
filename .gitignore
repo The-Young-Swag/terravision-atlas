@@ -144,3 +144,9 @@ vite.config.ts.timestamp-*
 
 # Design reference (local only, never committed)
 MOCKUP.html
+AGENTS.md
+opencode.json
+terravision-atlas.md
+SKILL.md
+devcontainer.json
+setup.sh
