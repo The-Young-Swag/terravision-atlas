@@ -5,6 +5,7 @@ import { useMapStore } from '../../../stores/mapStore';
 import { useDisasterStore } from '../../../stores/disasterStore';
 import { createMap, updateBasemap } from '../../../core/map/openlayers/createMap';
 import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';
+import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'ol/ol.css';
 
 export function OpenLayersMap() {
@@ -15,6 +16,9 @@ export function OpenLayersMap() {
 
   const { center, zoom, basemap, showHazards, setCenter, setZoom } = useMapStore();
   const { events: disasterEvents } = useDisasterStore();
+
+  // Adaptive contrast for in-map overlays (hazard markers, etc.)
+  const { markerStroke } = useMapOverlayContrast();
 
   const hazardFeatures = useMemo(
     () =>
@@ -72,9 +76,9 @@ export function OpenLayersMap() {
       }
     });
 
-    // Initial hazard layer — uses live disaster events
+    // Initial hazard layer — uses live disaster events with adaptive stroke
     if (showHazards && hazardFeatures.length > 0) {
-      const hazardLayer = createHazardLayer(hazardFeatures);
+      const hazardLayer = createHazardLayer(hazardFeatures, markerStroke);
       map.addLayer(hazardLayer);
       hazardLayerRef.current = hazardLayer;
     }
@@ -101,7 +105,7 @@ export function OpenLayersMap() {
     updateBasemap(map, basemap);
   }, [basemap]);
 
-  // Toggle hazards and update when events change
+  // Toggle hazards and update when events change OR when markerStroke changes (basemap switch)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -113,11 +117,11 @@ export function OpenLayersMap() {
     }
 
     if (showHazards && hazardFeatures.length > 0) {
-      const layer = createHazardLayer(hazardFeatures);
+      const layer = createHazardLayer(hazardFeatures, markerStroke);
       map.addLayer(layer);
       hazardLayerRef.current = layer;
     }
-  }, [showHazards, hazardFeatures]);
+  }, [showHazards, hazardFeatures, markerStroke]);
 
   // Keep view in sync if store center/zoom changes externally (e.g., search fly-to)
   // Compare with current view to avoid animating when the change originated from the map itself

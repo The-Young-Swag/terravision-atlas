@@ -19,8 +19,11 @@ const severityColor: Record<HazardFeature['severity'], string> = {
   low: '#2EC4B6',
 };
 
-// Vector layer for live hazard pins with subtle glow.
-export function createHazardLayer(hazards: HazardFeature[]): VectorLayer<VectorSource> {
+// Vector layer for live hazard pins with adaptive stroke for basemap contrast
+export function createHazardLayer(
+  hazards: HazardFeature[],
+  markerStrokeColor: string = '#f8fafc', // default light stroke for dark basemaps
+): VectorLayer<VectorSource> {
   const features = hazards.map((hazard) => {
     const feature = new Feature({
       geometry: new Point(fromLonLat([hazard.lon, hazard.lat])),
@@ -35,7 +38,7 @@ export function createHazardLayer(hazards: HazardFeature[]): VectorLayer<VectorS
         image: new Circle({
           radius: hazard.severity === 'high' ? 7 : 5,
           fill: new Fill({ color }),
-          stroke: new Stroke({ color: 'rgba(255,255,255,0.9)', width: 2 }),
+          stroke: new Stroke({ color: markerStrokeColor, width: 2 }),
         }),
       }),
     );

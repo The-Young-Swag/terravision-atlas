@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Map as MapLibre, NavigationControl, AttributionControl } from 'maplibre-gl';
 import { useMapStore } from '../../../stores/mapStore';
 import { MAPLIBRE_DEMO_STYLE } from '../../../core/map/maplibre/style';
+import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 export function MapLibreMap() {
@@ -9,6 +10,9 @@ export function MapLibreMap() {
   const mapRef = useRef<MapLibre | null>(null);
 
   const { center, zoom } = useMapStore();
+
+  // Adaptive contrast for in-map UI (controls, attribution)
+  const { theme, textPrimary, attributionText } = useMapOverlayContrast();
 
   useEffect(() => {
     const container = containerRef.current;
@@ -22,10 +26,54 @@ export function MapLibreMap() {
       attributionControl: false,
     });
 
-    map.addControl(new NavigationControl({ showCompass: false }), 'bottom-right');
-    map.addControl(new AttributionControl({ compact: true }), 'bottom-right');
+    // Custom NavigationControl with adaptive colors
+    const navControl = new NavigationControl({ showCompass: false });
+    map.addControl(navControl, 'bottom-right');
 
-    // Sync view changes back to store on moveend (same pattern as OpenLayers fix)
+    // Custom AttributionControl with adaptive colors
+    const attributionControl = new AttributionControl({ compact: true });
+    map.addControl(attributionControl, 'bottom-right');
+
+    // Apply adaptive styles to maplibre controls after they're rendered
+    const applyControlStyles = () => {
+      if (!container) return;
+
+      // NavigationControl buttons (zoom in/out)
+      const navButtons = container.querySelectorAll('.maplibre-ctrl-zoom-in, .maplibre-ctrl-zoom-out');
+      navButtons.forEach((btn) => {
+        const button = btn as HTMLElement;
+        button.style.backgroundColor = theme === 'light' ? '#ffffff' : '#1e293b';
+        button.style.color = theme === 'light' ? '#1e293b' : '#f8fafc';
+        button.style.border = theme === 'light' ? '1px solid #cbd5e1' : '1px solid #475569';
+      });
+
+      // Compass (if shown)
+      const compass = container.querySelector('.maplibre-ctrl-compass');
+      if (compass) {
+        (compass as HTMLElement).style.filter = theme === 'light' ? 'invert(0)' : 'invert(1)';
+      }
+
+      // AttributionControl
+      const attribution = container.querySelector('.maplibre-ctrl-attrib');
+      if (attribution) {
+        const attr = attribution as HTMLElement;
+        attr.style.color = attributionText;
+        attr.style.backgroundColor = theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)';
+      }
+
+      // Attribution toggle button
+      const attribToggle = container.querySelector('.maplibre-ctrl-attrib-toggle');
+      if (attribToggle) {
+        const toggle = attribToggle as HTMLElement;
+        toggle.style.color = textPrimary;
+        toggle.style.backgroundColor = theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)';
+      }
+    };
+
+    // Apply initially and on style/basemap changes
+    setTimeout(applyControlStyles, 100);
+
+    // Sync view changes back to store on moveend
     let isProgrammatic = false;
 
     map.on('moveend', () => {
@@ -37,6 +85,12 @@ export function MapLibreMap() {
       const z = map.getZoom();
       useMapStore.getState().setCenter([c.lng, c.lat]);
       useMapStore.getState().setZoom(z);
+    });
+
+    // Re-apply styles when map style changes (basemap switch)
+    map.on('style.load', applyControlStyles);
+    map.on('render', () => {
+      // Re-apply on first few renders to catch dynamic control creation
     });
 
     // Store for external sync
