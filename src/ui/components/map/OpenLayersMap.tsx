@@ -9,6 +9,10 @@ import { createRouteLayer } from '../../../core/map/openlayers/routeLayer';
 import { useRouteStore } from '../../../stores/routeStore';
 import { createShelterLayer } from '../../../core/map/openlayers/shelterLayer';
 import { useShelterStore } from '../../../stores/shelterStore';
+import { createTrafficFlowLayer, createTrafficIncidentLayer } from '../../../core/map/openlayers/trafficLayer';
+import { useTrafficStore } from '../../../stores/trafficStore';
+import { tomtomApiKey } from '../../../features/traffic/tomtom';
+import { refreshTraffic } from '../../../features/traffic/refresh';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'ol/ol.css';
 
@@ -18,12 +22,17 @@ export function OpenLayersMap() {
   const hazardLayerRef = useRef<ReturnType<typeof createHazardLayer> | null>(null);
   const routeLayerRef = useRef<ReturnType<typeof createRouteLayer> | null>(null);
   const shelterLayerRef = useRef<ReturnType<typeof createShelterLayer> | null>(null);
+  const trafficFlowLayerRef = useRef<ReturnType<typeof createTrafficFlowLayer> | null>(null);
+  const trafficIncidentLayerRef = useRef<ReturnType<typeof createTrafficIncidentLayer> | null>(null);
+  const trafficRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isProgrammaticRef = useRef(false);
 
-  const { center, zoom, basemap, showHazards, setCenter, setZoom } = useMapStore();
+  const { center, zoom, basemap, showHazards, showTraffic, setCenter, setZoom } = useMapStore();
   const { events: disasterEvents } = useDisasterStore();
   const { route, avoidRing } = useRouteStore();
   const shelters = useShelterStore((s) => s.shelters);
+  const trafficStatus = useTrafficStore((s) => s.status);
+  const trafficIncidents = useTrafficStore((s) => s.incidents);
 
   // Adaptive contrast for in-map overlays (hazard markers, etc.)
   const { markerStroke } = useMapOverlayContrast();
@@ -39,6 +48,20 @@ export function OpenLayersMap() {
       })),
     [disasterEvents],
   );
+
+  // Refresh traffic incidents for the current view — debounced so a pan
+  // never fires more than one lookup per pause, on top of the bbox cache.
+  const refreshTrafficForView = () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const extent = map.getView().calculateExtent(map.getSize());
+    const [minLon, minLat] = toLonLat([extent[0], extent[1]]);
+    const [maxLon, maxLat] = toLonLat([extent[2], extent[3]]);
+    if (trafficRefreshTimer.current) clearTimeout(trafficRefreshTimer.current);
+    trafficRefreshTimer.current = setTimeout(() => {
+      void refreshTraffic({ minLon, minLat, maxLon, maxLat });
+    }, 800);
+  };
 
   // Initialize map once
   useEffect(() => {
@@ -81,6 +104,10 @@ export function OpenLayersMap() {
         if (zoomDiff > 0.05) {
           setZoom(viewZoom);
         }
+      }
+
+      if (useMapStore.getState().showTraffic) {
+        refreshTrafficForView();
       }
     });
 
@@ -164,6 +191,41 @@ export function OpenLayersMap() {
       shelterLayerRef.current = layer;
     }
   }, [shelters]);
+
+  // Traffic flow + incident layers — visible only while the traffic state
+  // is ok, so a dead quota never leaves a blank or broken overlay behind.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (trafficFlowLayerRef.current) {
+      map.removeLayer(trafficFlowLayerRef.current);
+      trafficFlowLayerRef.current = null;
+    }
+    if (trafficIncidentLayerRef.current) {
+      map.removeLayer(trafficIncidentLayerRef.current);
+      trafficIncidentLayerRef.current = null;
+    }
+
+    if (showTraffic && trafficStatus === 'ok') {
+      const key = tomtomApiKey();
+      if (key) {
+        const flowLayer = createTrafficFlowLayer(key);
+        map.addLayer(flowLayer);
+        trafficFlowLayerRef.current = flowLayer;
+      }
+      if (trafficIncidents.length > 0) {
+        const incidentLayer = createTrafficIncidentLayer(trafficIncidents);
+        map.addLayer(incidentLayer);
+        trafficIncidentLayerRef.current = incidentLayer;
+      }
+    }
+  }, [showTraffic, trafficStatus, trafficIncidents]);
+
+  useEffect(() => {
+    if (!showTraffic) return;
+    refreshTrafficForView();
+  }, [showTraffic]);
 
   // Keep view in sync if store center/zoom changes externally (e.g., search fly-to)
   // Compare with current view to avoid animating when the change originated from the map itself

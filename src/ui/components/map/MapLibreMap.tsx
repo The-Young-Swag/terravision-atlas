@@ -3,6 +3,10 @@ import { Map as MapLibre, NavigationControl, AttributionControl, setWorkerUrl } 
 import { useMapStore } from '../../../stores/mapStore';
 import { MAPLIBRE_DEMO_STYLE } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
+import { setTrafficVisible } from '../../../core/map/maplibre/traffic';
+import { useTrafficStore } from '../../../stores/trafficStore';
+import { tomtomApiKey } from '../../../features/traffic/tomtom';
+import { refreshTraffic } from '../../../features/traffic/refresh';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -19,7 +23,8 @@ export function MapLibreMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibre | null>(null);
 
-  const { center, zoom, showTerrainContours } = useMapStore();
+  const { center, zoom, showTerrainContours, showTraffic } = useMapStore();
+  const trafficStatus = useTrafficStore((s) => s.status);
 
   // Adaptive contrast for in-map UI (controls, attribution)
   const { theme, textPrimary, attributionText } = useMapOverlayContrast();
@@ -133,6 +138,30 @@ export function MapLibreMap() {
       });
     }
   }, [showTerrainContours]);
+
+  // Traffic incidents for an approximate view box — debounced; the shared
+  // status this sets is what gates the flow layers in both map views.
+  useEffect(() => {
+    if (!showTraffic) return undefined;
+    const halfDegrees = 180 / 2 ** zoom;
+    const timer = setTimeout(() => {
+      void refreshTraffic({
+        minLon: center[0] - halfDegrees,
+        minLat: center[1] - halfDegrees,
+        maxLon: center[0] + halfDegrees,
+        maxLat: center[1] + halfDegrees,
+      });
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [showTraffic, center, zoom]);
+
+  // Traffic flow overlay — same TomTom tiles as the 2D view, shown only
+  // while the shared status is ok so quota failures hide it everywhere.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    setTrafficVisible(map, showTraffic && trafficStatus === 'ok', tomtomApiKey());
+  }, [showTraffic, trafficStatus]);
 
   // Sync center/zoom when store changes externally — only fly when meaningfully different
   useEffect(() => {
