@@ -6,11 +6,10 @@ Chart.register(...registerables);
 interface FuelChartProps {
   fuelNeeded: number;
   totalCost: number;
-  carbonKg: number;
   fuelUnit: 'L' | 'gal';
 }
 
-export function FuelChart({ fuelNeeded, totalCost, carbonKg, fuelUnit }: FuelChartProps) {
+export function FuelChart({ fuelNeeded, totalCost, fuelUnit }: FuelChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
@@ -30,11 +29,11 @@ export function FuelChart({ fuelNeeded, totalCost, carbonKg, fuelUnit }: FuelCha
     chartRef.current = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: [`Fuel (${fuelUnit})`, 'Cost (₱)', 'CO₂ (kg)'],
+        labels: [`Fuel (${fuelUnit})`, 'Cost (₱)'],
         datasets: [
           {
-            data: [fuelNeeded, totalCost, carbonKg],
-            backgroundColor: ['#5500a4', '#00d890', '#FF9F1C'],
+            data: [fuelNeeded, totalCost],
+            backgroundColor: ['#5500a4', '#00d890'],
             borderRadius: 8,
             borderSkipped: false,
             barThickness: 18,
@@ -78,7 +77,7 @@ export function FuelChart({ fuelNeeded, totalCost, carbonKg, fuelUnit }: FuelCha
       chartRef.current?.destroy();
       chartRef.current = null;
     };
-  }, [fuelNeeded, totalCost, carbonKg, fuelUnit]);
+  }, [fuelNeeded, totalCost, fuelUnit]);
 
   return (
     <div className="h-[110px] w-full">

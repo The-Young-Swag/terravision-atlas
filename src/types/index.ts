@@ -23,18 +23,9 @@ export interface DisasterEvent {
   source: string;
 }
 
-export interface VehicleProfile {
-  id: string;
-  name: string;
-  efficiency: number;
-  efficiencyUnit: 'kml' | 'l100km' | 'mpg';
-  fuelType: 'gasoline' | 'diesel' | 'electric';
-}
-
 export interface FuelCalculation {
   distance: number;
   fuelNeeded: number;
   totalCost: number;
   costPerUnit: number;
-  carbonKg: number;
 }
