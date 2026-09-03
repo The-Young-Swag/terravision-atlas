@@ -11,6 +11,7 @@ import { createRouteLayer } from '../../../core/map/openlayers/routeLayer';
 import { useRouteStore } from '../../../stores/routeStore';
 import { createShelterLayer } from '../../../core/map/openlayers/shelterLayer';
 import { useShelterStore } from '../../../stores/shelterStore';
+import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
 import { createTrafficFlowLayer, createTrafficIncidentLayer } from '../../../core/map/openlayers/trafficLayer';
 import { useTrafficStore } from '../../../stores/trafficStore';
 import { tomtomApiKey } from '../../../features/traffic/tomtom';
@@ -95,13 +96,20 @@ export function OpenLayersMap() {
       const viewZoom = view.getZoom();
 
       if (viewCenter) {
-        const [lon, lat] = toLonLat(viewCenter);
+        const [rawLon, rawLat] = toLonLat(viewCenter);
+        // Snap-to-grid survey tool: round to a resolution-adaptive graticule
+        // step so reported coordinates land exactly on grid lines.
+        const resolution = view.getResolution();
+        const snapped =
+          useMapStore.getState().snapToGrid && resolution !== undefined
+            ? snapLonLat(rawLon, rawLat, niceGridStepDegrees(resolution, rawLat))
+            : { lon: rawLon, lat: rawLat };
         // Only update if meaningfully different (avoid micro-jitter)
         const [storeLon, storeLat] = center;
-        const lonDiff = Math.abs(lon - storeLon);
-        const latDiff = Math.abs(lat - storeLat);
+        const lonDiff = Math.abs(snapped.lon - storeLon);
+        const latDiff = Math.abs(snapped.lat - storeLat);
         if (lonDiff > 0.0001 || latDiff > 0.0001) {
-          setCenter([lon, lat]);
+          setCenter([snapped.lon, snapped.lat]);
         }
       }
 

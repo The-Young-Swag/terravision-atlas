@@ -11,6 +11,7 @@ interface MapState {
   showHazards: boolean;
   showTraffic: boolean;
   showTerrainContours: boolean;
+  snapToGrid: boolean;
   setCenter: (center: [number, number]) => void;
   setZoom: (zoom: number) => void;
   setBasemap: (basemap: BasemapId) => void;
@@ -18,6 +19,7 @@ interface MapState {
   setShowHazards: (show: boolean) => void;
   setShowTraffic: (show: boolean) => void;
   setShowTerrainContours: (show: boolean) => void;
+  setSnapToGrid: (snap: boolean) => void;
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -28,6 +30,7 @@ export const useMapStore = create<MapState>((set) => ({
   showHazards: true,
   showTraffic: false,
   showTerrainContours: false,
+  snapToGrid: false,
   setCenter: (center) => set({ center }),
   setZoom: (zoom) => set({ zoom }),
   setBasemap: (basemap) => set({ basemap }),
@@ -35,4 +38,5 @@ export const useMapStore = create<MapState>((set) => ({
   setShowHazards: (showHazards) => set({ showHazards }),
   setShowTraffic: (showTraffic) => set({ showTraffic }),
   setShowTerrainContours: (showTerrainContours) => set({ showTerrainContours }),
+  setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
 }));

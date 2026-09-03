@@ -4,6 +4,7 @@ import type { MapLayerMouseEvent } from 'maplibre-gl';
 import { useMapStore } from '../../../stores/mapStore';
 import { MAPLIBRE_STYLES } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
+import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
 import {
   TRAFFIC_INCIDENT_LAYER_ID,
   addIncidentLayers,
@@ -108,8 +109,15 @@ export function MapLibreMap() {
       }
       const c = map.getCenter();
       const z = map.getZoom();
-      useMapStore.getState().setCenter([c.lng, c.lat]);
-      useMapStore.getState().setZoom(z);
+      const store = useMapStore.getState();
+      if (store.snapToGrid) {
+        const resolution = (156543.03392804097 * Math.cos((c.lat * Math.PI) / 180)) / 2 ** z;
+        const snapped = snapLonLat(c.lng, c.lat, niceGridStepDegrees(resolution, c.lat));
+        store.setCenter([snapped.lon, snapped.lat]);
+      } else {
+        store.setCenter([c.lng, c.lat]);
+      }
+      store.setZoom(z);
     });
 
     // Re-apply styles when map style changes (basemap switch)
