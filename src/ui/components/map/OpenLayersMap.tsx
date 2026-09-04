@@ -296,14 +296,16 @@ export function OpenLayersMap() {
       if (!center || !useRouteStore.getState().drawAvoidArmed) return;
       const pixel = map.getEventPixel(event);
       const [lon, lat] = toLonLat(map.getCoordinateFromPixel(pixel));
-      const circle = previewCircle(center[0], center[1], lon, lat);
+      const { circle, atCap } = previewCircle(center[0], center[1], lon, lat);
       if (drawPreviewLayerRef.current) {
         map.removeLayer(drawPreviewLayerRef.current);
       }
       const preview = createAvoidLayer(circleToRing(circle));
       map.addLayer(preview);
       drawPreviewLayerRef.current = preview;
-      drawTooltip.textContent = `${circle.radiusKm.toFixed(1)} km — release to set`;
+      drawTooltip.textContent = atCap
+        ? `${circle.radiusKm.toFixed(1)} km (max) — release to set`
+        : `${circle.radiusKm.toFixed(1)} km — release to set`;
       drawTooltip.style.display = 'block';
       drawTooltip.style.left = `${pixel[0] + 14}px`;
       drawTooltip.style.top = `${pixel[1] - 10}px`;
@@ -317,7 +319,7 @@ export function OpenLayersMap() {
       }
       const pixel = map.getEventPixel(event);
       const [lon, lat] = toLonLat(map.getCoordinateFromPixel(pixel));
-      const circle = previewCircle(center[0], center[1], lon, lat);
+      const { circle } = previewCircle(center[0], center[1], lon, lat);
       const store = useRouteStore.getState();
       hideDrawPreview();
       if (circle.radiusKm >= MIN_AVOID_RADIUS_KM) {

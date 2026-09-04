@@ -83,7 +83,7 @@ export interface ValhallaResponse {
 export interface AvoidanceRequestBody {
   locations: { lat: number; lon: number }[];
   costing: string;
-  exclude_polygons?: { lat: number; lon: number }[][];
+  exclude_polygons?: [number, number][][];
   directions_options: { units: string };
 }
 
@@ -99,7 +99,10 @@ export function buildAvoidanceRequestBody(
       { lat: to.lat, lon: to.lon },
     ],
     costing: 'auto',
-    ...(avoidRing ? { exclude_polygons: [avoidRing.map((point) => ({ lat: point.lat, lon: point.lon }))] } : {}),
+    // NOTE: exclusion polygons are GeoJSON-style [lon, lat] pairs, NOT the
+    // {lat, lon} objects that locations use. Sending objects fails with
+    // "Failed to parse polygon: IsArray()".
+    ...(avoidRing ? { exclude_polygons: [avoidRing.map((point) => [point.lon, point.lat])] } : {}),
     directions_options: { units: 'kilometers' },
   };
 }

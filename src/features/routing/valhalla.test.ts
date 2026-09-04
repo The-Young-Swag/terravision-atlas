@@ -45,7 +45,7 @@ describe('buildAvoidanceRequestBody', () => {
       { lat: 15.17, lon: 120.62 },
     ]);
     expect(body.exclude_polygons).toHaveLength(1);
-    expect(body.exclude_polygons?.[0]?.[0]).toEqual({ lat: 15.15, lon: 120.6 });
+    expect(body.exclude_polygons?.[0]?.[0]).toEqual([120.6, 15.15]);
     expect(body.directions_options).toEqual({ units: 'kilometers' });
   });
 

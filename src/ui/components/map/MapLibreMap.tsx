@@ -181,10 +181,12 @@ export function MapLibreMap() {
       const center = drawCenterRef.current;
       const liveMap = mapRef.current;
       if (!center || !liveMap || !useRouteStore.getState().drawAvoidArmed) return;
-      const circle = previewCircle(center.lon, center.lat, event.lngLat.lng, event.lngLat.lat);
+      const { circle, atCap } = previewCircle(center.lon, center.lat, event.lngLat.lng, event.lngLat.lat);
       setAvoidPreview(liveMap, circle);
       const point = liveMap.project(event.lngLat);
-      drawTooltip.textContent = `${circle.radiusKm.toFixed(1)} km — release to set`;
+      drawTooltip.textContent = atCap
+        ? `${circle.radiusKm.toFixed(1)} km (max) — release to set`
+        : `${circle.radiusKm.toFixed(1)} km — release to set`;
       drawTooltip.style.display = 'block';
       drawTooltip.style.left = `${point.x + 14}px`;
       drawTooltip.style.top = `${point.y - 10}px`;
@@ -198,7 +200,7 @@ export function MapLibreMap() {
         drawTooltip.style.display = 'none';
         return;
       }
-      const circle = previewCircle(center.lon, center.lat, event.lngLat.lng, event.lngLat.lat);
+      const { circle } = previewCircle(center.lon, center.lat, event.lngLat.lng, event.lngLat.lat);
       const store = useRouteStore.getState();
       if (mapRef.current) setAvoidPreview(mapRef.current, null);
       drawTooltip.style.display = 'none';

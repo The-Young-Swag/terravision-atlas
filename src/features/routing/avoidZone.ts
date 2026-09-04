@@ -23,10 +23,25 @@ export function circlePolygon(circle: EvacCircle): GeoJSON.Feature<GeoJSON.Polyg
 /** Smallest drawable radius — a plain click without drag draws nothing. */
 export const MIN_AVOID_RADIUS_KM = 0.1;
 
+/**
+ * Largest drawable radius. Valhalla rejects exclusion polygons over 10 km
+ * in circumference (~1.59 km radius for a circle), so the preview clamps
+ * there and says so — a zone that can never route is worse than a cap.
+ */
+export const MAX_AVOID_RADIUS_KM = 1.5;
+
 /** Live preview circle from a drag: anchor center plus current cursor point. */
-export function previewCircle(centerLon: number, centerLat: number, cursorLon: number, cursorLat: number): EvacCircle {
+export function previewCircle(
+  centerLon: number,
+  centerLat: number,
+  cursorLon: number,
+  cursorLat: number,
+): { circle: EvacCircle; atCap: boolean } {
   const radiusKm = turf.distance([centerLon, centerLat], [cursorLon, cursorLat], { units: 'kilometers' });
-  return { lon: centerLon, lat: centerLat, radiusKm };
+  if (radiusKm <= MAX_AVOID_RADIUS_KM) {
+    return { circle: { lon: centerLon, lat: centerLat, radiusKm }, atCap: false };
+  }
+  return { circle: { lon: centerLon, lat: centerLat, radiusKm: MAX_AVOID_RADIUS_KM }, atCap: true };
 }
 
 export function circleToRing(circle: EvacCircle): EvacRoutePoint[] {
