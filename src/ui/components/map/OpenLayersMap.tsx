@@ -11,6 +11,9 @@ import { createRouteLayer } from '../../../core/map/openlayers/routeLayer';
 import { useRouteStore } from '../../../stores/routeStore';
 import { createShelterLayer } from '../../../core/map/openlayers/shelterLayer';
 import { useShelterStore } from '../../../stores/shelterStore';
+import { createSearchMarkerLayer } from '../../../core/map/openlayers/searchLayer';
+import { useSearchStore } from '../../../stores/searchStore';
+import { reverseNominatim } from '../../../features/search/geocode';
 import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
 import { createMeasureLayer } from '../../../core/map/openlayers/measureLayer';
 import { geodesicKilometers, formatDistanceKilometers } from '../../../core/geodetic/measurements/distance';
@@ -40,6 +43,9 @@ export function OpenLayersMap() {
   const { center, zoom, basemap, showHazards, showTraffic, setCenter, setZoom } = useMapStore();
   const measureActive = useMapStore((s) => s.measureActive);
   const measurePoints = useMapStore((s) => s.measurePoints);
+  const searchMarker = useSearchStore((s) => s.marker);
+  const searchMarkerLayerRef = useRef<ReturnType<typeof createSearchMarkerLayer> | null>(null);
+  const reversePopupRef = useRef<Overlay | null>(null);
   const { events: disasterEvents } = useDisasterStore();
   const { route, avoidRing } = useRouteStore();
   const shelters = useShelterStore((s) => s.shelters);
@@ -168,6 +174,42 @@ export function OpenLayersMap() {
     };
     map.on('click', handleMapClick);
 
+    // Reverse-geocode popup on right-click. Contextmenu is a separate DOM
+    // event from click, so incident popups and measure clicks are unaffected.
+    // (Mobile long-press is intentionally not wired: it conflicts with
+    // touch-pan gestures on this map.)
+    const reversePopupElement = document.createElement('div');
+    const reversePopup = new Overlay({
+      element: reversePopupElement,
+      positioning: 'bottom-center',
+      offset: [0, -10],
+      stopEvent: true,
+    });
+    map.addOverlay(reversePopup);
+    reversePopupRef.current = reversePopup;
+
+    const handleContextMenu = async (event: MouseEvent) => {
+      event.preventDefault();
+      const pixel = map.getEventPixel(event);
+      const coordinate = map.getCoordinateFromPixel(pixel);
+      if (!coordinate) return;
+      const [lon, lat] = toLonLat(coordinate);
+      try {
+        const place = await reverseNominatim(lat, lon);
+        if (!place) {
+          reversePopupElement.innerHTML =
+            '<div class="incident-popup"><p class="incident-title">No address found here</p></div>';
+        } else {
+          const safe = place.displayName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          reversePopupElement.innerHTML = `<div class="incident-popup"><p class="incident-title">Address</p><p class="incident-desc">${safe}</p></div>`;
+        }
+        reversePopup.setPosition(coordinate);
+      } catch {
+        reversePopup.setPosition(undefined);
+      }
+    };
+    map.getViewport().addEventListener('contextmenu', handleContextMenu);
+
     // Geodesic measure tool: picks points while armed (third click restarts).
     map.on('click', (event: MapBrowserEvent) => {
       const state = useMapStore.getState();
@@ -186,6 +228,7 @@ export function OpenLayersMap() {
 
     return () => {
       resizeObserver.disconnect();
+      map.getViewport()?.removeEventListener('contextmenu', handleContextMenu);
       map.setTarget(undefined);
       mapInstanceRef.current = null;
     };
@@ -261,6 +304,23 @@ export function OpenLayersMap() {
     if (!map) return;
     map.getViewport().style.cursor = measureActive ? 'crosshair' : '';
   }, [measureActive]);
+
+  // Search-result pin — replaced on every search, cleared with the query.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (searchMarkerLayerRef.current) {
+      map.removeLayer(searchMarkerLayerRef.current);
+      searchMarkerLayerRef.current = null;
+    }
+
+    if (searchMarker) {
+      const layer = createSearchMarkerLayer(searchMarker);
+      map.addLayer(layer);
+      searchMarkerLayerRef.current = layer;
+    }
+  }, [searchMarker]);
 
   // Shelter markers — rebuilt whenever the shelter list changes
   useEffect(() => {

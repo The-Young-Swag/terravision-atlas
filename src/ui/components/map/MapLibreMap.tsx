@@ -6,6 +6,8 @@ import { MAPLIBRE_STYLES } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
 import { removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
+import { setSearchMarkerVisible } from '../../../core/map/maplibre/search';
+import { useSearchStore } from '../../../stores/searchStore';
 import {
   TRAFFIC_INCIDENT_LAYER_ID,
   addIncidentLayers,
@@ -152,6 +154,7 @@ export function MapLibreMap() {
   // Crosshair cursor while the measure tool is armed.
   const measureActive = useMapStore((s) => s.measureActive);
   const measurePoints = useMapStore((s) => s.measurePoints);
+  const searchMarker = useSearchStore((s) => s.marker);
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -252,8 +255,16 @@ export function MapLibreMap() {
       const trafficState = useTrafficStore.getState();
       setContoursVisible(liveMap, mapState.showTerrainContours);
       setTrafficVisible(liveMap, mapState.showTraffic && trafficState.status === 'ok', tomtomApiKey());
+      setSearchMarkerVisible(liveMap, useSearchStore.getState().marker);
     });
   }, [basemap]);
+
+  // Search-result pin — mirrors the 2D marker.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    setSearchMarkerVisible(map, searchMarker);
+  }, [searchMarker]);
 
   // Sync center/zoom when store changes externally — only fly when meaningfully different
   useEffect(() => {

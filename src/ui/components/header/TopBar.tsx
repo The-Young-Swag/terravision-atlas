@@ -1,6 +1,41 @@
-import { Search, Settings2, Fuel, Compass, BookOpen, Box } from 'lucide-react';
+import { useState } from 'react';
+import { Settings2, Fuel, Compass, BookOpen, Box } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { useMapStore } from '../../../stores/mapStore';
+import { useSearchStore } from '../../../stores/searchStore';
+import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
+import type { GeocodedPlace } from '../../../features/search/geocode';
+
+function PlaceSearchBox() {
+  const [query, setQuery] = useState('');
+  const setCenter = useMapStore((s) => s.setCenter);
+  const setZoom = useMapStore((s) => s.setZoom);
+  const setMarker = useSearchStore((s) => s.setMarker);
+  const clearMarker = useSearchStore((s) => s.clearMarker);
+
+  const handleSelect = (place: GeocodedPlace) => {
+    setCenter([place.lon, place.lat]);
+    setZoom(12);
+    setMarker({ lon: place.lon, lat: place.lat, label: place.displayName });
+  };
+
+  return (
+    <PlaceAutocomplete
+      value={query}
+      onChange={(text) => {
+        setQuery(text);
+        if (text.trim().length === 0) clearMarker();
+      }}
+      onSelect={(place) => {
+        setQuery(place.displayName.split(',')[0]);
+        handleSelect(place);
+      }}
+      placeholder="Search places"
+      ariaLabel="Search places"
+    />
+  );
+}
 
 type AppMode = 'explore' | 'monitor' | 'survey';
 
@@ -44,15 +79,8 @@ export function TopBar({
           <span className={`text-[11px] font-medium tracking-widest ${isBrightBasemap ? 'text-slate-700' : 'text-slate-400'}`}>ATLAS</span>
         </div>
 
-        <div className="glass flex max-w-md flex-1 items-center gap-2.5 rounded-2xl px-4 py-2.5 opacity-60">
-          <Search className={`h-4 w-4 shrink-0 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`} aria-hidden />
-          <input
-            className={`flex-1 bg-transparent text-[13.5px] focus:outline-none ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-400'}`}
-            placeholder="Place search — not implemented (no free geocoder wired)"
-            aria-label="Search"
-            disabled
-            title="Place search not implemented"
-          />
+        <div className="glass flex max-w-md flex-1 items-center gap-2.5 rounded-2xl px-4 py-2.5">
+          <PlaceSearchBox />
         </div>
 
         {/* Mode switcher — Explore / Monitor / Survey with per-mode colors */}
