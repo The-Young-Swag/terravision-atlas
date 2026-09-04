@@ -66,8 +66,9 @@ export function EvacuationPanel() {
   const [toLat, setToLat] = useState(() => mapCenter[1].toFixed(4));
   const [avoidLon, setAvoidLon] = useState(() => mapCenter[0].toFixed(4));
   const [avoidLat, setAvoidLat] = useState(() => mapCenter[1].toFixed(4));
-  const [radiusKm, setRadiusKm] = useState('2');
+  const [radiusKm, setRadiusKm] = useState('1');
   const [isRouting, setIsRouting] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const [result, setResult] = useState<{ distanceKm: number; durationMinutes: number; avoidsArea: boolean } | null>(
     null,
   );
@@ -137,10 +138,13 @@ export function EvacuationPanel() {
     try {
       const from = { lon: parseCoordinate(fromLon, 'Start longitude', -180, 180), lat: parseCoordinate(fromLat, 'Start latitude', -90, 90) };
       const to = { lon: parseCoordinate(toLon, 'End longitude', -180, 180), lat: parseCoordinate(toLat, 'End latitude', -90, 90) };
+      // Valhalla rejects exclusion polygons over 10 km in circumference
+      // (~1.59 km radius), so the manual radius is capped the same as the
+      // draw tool instead of failing server-side.
       const avoid: EvacCircle = {
         lon: parseCoordinate(avoidLon, 'Avoid longitude', -180, 180),
         lat: parseCoordinate(avoidLat, 'Avoid latitude', -90, 90),
-        radiusKm: parseCoordinate(radiusKm, 'Avoid radius', 0.1, 20),
+        radiusKm: parseCoordinate(radiusKm, 'Avoid radius (max 1.5 km per Valhalla limits)', 0.1, 1.5),
       };
       setAvoidCircle(avoid);
       void submitRoute(from, to, avoid);
@@ -293,56 +297,72 @@ export function EvacuationPanel() {
           </p>
         )}
 
-        <div className="mb-3 grid grid-cols-2 gap-2">
-          <div>
-            <label className={labelClass}>Start lon</label>
-            <input value={fromLon} onChange={(e) => setFromLon(e.target.value)} inputMode="decimal" className={inputClass} />
-          </div>
-          <div>
-            <label className={labelClass}>Start lat</label>
-            <input value={fromLat} onChange={(e) => setFromLat(e.target.value)} inputMode="decimal" className={inputClass} />
-          </div>
-          <div>
-            <label className={labelClass}>End lon</label>
-            <input value={toLon} onChange={(e) => setToLon(e.target.value)} inputMode="decimal" className={inputClass} />
-          </div>
-          <div>
-            <label className={labelClass}>End lat</label>
-            <input value={toLat} onChange={(e) => setToLat(e.target.value)} inputMode="decimal" className={inputClass} />
-          </div>
-          <div>
-            <label className={labelClass}>Avoid lon</label>
-            <input value={avoidLon} onChange={(e) => setAvoidLon(e.target.value)} inputMode="decimal" className={inputClass} />
-          </div>
-          <div>
-            <label className={labelClass}>Avoid lat</label>
-            <input value={avoidLat} onChange={(e) => setAvoidLat(e.target.value)} inputMode="decimal" className={inputClass} />
-          </div>
-        </div>
-
         <div className="mb-3">
-          <label className={labelClass}>Avoid radius (km)</label>
-          <input value={radiusKm} onChange={(e) => setRadiusKm(e.target.value)} inputMode="decimal" className={inputClass} />
+          <button
+            type="button"
+            onClick={() => setManualOpen(!manualOpen)}
+            aria-expanded={manualOpen}
+            className={`flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-[11px] transition hover:bg-white/[0.06] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
+          >
+            <span>Enter coordinates manually</span>
+            <span aria-hidden>{manualOpen ? '▴' : '▾'}</span>
+          </button>
         </div>
+        {manualOpen && (
+          <>
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <div>
+                <label className={labelClass}>Start lon</label>
+                <input value={fromLon} onChange={(e) => setFromLon(e.target.value)} inputMode="decimal" className={inputClass} />
+              </div>
+            <div>
+              <label className={labelClass}>Start lat</label>
+              <input value={fromLat} onChange={(e) => setFromLat(e.target.value)} inputMode="decimal" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>End lon</label>
+              <input value={toLon} onChange={(e) => setToLon(e.target.value)} inputMode="decimal" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>End lat</label>
+              <input value={toLat} onChange={(e) => setToLat(e.target.value)} inputMode="decimal" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Avoid lon</label>
+              <input value={avoidLon} onChange={(e) => setAvoidLon(e.target.value)} inputMode="decimal" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Avoid lat</label>
+              <input value={avoidLat} onChange={(e) => setAvoidLat(e.target.value)} inputMode="decimal" className={inputClass} />
+            </div>
+          </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={handleGuidedRoute}
-            disabled={isRouting || !start || !destination}
-            title={!start || !destination ? 'Set start and destination first' : 'Find evacuation route'}
-            className="flex-1 rounded-xl bg-[#5500a4] py-2 text-[12.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-60"
-          >
-            {isRouting ? 'Requesting route…' : 'Find evacuation route'}
-          </button>
-          <button
-            onClick={handleManualRoute}
-            disabled={isRouting}
-            title="Route from the manual coordinate fields below"
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-medium text-slate-300 hover:bg-white/10 disabled:opacity-60"
-          >
-            Use manual
-          </button>
-        </div>
+          <div className="mb-3">
+            <label className={labelClass}>Avoid radius (km)</label>
+            <input value={radiusKm} onChange={(e) => setRadiusKm(e.target.value)} inputMode="decimal" className={inputClass} />
+          </div>
+
+            <div className="mb-3">
+              <button
+                onClick={handleManualRoute}
+                disabled={isRouting}
+                title="Route from the manual coordinate fields above"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-medium text-slate-300 hover:bg-white/10 disabled:opacity-60"
+              >
+                {isRouting ? 'Requesting route…' : 'Route from these coordinates'}
+              </button>
+            </div>
+          </>
+        )}
+
+        <button
+          onClick={handleGuidedRoute}
+          disabled={isRouting || !start || !destination}
+          title={!start || !destination ? 'Set start and destination first' : 'Find evacuation route'}
+          className="w-full rounded-xl bg-[#5500a4] py-2 text-[12.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-60"
+        >
+          {isRouting ? 'Requesting route…' : 'Find evacuation route'}
+        </button>
 
         {route && (
           <div
