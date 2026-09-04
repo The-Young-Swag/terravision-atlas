@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Grid2x2, Ruler, X, Move3d } from 'lucide-react';
+import { Grid2x2, Ruler, X, Move3d, Printer } from 'lucide-react';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
+import { downloadA0Png, exportA0Png } from '../../../features/export/print/a0Export';
 import { bearingDegrees, formatBearing, formatDistanceKilometers, geodesicKilometers } from '../../../core/geodetic/measurements/distance';
 
 type AppMode = 'explore' | 'monitor' | 'survey';
@@ -21,6 +22,31 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
   const clearMeasure = useMapStore((s) => s.clearMeasure);
   const showDatumViz = useMapStore((s) => s.showDatumViz);
   const setShowDatumViz = useMapStore((s) => s.setShowDatumViz);
+  const viewMode = useMapStore((s) => s.viewMode);
+  const center = useMapStore((s) => s.center);
+  const zoom = useMapStore((s) => s.zoom);
+  const basemap = useMapStore((s) => s.basemap);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportNote, setExportNote] = useState<string | null>(null);
+
+  const handleA0Export = async () => {
+    // A0 rendering reads OpenLayers canvases, so it only runs in 2D Map view.
+    if (viewMode !== '2d') {
+      setExportNote('Switch to 2D Map to export — A0 renders the 2D view');
+      return;
+    }
+    setExportNote(null);
+    setIsExporting(true);
+    try {
+      const blob = await exportA0Png(center[0], center[1], zoom, basemap, setExportNote);
+      downloadA0Png(blob, basemap, zoom);
+      setExportNote(`Saved ${(blob.size / 1048576).toFixed(1)} MB PNG`);
+    } catch (err) {
+      setExportNote(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // Escape exits measure mode (and clears the line) from either map.
   useEffect(() => {
@@ -115,7 +141,18 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               <Move3d className="h-3.5 w-3.5" />
               Datum shift viz
             </button>
-            <span className={`px-3 py-2 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>A0 export — not fully implemented (see Geodetic panel for working Proj4/NTv2/EPSG)</span>
+            <button
+              onClick={() => void handleA0Export()}
+              disabled={isExporting}
+              title="Download the current 2D view as an A0-size PNG (2D Map view only)"
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition disabled:opacity-60 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+            >
+              <Printer className={`h-3.5 w-3.5 ${isExporting ? 'animate-pulse' : ''}`} />
+              {isExporting ? (exportNote ?? 'Exporting…') : 'A0 export'}
+            </button>
+            {exportNote && !isExporting && (
+              <span className={`px-3 py-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{exportNote}</span>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
