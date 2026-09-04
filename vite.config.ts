@@ -1,29 +1,12 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import cesium from 'vite-plugin-cesium';
 
-// TomTom key for the traffic overlay: read from API.txt (project root,
-// gitignored, format TOMTOM_API_KEY=value) and exposed as
-// VITE_TOMTOM_API_KEY. This project has no other secret plumbing — .env is
-// empty and nothing else reads import.meta.env — so this file is the single
-// documented place keys enter the client. API.txt is never committed.
-function loadLocalApiKeys(): void {
-  try {
-    const lines = fs.readFileSync(path.resolve(__dirname, 'API.txt'), 'utf8').split('\n');
-    for (const line of lines) {
-      const match = line.match(/^\s*TOMTOM_API_KEY\s*=\s*(\S+)\s*$/);
-      if (match && !process.env.VITE_TOMTOM_API_KEY) {
-        process.env.VITE_TOMTOM_API_KEY = match[1];
-      }
-    }
-  } catch {
-    // No API.txt (e.g. fresh clone) — traffic features report themselves
-    // unavailable instead of failing the build.
-  }
-}
-loadLocalApiKeys();
+// TomTom key for the traffic overlay: read from .env as
+// VITE_TOMTOM_API_KEY via Vite's import.meta.env mechanism.
+// See .env.example for expected variable names. .env is gitignored
+// and never committed.
 
 // TerraVision: Atlas — Vite configuration
 // - React Fast Refresh

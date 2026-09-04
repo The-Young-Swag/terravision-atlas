@@ -5,8 +5,10 @@ import * as turf from '@turf/turf';
 // users of the app). Two APIs, exactly as specified:
 // - Traffic Flow map tiles (raster, colored by congestion) as the overlay.
 // - Traffic Incidents details (vector markers) for the current view.
-// The API key lives in API.txt (project root, gitignored) and is exposed to
-// the client as VITE_TOMTOM_API_KEY by vite.config.ts — never committed.
+// TomTom key for the traffic overlay: read from .env as
+// VITE_TOMTOM_API_KEY via Vite's import.meta.env mechanism.
+// See .env.example for expected variable names. .env is gitignored
+// and never committed.
 // Tile requests are cached by OpenLayers and the browser HTTP cache;
 // incident responses are cached below by rounded bounding box with a TTL so
 // panning back over the same area never re-fetches.
