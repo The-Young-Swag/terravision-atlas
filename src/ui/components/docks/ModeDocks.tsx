@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Grid2x2, Ruler, X } from 'lucide-react';
+import { Grid2x2, Ruler, X, Move3d } from 'lucide-react';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
 import { bearingDegrees, formatBearing, formatDistanceKilometers, geodesicKilometers } from '../../../core/geodetic/measurements/distance';
@@ -19,6 +19,8 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
   const measurePoints = useMapStore((s) => s.measurePoints);
   const setMeasureActive = useMapStore((s) => s.setMeasureActive);
   const clearMeasure = useMapStore((s) => s.clearMeasure);
+  const showDatumViz = useMapStore((s) => s.showDatumViz);
+  const setShowDatumViz = useMapStore((s) => s.setShowDatumViz);
 
   // Escape exits measure mode (and clears the line) from either map.
   useEffect(() => {
@@ -104,7 +106,16 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
-            <span className={`px-3 py-2 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>Datum shift viz · A0 export — not fully implemented (see Geodetic panel for working Proj4/NTv2/EPSG)</span>
+            <button
+              onClick={() => setShowDatumViz(!showDatumViz)}
+              aria-pressed={showDatumViz}
+              title="Show the datum shift visualization panel"
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${showDatumViz ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+            >
+              <Move3d className="h-3.5 w-3.5" />
+              Datum shift viz
+            </button>
+            <span className={`px-3 py-2 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>A0 export — not fully implemented (see Geodetic panel for working Proj4/NTv2/EPSG)</span>
           </motion.div>
         )}
       </AnimatePresence>

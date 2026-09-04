@@ -14,6 +14,7 @@ interface MapState {
   snapToGrid: boolean;
   measureActive: boolean;
   measurePoints: [number, number][];
+  showDatumViz: boolean;
   setCenter: (center: [number, number]) => void;
   setZoom: (zoom: number) => void;
   setBasemap: (basemap: BasemapId) => void;
@@ -25,6 +26,7 @@ interface MapState {
   setMeasureActive: (active: boolean) => void;
   pushMeasurePoint: (point: [number, number]) => void;
   clearMeasure: () => void;
+  setShowDatumViz: (show: boolean) => void;
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -38,6 +40,7 @@ export const useMapStore = create<MapState>((set) => ({
   snapToGrid: false,
   measureActive: false,
   measurePoints: [],
+  showDatumViz: false,
   setCenter: (center) => set({ center }),
   setZoom: (zoom) => set({ zoom }),
   setBasemap: (basemap) => set({ basemap }),
@@ -53,4 +56,5 @@ export const useMapStore = create<MapState>((set) => ({
       measurePoints: state.measurePoints.length >= 2 ? [point] : [...state.measurePoints, point],
     })),
   clearMeasure: () => set({ measurePoints: [] }),
+  setShowDatumViz: (showDatumViz) => set({ showDatumViz }),
 }));

@@ -7,6 +7,7 @@ import { useMapStore } from './stores/mapStore';
 import { TopBar } from './ui/components/header/TopBar';
 import { LayersPanel } from './ui/components/panels/LayersPanel';
 import { GeodeticPanel } from './ui/components/panels/GeodeticPanel';
+import { CoordinatePanel } from './ui/components/geodetic/CoordinatePanel';
 import { LiveAlertsPanel } from './ui/components/panels/LiveAlertsPanel';
 import { FuelPanel } from './ui/components/fuel/FuelPanel';
 import { ModeDocks } from './ui/components/docks/ModeDocks';
@@ -27,7 +28,7 @@ export default function App() {
   const [fuelOpen, setFuelOpen] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
   const [minecraftOpen, setMinecraftOpen] = useState(false);
-  const { viewMode } = useMapStore();
+  const { viewMode, showDatumViz } = useMapStore();
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[#0A0E19] text-slate-100 selection:bg-[#5500a4]/30">
@@ -65,6 +66,7 @@ export default function App() {
 
       <LayersPanel />
       {activeMode === 'survey' && <GeodeticPanel />}
+      {activeMode === 'survey' && showDatumViz && <CoordinatePanel />}
       {activeMode === 'monitor' && <EvacuationPanel />}
       {activeMode === 'monitor' && <ShelterPanel />}
       <LiveAlertsPanel activeMode={activeMode} />

@@ -2,12 +2,15 @@ import { useMemo, useState } from 'react';
 import { useMapStore } from '../../../stores/mapStore';
 import { transformCoordinate, getEpsgList } from '../../../core/geodetic/projections/epsg';
 import { Upload, SlidersHorizontal } from 'lucide-react';
+import { FloatingPanel } from '../common/FloatingPanel';
+import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 
 export function CoordinatePanel() {
   const { center } = useMapStore();
   const [targetEpsg, setTargetEpsg] = useState('EPSG:32651');
   const [datumBlend, setDatumBlend] = useState(0); // 0 = WGS84, 100 = shifted
   const [gridFile, setGridFile] = useState<string | null>(null);
+  const isBrightBasemap = useBrightBasemap();
 
   const transformed = useMemo(() => {
     try {
@@ -21,16 +24,21 @@ export function CoordinatePanel() {
   const wgs84Label = `${center[1].toFixed(5)}°N, ${center[0].toFixed(5)}°E`;
 
   return (
-    <div className="glass absolute bottom-24 left-4 z-10 hidden w-72 rounded-2xl p-4 md:block">
-      <h3 className="mb-3 text-[13px] font-semibold text-slate-200">Geodetic</h3>
-
-      <div className="mb-3">
-        <p className="mb-1 text-[11px] uppercase tracking-wide text-slate-500">WGS84 (EPSG:4326)</p>
+    <FloatingPanel
+      id="datum-viz"
+      title="Datum shift"
+      icon={<SlidersHorizontal className="h-3.5 w-3.5" />}
+      initialPosition={{ x: 320, y: 380 }}
+      bubbleLabel="Datum shift"
+    >
+      <div>
+        <div className="mb-3">
+        <p className={`mb-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>WGS84 (EPSG:4326)</p>
         <p className="font-mono text-[12px] text-slate-200">{wgs84Label}</p>
       </div>
 
       <div className="mb-3">
-        <label className="mb-1 block text-[11px] uppercase tracking-wide text-slate-500">
+        <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
           Target projection
         </label>
         <select
@@ -47,21 +55,21 @@ export function CoordinatePanel() {
       </div>
 
       <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
-        <p className="mb-1 text-[11px] uppercase tracking-wide text-slate-500">{targetEpsg}</p>
+        <p className={`mb-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{targetEpsg}</p>
         {transformed.error ? (
           <p className="font-mono text-[11px] text-[#E63946]">{transformed.error}</p>
         ) : (
           <p className="font-mono text-[12px] text-slate-200">
             E: {transformed.x.toFixed(2)}<br />
-            N: {transformed.y.toFixed(2)} <span className="text-slate-400">m</span>
+            N: {transformed.y.toFixed(2)} <span className={isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}>m</span>
           </p>
         )}
       </div>
 
       <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <div className="mb-2 flex items-center gap-2">
-          <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />
-          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+          <SlidersHorizontal className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`} />
+          <p className={`text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
             Datum shift visualization
           </p>
         </div>
@@ -73,7 +81,7 @@ export function CoordinatePanel() {
           onChange={(e) => setDatumBlend(Number(e.target.value))}
           className="h-1 w-full appearance-none rounded-full bg-white/10 accent-[#5500a4]"
         />
-        <div className="mt-1 flex justify-between font-mono text-[10px] text-slate-500">
+        <div className={`mt-1 flex justify-between font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
           <span>WGS84</span>
           <span>{datumBlend}%</span>
           <span>Shifted</span>
@@ -97,14 +105,15 @@ export function CoordinatePanel() {
             }}
           />
         </label>
-        <p className="mt-1 text-center font-mono text-[10px] text-slate-500">
+        <p className={`mt-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
           Supports NTv2 grids for sub-centimeter shifts
         </p>
       </div>
 
-      <p className="mt-3 text-center font-mono text-[10px] text-slate-500">
+      <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
         Powered by Proj4js · 7 EPSG bundled · NTv2 precise (full 5k+ requires proj4-epsg fetch)
       </p>
-    </div>
+      </div>
+    </FloatingPanel>
   );
 }
