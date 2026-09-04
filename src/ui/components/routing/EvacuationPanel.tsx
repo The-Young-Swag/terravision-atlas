@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigation, ShieldAlert, MapPin, X } from 'lucide-react';
+import { Navigation, ShieldAlert, MapPin, X, Check, TriangleAlert } from 'lucide-react';
 import * as turf from '@turf/turf';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { useMapStore } from '../../../stores/mapStore';
@@ -343,6 +343,24 @@ export function EvacuationPanel() {
             Use manual
           </button>
         </div>
+
+        {route && (
+          <div
+            className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium ${
+              route.avoidsArea ? 'bg-[#00d890]/15 text-[#00d890]' : 'bg-[#FF9F1C]/15 text-[#FF9F1C]'
+            }`}
+          >
+            {route.avoidsArea ? (
+              <>
+                <Check className="h-3.5 w-3.5" aria-hidden /> Route avoids marked area
+              </>
+            ) : (
+              <>
+                <TriangleAlert className="h-3.5 w-3.5" aria-hidden /> Route intersects avoid zone
+              </>
+            )}
+          </div>
+        )}
 
         {result && (
           <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-[12px]">

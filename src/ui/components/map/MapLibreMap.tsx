@@ -8,6 +8,7 @@ import { MAPLIBRE_STYLES } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
 import { removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
+import { setRouteVisible } from '../../../core/map/maplibre/route';
 import { setSearchMarkerVisible } from '../../../core/map/maplibre/search';
 import { useSearchStore } from '../../../stores/searchStore';
 import {
@@ -253,6 +254,7 @@ export function MapLibreMap() {
   const measurePoints = useMapStore((s) => s.measurePoints);
   const evacStart = useRouteStore((s) => s.start);
   const evacDestination = useRouteStore((s) => s.destination);
+  const evacRoute = useRouteStore((s) => s.route);
   const avoidCircle = useRouteStore((s) => s.avoidCircle);
   const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
   const drawCenterRef = useRef<{ lon: number; lat: number } | null>(null);
@@ -360,6 +362,7 @@ export function MapLibreMap() {
       setContoursVisible(liveMap, mapState.showTerrainContours);
       setTrafficVisible(liveMap, mapState.showTraffic && trafficState.status === 'ok', tomtomApiKey());
       setAvoidVisible(liveMap, useRouteStore.getState().avoidCircle);
+      setRouteVisible(liveMap, useRouteStore.getState().route);
       setSearchMarkerVisible(liveMap, useSearchStore.getState().marker);
     });
   }, [basemap]);
@@ -440,6 +443,13 @@ export function MapLibreMap() {
     }
     return undefined;
   }, [drawAvoidArmed]);
+
+  // Evacuation route line — added after the avoid hatch so it draws above.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    setRouteVisible(map, evacRoute);
+  }, [evacRoute]);
 
   // Sync center/zoom when store changes externally — only fly when meaningfully different
   useEffect(() => {
