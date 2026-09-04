@@ -1,13 +1,18 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
 import { useMapStore } from '../../../stores/mapStore';
-import { createCesiumViewer, flyToCesium } from '../../../core/map/cesium/createCesiumViewer';
+import {
+  createCesiumViewer,
+  flyToCesium,
+  type TerrainStatus,
+} from '../../../core/map/cesium/createCesiumViewer';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 
 export function CesiumGlobe() {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
+  const [terrain, setTerrain] = useState<TerrainStatus | null>(null);
 
   const { center, zoom } = useMapStore();
   const basemap = useMapStore((s) => s.basemap);
@@ -23,13 +28,14 @@ export function CesiumGlobe() {
     let viewer: Cesium.Viewer | null = null;
 
     createCesiumViewer({ container, center, zoom })
-      .then((v) => {
+      .then(({ viewer: v, terrain: terrainStatus }) => {
         if (cancelled) {
           v.destroy();
           return;
         }
         viewerRef.current = v;
         viewer = v;
+        setTerrain(terrainStatus);
 
         // Apply adaptive widget styles
         const applyWidgetStyles = () => {
@@ -131,6 +137,26 @@ export function CesiumGlobe() {
       className="absolute inset-0 h-full w-full bg-[#0A0E19]"
       aria-label="3D globe"
       role="region"
-    />
+    >
+      {/* Attribution: Cesium's built-in credit container is hidden (we use
+          our own glass UI), so Ion + imagery credits are rendered here. */}
+      <div className="pointer-events-none absolute bottom-1 right-2 z-10 rounded bg-black/45 px-1.5 py-0.5 font-mono text-[10px] text-slate-300">
+        Imagery © OpenStreetMap contributors
+        {terrain?.kind === 'ion' ? ' · Terrain © Cesium Ion' : null}
+      </div>
+      {/* Honest terrain-failure notice — never silently fall back to flat. */}
+      {terrain && terrain.kind !== 'ion' && (
+        <div className="absolute left-1/2 top-16 z-10 -translate-x-1/2 rounded-xl border border-amber-400/40 bg-black/70 px-4 py-2 text-center backdrop-blur">
+          <p className="text-[12px] font-medium text-amber-300">
+            Terrain unavailable — showing flat globe
+          </p>
+          <p className="mt-0.5 font-mono text-[10px] text-slate-300">
+            {terrain.kind === 'no-token'
+              ? 'VITE_CESIUM_ION_TOKEN is missing (see .env.example)'
+              : `Cesium Ion error: ${terrain.message}`}
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
