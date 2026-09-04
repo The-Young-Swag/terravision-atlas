@@ -12,6 +12,8 @@ import { useRouteStore } from '../../../stores/routeStore';
 import { createShelterLayer } from '../../../core/map/openlayers/shelterLayer';
 import { useShelterStore } from '../../../stores/shelterStore';
 import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
+import { createMeasureLayer } from '../../../core/map/openlayers/measureLayer';
+import { geodesicKilometers, formatDistanceKilometers } from '../../../core/geodetic/measurements/distance';
 import { createTrafficFlowLayer, createTrafficIncidentLayer } from '../../../core/map/openlayers/trafficLayer';
 import { useTrafficStore } from '../../../stores/trafficStore';
 import { tomtomApiKey } from '../../../features/traffic/tomtom';
@@ -32,9 +34,12 @@ export function OpenLayersMap() {
   const trafficIncidentLayerRef = useRef<ReturnType<typeof createTrafficIncidentLayer> | null>(null);
   const trafficRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const incidentPopupRef = useRef<Overlay | null>(null);
+  const measureLayerRef = useRef<ReturnType<typeof createMeasureLayer> | null>(null);
   const isProgrammaticRef = useRef(false);
 
   const { center, zoom, basemap, showHazards, showTraffic, setCenter, setZoom } = useMapStore();
+  const measureActive = useMapStore((s) => s.measureActive);
+  const measurePoints = useMapStore((s) => s.measurePoints);
   const { events: disasterEvents } = useDisasterStore();
   const { route, avoidRing } = useRouteStore();
   const shelters = useShelterStore((s) => s.shelters);
@@ -163,6 +168,14 @@ export function OpenLayersMap() {
     };
     map.on('click', handleMapClick);
 
+    // Geodesic measure tool: picks points while armed (third click restarts).
+    map.on('click', (event: MapBrowserEvent) => {
+      const state = useMapStore.getState();
+      if (!state.measureActive) return;
+      const [lon, lat] = toLonLat(event.coordinate);
+      state.pushMeasurePoint([lon, lat]);
+    });
+
     // Store for external sync (mirrors MapLibreMap's __maplibre handle).
     (mapRef.current as unknown as { __olmap?: Map }).__olmap = map;
     mapInstanceRef.current = map;
@@ -221,6 +234,33 @@ export function OpenLayersMap() {
       routeLayerRef.current = layer;
     }
   }, [route, avoidRing]);
+
+  // Measure overlay — line, markers and distance label for picked points
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (measureLayerRef.current) {
+      map.removeLayer(measureLayerRef.current);
+      measureLayerRef.current = null;
+    }
+
+    if (measureActive && measurePoints.length > 0) {
+      const layer = createMeasureLayer(
+        measurePoints,
+        formatDistanceKilometers(geodesicKilometers(measurePoints)),
+      );
+      map.addLayer(layer);
+      measureLayerRef.current = layer;
+    }
+  }, [measureActive, measurePoints]);
+
+  // Crosshair cursor while the measure tool is armed.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    map.getViewport().style.cursor = measureActive ? 'crosshair' : '';
+  }, [measureActive]);
 
   // Shelter markers — rebuilt whenever the shelter list changes
   useEffect(() => {

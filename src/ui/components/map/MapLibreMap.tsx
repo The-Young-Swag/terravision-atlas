@@ -5,6 +5,7 @@ import { useMapStore } from '../../../stores/mapStore';
 import { MAPLIBRE_STYLES } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
+import { removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
 import {
   TRAFFIC_INCIDENT_LAYER_ID,
   addIncidentLayers,
@@ -120,6 +121,13 @@ export function MapLibreMap() {
       store.setZoom(z);
     });
 
+    // Geodesic measure tool: picks points while armed (third click restarts).
+    map.on('click', (event) => {
+      const state = useMapStore.getState();
+      if (!state.measureActive) return;
+      state.pushMeasurePoint([event.lngLat.lng, event.lngLat.lat]);
+    });
+
     // Re-apply styles when map style changes (basemap switch)
     map.on('style.load', applyControlStyles);
     map.on('render', () => {
@@ -140,6 +148,26 @@ export function MapLibreMap() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Crosshair cursor while the measure tool is armed.
+  const measureActive = useMapStore((s) => s.measureActive);
+  const measurePoints = useMapStore((s) => s.measurePoints);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.getCanvas().style.cursor = measureActive ? 'crosshair' : '';
+  }, [measureActive]);
+
+  // Measure overlay — line and dots for the picked points.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    if (measureActive && measurePoints.length > 0) {
+      setMeasureVisible(map, measurePoints);
+    } else {
+      removeMeasureLayers(map);
+    }
+  }, [measureActive, measurePoints]);
 
   // Terrain contour overlay — generated client-side from AWS Terrarium tiles.
   // The map style is never replaced after creation, so dynamically added

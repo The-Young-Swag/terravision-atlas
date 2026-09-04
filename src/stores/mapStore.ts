@@ -12,6 +12,8 @@ interface MapState {
   showTraffic: boolean;
   showTerrainContours: boolean;
   snapToGrid: boolean;
+  measureActive: boolean;
+  measurePoints: [number, number][];
   setCenter: (center: [number, number]) => void;
   setZoom: (zoom: number) => void;
   setBasemap: (basemap: BasemapId) => void;
@@ -20,6 +22,9 @@ interface MapState {
   setShowTraffic: (show: boolean) => void;
   setShowTerrainContours: (show: boolean) => void;
   setSnapToGrid: (snap: boolean) => void;
+  setMeasureActive: (active: boolean) => void;
+  pushMeasurePoint: (point: [number, number]) => void;
+  clearMeasure: () => void;
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -31,6 +36,8 @@ export const useMapStore = create<MapState>((set) => ({
   showTraffic: false,
   showTerrainContours: false,
   snapToGrid: false,
+  measureActive: false,
+  measurePoints: [],
   setCenter: (center) => set({ center }),
   setZoom: (zoom) => set({ zoom }),
   setBasemap: (basemap) => set({ basemap }),
@@ -39,4 +46,11 @@ export const useMapStore = create<MapState>((set) => ({
   setShowTraffic: (showTraffic) => set({ showTraffic }),
   setShowTerrainContours: (showTerrainContours) => set({ showTerrainContours }),
   setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
+  setMeasureActive: (measureActive) =>
+    set((state) => ({ measureActive, measurePoints: measureActive ? state.measurePoints : [] })),
+  pushMeasurePoint: (point) =>
+    set((state) => ({
+      measurePoints: state.measurePoints.length >= 2 ? [point] : [...state.measurePoints, point],
+    })),
+  clearMeasure: () => set({ measurePoints: [] }),
 }));
