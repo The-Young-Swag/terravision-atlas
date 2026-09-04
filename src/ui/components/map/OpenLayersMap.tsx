@@ -8,6 +8,9 @@ import { useDisasterStore } from '../../../stores/disasterStore';
 import { createMap, updateBasemap } from '../../../core/map/openlayers/createMap';
 import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';
 import { createRouteLayer } from '../../../core/map/openlayers/routeLayer';
+import { circleToRing } from '../../../features/routing/avoidZone';
+import { createEvacPinLayer } from '../../../core/map/openlayers/pinLayer';
+import Translate from 'ol/interaction/Translate';
 import { useRouteStore } from '../../../stores/routeStore';
 import { createShelterLayer } from '../../../core/map/openlayers/shelterLayer';
 import { useShelterStore } from '../../../stores/shelterStore';
@@ -47,7 +50,11 @@ export function OpenLayersMap() {
   const searchMarkerLayerRef = useRef<ReturnType<typeof createSearchMarkerLayer> | null>(null);
   const reversePopupRef = useRef<Overlay | null>(null);
   const { events: disasterEvents } = useDisasterStore();
-  const { route, avoidRing } = useRouteStore();
+  const { route, avoidCircle } = useRouteStore();
+  const evacStart = useRouteStore((s) => s.start);
+  const evacDestination = useRouteStore((s) => s.destination);
+  const pinLayerRef = useRef<ReturnType<typeof createEvacPinLayer> | null>(null);
+  const pinTranslateRef = useRef<Translate | null>(null);
   const shelters = useShelterStore((s) => s.shelters);
   const trafficStatus = useTrafficStore((s) => s.status);
   const trafficIncidents = useTrafficStore((s) => s.incidents);
@@ -218,6 +225,30 @@ export function OpenLayersMap() {
       state.pushMeasurePoint([lon, lat]);
     });
 
+    // Evacuation pin placement: only while a Start/Destination pick is
+    // armed. Clicks on traffic incident markers are left to the popup.
+    map.on('click', (event: MapBrowserEvent) => {
+      const routeState = useRouteStore.getState();
+      if (!routeState.pickMode) return;
+      const blocked = map.forEachFeatureAtPixel(event.pixel, () => true, {
+        layerFilter: (layer) => layer.get('layerId') === 'traffic-incidents',
+      });
+      if (blocked) return;
+      const [lon, lat] = toLonLat(event.coordinate);
+      void (async () => {
+        const place = await reverseNominatim(lat, lon).catch(() => null);
+        const live = useRouteStore.getState();
+        const pin = { lon, lat, label: place?.displayName.split(',')[0] ?? 'Pinned location' };
+        if (live.pickMode === 'start') {
+          live.setStart(pin);
+          live.setPickMode(live.destination ? null : 'destination');
+        } else if (live.pickMode === 'destination') {
+          live.setDestination(pin);
+          live.setPickMode(null);
+        }
+      })();
+    });
+
     // Store for external sync (mirrors MapLibreMap's __maplibre handle).
     (mapRef.current as unknown as { __olmap?: Map }).__olmap = map;
     mapInstanceRef.current = map;
@@ -271,12 +302,12 @@ export function OpenLayersMap() {
       routeLayerRef.current = null;
     }
 
-    if (route && avoidRing) {
-      const layer = createRouteLayer(route, avoidRing);
+    if (route) {
+      const layer = createRouteLayer(route, avoidCircle ? circleToRing(avoidCircle) : []);
       map.addLayer(layer);
       routeLayerRef.current = layer;
     }
-  }, [route, avoidRing]);
+  }, [route, avoidCircle]);
 
   // Measure overlay — line, markers and distance label for picked points
   useEffect(() => {
@@ -321,6 +352,46 @@ export function OpenLayersMap() {
       searchMarkerLayerRef.current = layer;
     }
   }, [searchMarker]);
+
+  // Evacuation pins — rebuilt on pin changes; draggable via Translate,
+  // which re-geocodes on drop so labels track the new position.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (pinTranslateRef.current) {
+      map.removeInteraction(pinTranslateRef.current);
+      pinTranslateRef.current = null;
+    }
+    if (pinLayerRef.current) {
+      map.removeLayer(pinLayerRef.current);
+      pinLayerRef.current = null;
+    }
+
+    if (!evacStart && !evacDestination) return;
+    const layer = createEvacPinLayer(evacStart, evacDestination);
+    map.addLayer(layer);
+    pinLayerRef.current = layer;
+
+    const translate = new Translate({ layers: [layer] });
+    translate.on('translateend', (event) => {
+      const feature = event.features.item(0);
+      const role = feature?.get('pinRole');
+      const geometry = feature?.getGeometry();
+      if ((role !== 'start' && role !== 'destination') || !(geometry instanceof Point)) return;
+      const [lon, lat] = toLonLat(geometry.getCoordinates());
+      void reverseNominatim(lat, lon)
+        .then((place) => ({ lon, lat, label: place?.displayName.split(',')[0] ?? 'Pinned location' }))
+        .then((pin) => {
+          const live = useRouteStore.getState();
+          if (role === 'start') live.setStart(pin);
+          else live.setDestination(pin);
+        })
+        .catch(() => undefined);
+    });
+    map.addInteraction(translate);
+    pinTranslateRef.current = translate;
+  }, [evacStart, evacDestination]);
 
   // Shelter markers — rebuilt whenever the shelter list changes
   useEffect(() => {

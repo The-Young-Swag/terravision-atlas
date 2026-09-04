@@ -83,7 +83,7 @@ export interface ValhallaResponse {
 export interface AvoidanceRequestBody {
   locations: { lat: number; lon: number }[];
   costing: string;
-  exclude_polygons: { lat: number; lon: number }[][];
+  exclude_polygons?: { lat: number; lon: number }[][];
   directions_options: { units: string };
 }
 
@@ -91,7 +91,7 @@ export interface AvoidanceRequestBody {
 export function buildAvoidanceRequestBody(
   from: RoutePoint,
   to: RoutePoint,
-  avoidRing: RoutePoint[],
+  avoidRing: RoutePoint[] | null,
 ): AvoidanceRequestBody {
   return {
     locations: [
@@ -99,7 +99,7 @@ export function buildAvoidanceRequestBody(
       { lat: to.lat, lon: to.lon },
     ],
     costing: 'auto',
-    exclude_polygons: [avoidRing.map((point) => ({ lat: point.lat, lon: point.lon }))],
+    ...(avoidRing ? { exclude_polygons: [avoidRing.map((point) => ({ lat: point.lat, lon: point.lon }))] } : {}),
     directions_options: { units: 'kilometers' },
   };
 }
@@ -112,9 +112,9 @@ export function buildAvoidanceRequestBody(
 export async function routeAvoidingArea(
   from: RoutePoint,
   to: RoutePoint,
-  avoidRing: RoutePoint[],
+  avoidRing: RoutePoint[] | null,
 ): Promise<AvoidanceRoute> {
-  if (avoidRing.length < 4) {
+  if (avoidRing && avoidRing.length < 4) {
     throw new Error('Avoidance area needs at least 3 distinct points plus closure');
   }
   await respectRateLimit();

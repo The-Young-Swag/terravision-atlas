@@ -45,8 +45,14 @@ describe('buildAvoidanceRequestBody', () => {
       { lat: 15.17, lon: 120.62 },
     ]);
     expect(body.exclude_polygons).toHaveLength(1);
-    expect(body.exclude_polygons[0][0]).toEqual({ lat: 15.15, lon: 120.6 });
+    expect(body.exclude_polygons?.[0]?.[0]).toEqual({ lat: 15.15, lon: 120.6 });
     expect(body.directions_options).toEqual({ units: 'kilometers' });
+  });
+
+  it('omits exclude_polygons when there is no avoid area', () => {
+    const body = buildAvoidanceRequestBody({ lon: 0, lat: 0 }, { lon: 1, lat: 1 }, null);
+    expect(body.exclude_polygons).toBeUndefined();
+    expect(body.locations).toHaveLength(2);
   });
 });
 

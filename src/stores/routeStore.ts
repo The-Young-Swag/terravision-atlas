@@ -1,8 +1,13 @@
 import { create } from 'zustand';
+import type { EvacCircle } from '../features/routing/avoidZone';
 
 export interface EvacRoutePoint {
   lon: number;
   lat: number;
+}
+
+export interface EvacPin extends EvacRoutePoint {
+  label: string;
 }
 
 export interface EvacRoute {
@@ -12,16 +17,41 @@ export interface EvacRoute {
   avoidsArea: boolean;
 }
 
+export type EvacPickMode = 'start' | 'destination' | null;
+
 interface RouteState {
   route: EvacRoute | null;
-  avoidRing: EvacRoutePoint[] | null; // closed lon/lat ring drawn on the map
-  setEvacuationRoute: (route: EvacRoute, avoidRing: EvacRoutePoint[]) => void;
+  start: EvacPin | null;
+  destination: EvacPin | null;
+  avoidCircle: EvacCircle | null;
+  pickMode: EvacPickMode;
+  setEvacuationRoute: (route: EvacRoute) => void;
+  setStart: (pin: EvacPin) => void;
+  clearStart: () => void;
+  setDestination: (pin: EvacPin) => void;
+  clearDestination: () => void;
+  setAvoidCircle: (circle: EvacCircle) => void;
+  clearAvoidCircle: () => void;
+  setPickMode: (mode: EvacPickMode) => void;
   clearEvacuationRoute: () => void;
 }
 
+// Pin/avoid edits invalidate the computed route (it would be stale), so
+// every setter below clears it. Clearing start also clears the destination:
+// a destination without a start cannot route.
 export const useRouteStore = create<RouteState>((set) => ({
   route: null,
-  avoidRing: null,
-  setEvacuationRoute: (route, avoidRing) => set({ route, avoidRing }),
-  clearEvacuationRoute: () => set({ route: null, avoidRing: null }),
+  start: null,
+  destination: null,
+  avoidCircle: null,
+  pickMode: null,
+  setEvacuationRoute: (route) => set({ route }),
+  setPickMode: (pickMode) => set({ pickMode }),
+  setStart: (start) => set({ start, route: null }),
+  clearStart: () => set({ start: null, destination: null, route: null }),
+  setDestination: (destination) => set({ destination, route: null }),
+  clearDestination: () => set({ destination: null, route: null }),
+  setAvoidCircle: (avoidCircle) => set({ avoidCircle, route: null }),
+  clearAvoidCircle: () => set({ avoidCircle: null, route: null }),
+  clearEvacuationRoute: () => set({ route: null }),
 }));

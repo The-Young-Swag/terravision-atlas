@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { Map as MapLibre, NavigationControl, AttributionControl, Popup, setWorkerUrl } from 'maplibre-gl';
+import { Map as MapLibre, Marker, NavigationControl, AttributionControl, Popup, setWorkerUrl } from 'maplibre-gl';
+import { useRouteStore } from '../../../stores/routeStore';
+import { reverseNominatim } from '../../../features/search/geocode';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
 import { useMapStore } from '../../../stores/mapStore';
 import { MAPLIBRE_STYLES } from '../../../core/map/maplibre/style';
@@ -130,6 +132,26 @@ export function MapLibreMap() {
       state.pushMeasurePoint([event.lngLat.lng, event.lngLat.lat]);
     });
 
+    // Evacuation pin placement while a Start/Destination pick is armed.
+    map.on('click', (event) => {
+      const routeState = useRouteStore.getState();
+      if (!routeState.pickMode) return;
+      const { lng, lat } = event.lngLat;
+      void reverseNominatim(lat, lng)
+        .then((place) => ({ lon: lng, lat, label: place?.displayName.split(',')[0] ?? 'Pinned location' }))
+        .then((pin) => {
+          const live = useRouteStore.getState();
+          if (live.pickMode === 'start') {
+            live.setStart(pin);
+            live.setPickMode(live.destination ? null : 'destination');
+          } else if (live.pickMode === 'destination') {
+            live.setDestination(pin);
+            live.setPickMode(null);
+          }
+        })
+        .catch(() => undefined);
+    });
+
     // Re-apply styles when map style changes (basemap switch)
     map.on('style.load', applyControlStyles);
     map.on('render', () => {
@@ -154,6 +176,10 @@ export function MapLibreMap() {
   // Crosshair cursor while the measure tool is armed.
   const measureActive = useMapStore((s) => s.measureActive);
   const measurePoints = useMapStore((s) => s.measurePoints);
+  const evacStart = useRouteStore((s) => s.start);
+  const evacDestination = useRouteStore((s) => s.destination);
+  const startMarkerRef = useRef<Marker | null>(null);
+  const destinationMarkerRef = useRef<Marker | null>(null);
   const searchMarker = useSearchStore((s) => s.marker);
   useEffect(() => {
     const map = mapRef.current;
@@ -265,6 +291,57 @@ export function MapLibreMap() {
     if (!map || !map.isStyleLoaded()) return;
     setSearchMarkerVisible(map, searchMarker);
   }, [searchMarker]);
+
+  // Evacuation pins as native draggable markers (green start, red
+  // destination). Drag end re-geocodes so labels track the pin.
+  // Cleanup removes the markers: without it, refs keep pointing at markers
+  // of a destroyed map across remounts, and the new map would never get any.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return undefined;
+
+    const syncMarker = (
+      ref: { current: Marker | null },
+      pin: { lon: number; lat: number; label: string } | null,
+      role: 'start' | 'destination',
+      color: string,
+    ) => {
+      if (!pin) {
+        ref.current?.remove();
+        ref.current = null;
+        return;
+      }
+      if (!ref.current) {
+        const marker = new Marker({ color, draggable: true });
+        marker.setLngLat([pin.lon, pin.lat]);
+        marker.addTo(map);
+        marker.on('dragend', () => {
+          const { lng, lat } = marker.getLngLat();
+          void reverseNominatim(lat, lng)
+            .then((place) => ({ lon: lng, lat, label: place?.displayName.split(',')[0] ?? 'Pinned location' }))
+            .then((moved) => {
+              const live = useRouteStore.getState();
+              if (role === 'start') live.setStart(moved);
+              else live.setDestination(moved);
+            })
+            .catch(() => undefined);
+        });
+        ref.current = marker;
+      } else {
+        ref.current.setLngLat([pin.lon, pin.lat]);
+      }
+    };
+
+    syncMarker(startMarkerRef, evacStart, 'start', '#22c55e');
+    syncMarker(destinationMarkerRef, evacDestination, 'destination', '#ef4444');
+
+    return () => {
+      startMarkerRef.current?.remove();
+      destinationMarkerRef.current?.remove();
+      startMarkerRef.current = null;
+      destinationMarkerRef.current = null;
+    };
+  }, [evacStart, evacDestination]);
 
   // Sync center/zoom when store changes externally — only fly when meaningfully different
   useEffect(() => {
