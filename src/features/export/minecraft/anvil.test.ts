@@ -95,7 +95,8 @@ describe('chunk NBT round-trip', () => {
 });
 
 describe('region file layout', () => {
-  it('writes sector-aligned chunks readable per the Anvil spec', () => {
+  // Full 1024-chunk region build (~100M block assignments) needs headroom under parallel load.
+  it('writes sector-aligned chunks readable per the Anvil spec', { timeout: 30000 }, () => {
     const chunks = buildRegionChunks(bigFlatRegion());
     const now = 1700000000;
     const region = writeRegionFile(chunks, now);
