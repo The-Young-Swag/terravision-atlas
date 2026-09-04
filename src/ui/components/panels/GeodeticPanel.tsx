@@ -34,10 +34,10 @@ export function GeodeticPanel() {
           <select
             value={targetEpsg}
             onChange={(e) => setTargetEpsg(e.target.value)}
-            className={`w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-mono text-[12px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}
+            className={`glass w-full rounded-xl px-3 py-2 font-mono text-[12px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}
           >
             {getEpsgList().map((epsg) => (
-              <option key={epsg.code} value={epsg.code} className="bg-[#0D1B2A]">
+              <option key={epsg.code} value={epsg.code} className="bg-[#0D1B2A] text-slate-200">
                 {epsg.code} — {epsg.name}
               </option>
             ))}
