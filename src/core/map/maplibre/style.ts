@@ -2,9 +2,19 @@
 // Raster mirrors of the four 2D basemaps (same tile endpoints as
 // core/map/openlayers/basemapLayers.ts) so Base Map selection visibly
 // changes the Vector view too. Map Type and Base Map are independent axes.
+// The 'satellite' slot renders the selected satellite source (Esri default
+// or a NASA GIBS layer); GIBS serves levels 0-9 so maxzoom 9 overzooms.
 
 import type { StyleSpecification } from 'maplibre-gl';
 import type { BasemapId } from '../../../stores/mapStore';
+import {
+  GIBS_MAX_ZOOM,
+  gibsBestDate,
+  gibsLayerMeta,
+  gibsTileUrlTemplate,
+  satelliteAttribution,
+  type SatelliteSourceId,
+} from '../gibs';
 
 function rasterStyle(tiles: string[], attribution: string, maxzoom = 19): StyleSpecification {
   return {
@@ -28,15 +38,23 @@ function rasterStyle(tiles: string[], attribution: string, maxzoom = 19): StyleS
   };
 }
 
+function satelliteStyle(source: SatelliteSourceId): StyleSpecification {
+  if (source === 'esri') {
+    return rasterStyle(
+      ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+      satelliteAttribution(source),
+    );
+  }
+  const meta = gibsLayerMeta(source);
+  return rasterStyle([gibsTileUrlTemplate(meta.product, gibsBestDate())], meta.attribution, GIBS_MAX_ZOOM);
+}
+
 export const MAPLIBRE_STYLES: Record<BasemapId, StyleSpecification> = {
   streets: rasterStyle(
     ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
     '© OpenStreetMap contributors',
   ),
-  satellite: rasterStyle(
-    ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-    'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics',
-  ),
+  satellite: satelliteStyle('esri'),
   terrain: rasterStyle(
     [
       'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
@@ -52,6 +70,12 @@ export const MAPLIBRE_STYLES: Record<BasemapId, StyleSpecification> = {
     18,
   ),
 };
+
+/** Style for a basemap + satellite-source combination. */
+export function maplibreStyleFor(basemap: BasemapId, satelliteSource: SatelliteSourceId): StyleSpecification {
+  if (basemap === 'satellite') return satelliteStyle(satelliteSource);
+  return MAPLIBRE_STYLES[basemap];
+}
 
 // Back-compat alias for the initial Vector style (streets).
 export const MAPLIBRE_DEMO_STYLE: StyleSpecification = MAPLIBRE_STYLES.streets;

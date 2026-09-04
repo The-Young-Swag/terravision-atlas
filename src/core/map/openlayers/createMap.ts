@@ -1,22 +1,25 @@
 import Map from 'ol/Map';
 import View from 'ol/View';
+import Attribution from 'ol/control/Attribution';
 import { fromLonLat } from 'ol/proj';
 import { createBasemapLayer } from './basemapLayers';
 import type { BasemapId } from '../../../stores/mapStore';
+import type { SatelliteSourceId } from '../gibs';
 
 export interface CreateMapOptions {
   target: HTMLElement;
   center: [number, number]; // [lon, lat]
   zoom: number;
   basemap: BasemapId;
+  satelliteSource?: SatelliteSourceId;
 }
 
 // Creates an OpenLayers map with a single basemap layer.
 // The caller owns lifecycle (setTarget(null) on unmount).
 export function createMap(options: CreateMapOptions): Map {
-  const { target, center, zoom, basemap } = options;
+  const { target, center, zoom, basemap, satelliteSource } = options;
 
-  const basemapLayer = createBasemapLayer(basemap);
+  const basemapLayer = createBasemapLayer(basemap, undefined, satelliteSource);
 
   const map = new Map({
     target,
@@ -27,19 +30,21 @@ export function createMap(options: CreateMapOptions): Map {
       maxZoom: 19,
       minZoom: 2,
     }),
-    controls: [],
+    // Collapsed attribution (mirrors MapLibre's compact control) so the
+    // per-basemap credits — including the active GIBS layer — are visible.
+    controls: [new Attribution({ collapsible: true, collapsed: true })],
   });
 
   return map;
 }
 
 // Helper to swap basemap without recreating the whole map.
-export function updateBasemap(map: Map, basemap: BasemapId): void {
+export function updateBasemap(map: Map, basemap: BasemapId, satelliteSource: SatelliteSourceId = 'esri'): void {
   const layers = map.getLayers();
   const oldBasemap = layers.item(0);
   if (oldBasemap) {
     map.removeLayer(oldBasemap);
   }
-  const newLayer = createBasemapLayer(basemap);
+  const newLayer = createBasemapLayer(basemap, undefined, satelliteSource);
   layers.insertAt(0, newLayer);
 }

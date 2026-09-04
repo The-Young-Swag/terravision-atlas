@@ -3,6 +3,7 @@ import View from 'ol/View';
 import { fromLonLat } from 'ol/proj';
 import { createBasemapLayer } from '../../../core/map/openlayers/basemapLayers';
 import type { BasemapId } from '../../../stores/mapStore';
+import type { SatelliteSourceId } from '../../../core/map/gibs';
 
 // Large-format map export: re-renders the current 2D view offscreen at A0
 // portrait size (150 dpi) with real map tiles — not an upscale of the
@@ -29,6 +30,7 @@ export async function exportA0Png(
   centerLat: number,
   zoom: number,
   basemap: BasemapId,
+  satelliteSource: SatelliteSourceId = 'esri',
   onProgress?: (stage: string) => void,
 ): Promise<Blob> {
   onProgress?.('Preparing A0 canvas…');
@@ -41,7 +43,7 @@ export async function exportA0Png(
   document.body.appendChild(container);
 
   const printMap = new Map({
-    layers: [createBasemapLayer(basemap, 'anonymous')],
+    layers: [createBasemapLayer(basemap, 'anonymous', satelliteSource)],
     target: container,
     view: new View({ center: fromLonLat([centerLon, centerLat]), zoom }),
   });

@@ -4,11 +4,18 @@ import { TrafficLegend } from './TrafficLegend';
 import { useMapStore } from '../../../stores/mapStore';
 import { useTrafficStore } from '../../../stores/trafficStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { GIBS_LAYERS, type SatelliteSourceId } from '../../../core/map/gibs';
 import { useMemo } from 'react';
+
+const SATELLITE_SOURCES: { id: SatelliteSourceId; label: string; desc: string }[] = [
+  { id: 'esri', label: 'Esri World Imagery', desc: 'High-res mosaic · default' },
+  ...GIBS_LAYERS.map((l) => ({ id: l.id, label: l.label, desc: l.desc })),
+];
 
 export function LayersPanel() {
   const {
     basemap,
+    satelliteSource,
     viewMode,
     showHazards,
     showTerrainContours,
@@ -16,6 +23,7 @@ export function LayersPanel() {
     center,
     zoom,
     setBasemap,
+    setSatelliteSource,
     setViewMode,
     setShowHazards,
     setShowTerrainContours,
@@ -60,7 +68,7 @@ export function LayersPanel() {
               {
                 id: 'satellite' as const,
                 label: 'Satellite',
-                desc: 'Esri World Imagery',
+                desc: SATELLITE_SOURCES.find((s) => s.id === satelliteSource)?.label ?? 'Esri World Imagery',
                 icon: Satellite,
                 preview: 'linear-gradient(135deg,#1e3a2e 0%,#0f1f18 100%)',
               },
@@ -98,14 +106,14 @@ export function LayersPanel() {
                 className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${isActive ? 'border-[#5500a4] bg-[#5500a4]/10 text-white' : isBrightBasemap ? 'border-white/10 bg-white/[0.04] text-slate-800 hover:text-slate-900' : 'border-white/10 bg-white/[0.04] text-slate-300 hover:text-white'}`}
               >
                 <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[12px] transition ${isActive ? 'border-[#5500a4]/30 bg-[#5500a4] text-white' : isBrightBasemap ? 'border-white/10 bg-white/5 text-slate-600 group-hover:text-slate-800' : 'border-white/10 bg-white/5 text-slate-400 group-hover:text-slate-200'}`}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[12px] transition ${isActive ? 'border-[#5500a4]/30 bg-[#5500a4] text-white' : 'border-white/10 bg-white/5 text-slate-400 group-hover:text-slate-200'}`}
                   style={!isActive ? { background: option.preview } : undefined}
                 >
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="flex-1">
-                  <span className={`block text-[13px] font-medium leading-none ${isBrightBasemap && !isActive ? 'text-slate-800' : ''}`}>{option.label}</span>
-                  <span className={`block text-[11px] ${isBrightBasemap && !isActive ? 'text-slate-600' : 'text-slate-400'}`}>{option.desc}</span>
+                  <span className={`block text-[13px] font-medium leading-none ${isActive ? 'text-[#10B981]' : 'text-slate-400'}`}>{option.label}</span>
+                  <span className="block text-[11px] text-slate-400">{option.desc}</span>
                 </span>
                 {isActive ? (
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#5500a4] text-white">
@@ -118,6 +126,42 @@ export function LayersPanel() {
             );
           })}
         </div>
+
+        {/* Satellite source picker — same selection pattern, shown only for
+            the Satellite basemap slot (Esri default + NASA GIBS layers). */}
+        {basemap === 'satellite' && (
+          <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-2">
+            <p className={`mb-1.5 px-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-500'}`}>
+              Satellite source
+            </p>
+            <div className="space-y-1">
+              {SATELLITE_SOURCES.map((source) => {
+                const isSourceActive = satelliteSource === source.id;
+                return (
+                  <button
+                    key={source.id}
+                    onClick={() => setSatelliteSource(source.id)}
+                    aria-label={`Satellite source ${source.label}`}
+                    aria-pressed={isSourceActive}
+                    className={`flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-1.5 text-left transition ${isSourceActive ? 'border-[#5500a4] bg-[#5500a4]/10 text-white' : isBrightBasemap ? 'border-transparent text-slate-800 hover:bg-white/10' : 'border-transparent text-slate-300 hover:bg-white/5 hover:text-white'}`}
+                  >
+                    <span className="flex-1">
+                      <span className={`block text-[12px] font-medium leading-tight ${isSourceActive ? 'text-[#10B981]' : ''}`}>{source.label}</span>
+                      <span className="block font-mono text-[10px] text-slate-400">{source.desc}</span>
+                    </span>
+                    {isSourceActive ? (
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#5500a4] text-white">
+                        <Check className="h-2.5 w-2.5" />
+                      </span>
+                    ) : (
+                      <span className="h-4 w-4 shrink-0 rounded-full border border-white/10" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="mb-4 space-y-1">
           {viewMode === '2d' && (

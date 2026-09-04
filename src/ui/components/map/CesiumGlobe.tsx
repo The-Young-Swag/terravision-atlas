@@ -4,6 +4,7 @@ import { useMapStore } from '../../../stores/mapStore';
 import {
   createCesiumViewer,
   flyToCesium,
+  globeImageryCredit,
   type TerrainStatus,
 } from '../../../core/map/cesium/createCesiumViewer';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
@@ -16,6 +17,7 @@ export function CesiumGlobe() {
 
   const { center, zoom } = useMapStore();
   const basemap = useMapStore((s) => s.basemap);
+  const satelliteSource = useMapStore((s) => s.satelliteSource);
 
   // Adaptive contrast for in-map Cesium widgets
   const { theme } = useMapOverlayContrast();
@@ -27,7 +29,7 @@ export function CesiumGlobe() {
     let cancelled = false;
     let viewer: Cesium.Viewer | null = null;
 
-    createCesiumViewer({ container, center, zoom })
+    createCesiumViewer({ container, center, zoom, basemap, satelliteSource })
       .then(({ viewer: v, terrain: terrainStatus }) => {
         if (cancelled) {
           v.destroy();
@@ -122,7 +124,7 @@ export function CesiumGlobe() {
     };
     // Only initialize once — center/zoom sync handled below
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [basemap]); // Re-create viewer when basemap changes (for theme adaptation)
+  }, [basemap, satelliteSource]); // Re-create viewer when basemap/satellite source changes
 
   // Sync center/zoom when store changes (e.g., search fly-to)
   useEffect(() => {
@@ -139,9 +141,10 @@ export function CesiumGlobe() {
       role="region"
     >
       {/* Attribution: Cesium's built-in credit container is hidden (we use
-          our own glass UI), so Ion + imagery credits are rendered here. */}
+          our own glass UI), so imagery + Ion credits render here and always
+          reflect the currently active satellite source. */}
       <div className="pointer-events-none absolute bottom-1 right-2 z-10 rounded bg-black/45 px-1.5 py-0.5 font-mono text-[10px] text-slate-300">
-        Imagery © OpenStreetMap contributors
+        {globeImageryCredit(basemap, satelliteSource)}
         {terrain?.kind === 'ion' ? ' · Terrain © Cesium Ion' : null}
       </div>
       {/* Honest terrain-failure notice — never silently fall back to flat. */}

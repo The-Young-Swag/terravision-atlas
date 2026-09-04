@@ -47,7 +47,7 @@ export function OpenLayersMap() {
   const measureLayerRef = useRef<ReturnType<typeof createMeasureLayer> | null>(null);
   const isProgrammaticRef = useRef(false);
 
-  const { center, zoom, basemap, showHazards, showTraffic, setCenter, setZoom } = useMapStore();
+  const { center, zoom, basemap, satelliteSource, showHazards, showTraffic, setCenter, setZoom } = useMapStore();
   const measureActive = useMapStore((s) => s.measureActive);
   const measurePoints = useMapStore((s) => s.measurePoints);
   const searchMarker = useSearchStore((s) => s.marker);
@@ -105,6 +105,7 @@ export function OpenLayersMap() {
       center,
       zoom,
       basemap,
+      satelliteSource,
     });
 
     // Sync view changes back to store only after user finishes interacting.
@@ -367,11 +368,12 @@ export function OpenLayersMap() {
   }, []);
 
   // Update basemap when store changes
+  // (basemap slot or satellite source within the slot)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
-    updateBasemap(map, basemap);
-  }, [basemap]);
+    updateBasemap(map, basemap, satelliteSource);
+  }, [basemap, satelliteSource]);
 
   // Toggle hazards and update when events change OR when markerStroke changes (basemap switch)
   useEffect(() => {

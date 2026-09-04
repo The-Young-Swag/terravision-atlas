@@ -1,9 +1,17 @@
 import * as Cesium from 'cesium';
+import type { BasemapId } from '../../../stores/mapStore';
+import {
+  GIBS_MAX_ZOOM,
+  gibsBestDate,
+  gibsLayerMeta,
+  gibsTileUrlTemplate,
+  type SatelliteSourceId,
+} from '../gibs';
 
 // Cesium viewer factory with real-world terrain via Cesium Ion.
-// - Imagery stays keyless (OpenStreetMap here; NASA GIBS layers are added
-//   on top by the imagery/basemaps architecture) so the Ion token quota is
-//   spent only on the elevation mesh.
+// - Imagery stays keyless: the 'satellite' basemap slot renders Esri World
+//   Imagery (default) or a NASA GIBS layer draped over the terrain mesh,
+//   so the Ion token quota is spent only on elevation, never on imagery.
 // - Elevation comes from Cesium World Terrain (Cesium.createWorldTerrainAsync,
 //   verified against the installed Cesium 1.145 typings) when a token is
 //   present in .env as VITE_CESIUM_ION_TOKEN (see .env.example).
@@ -14,6 +22,8 @@ export interface CreateCesiumOptions {
   container: HTMLElement;
   center: [number, number]; // [lon, lat]
   zoom: number; // approximate, converted to height
+  basemap?: BasemapId;
+  satelliteSource?: SatelliteSourceId;
 }
 
 export type TerrainStatus =
@@ -40,8 +50,41 @@ function zoomToHeight(zoom: number): number {
   return Math.max(500, Math.min(20000000, height * 1.2));
 }
 
+/** Imagery credit for the active 3D source (rendered in our own overlay). */
+export function globeImageryCredit(basemap: BasemapId, satelliteSource: SatelliteSourceId): string {
+  if (basemap === 'satellite') {
+    if (satelliteSource === 'esri') return 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics';
+    return gibsLayerMeta(satelliteSource).attribution;
+  }
+  return '© OpenStreetMap contributors';
+}
+
+function createGlobeImagery(
+  basemap: BasemapId,
+  satelliteSource: SatelliteSourceId,
+): Cesium.ImageryProvider {
+  if (basemap === 'satellite') {
+    if (satelliteSource === 'esri') {
+      return new Cesium.UrlTemplateImageryProvider({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        maximumLevel: 19,
+      });
+    }
+    // GIBS WMTS REST as a URL template (matrix order z/row/col), draped
+    // over the Ion terrain mesh. Levels 0-9; Cesium overzooms past 9.
+    const meta = gibsLayerMeta(satelliteSource);
+    return new Cesium.UrlTemplateImageryProvider({
+      url: gibsTileUrlTemplate(meta.product, gibsBestDate()),
+      maximumLevel: GIBS_MAX_ZOOM,
+    });
+  }
+  return new Cesium.OpenStreetMapImageryProvider({
+    url: 'https://a.tile.openstreetmap.org/',
+  });
+}
+
 export async function createCesiumViewer(options: CreateCesiumOptions): Promise<CreatedCesiumViewer> {
-  const { container, center, zoom } = options;
+  const { container, center, zoom, basemap = 'satellite', satelliteSource = 'esri' } = options;
 
   const token = cesiumIonToken();
   if (token) {
@@ -72,14 +115,12 @@ export async function createCesiumViewer(options: CreateCesiumOptions): Promise<
     shouldAnimate: true,
   });
 
-  // Use OSM imagery (keyless). Terrain comes from Cesium Ion when a
-  // token is configured; otherwise the globe is flat AND the UI says so.
+  // Imagery follows the shared basemap selection: the 'satellite' slot
+  // renders Esri (default) or the chosen GIBS layer draped over the
+  // terrain mesh. Terrain comes from Cesium Ion when a token is
+  // configured; otherwise the globe is flat AND the UI says so.
   viewer.imageryLayers.removeAll();
-  viewer.imageryLayers.addImageryProvider(
-    new Cesium.OpenStreetMapImageryProvider({
-      url: 'https://a.tile.openstreetmap.org/',
-    }),
-  );
+  viewer.imageryLayers.addImageryProvider(createGlobeImagery(basemap, satelliteSource));
 
   let terrain: TerrainStatus;
   if (!token) {
