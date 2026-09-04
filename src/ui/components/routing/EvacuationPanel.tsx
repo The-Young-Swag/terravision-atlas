@@ -29,12 +29,15 @@ export function EvacuationPanel() {
   const avoidCircle = useRouteStore((s) => s.avoidCircle);
   const route = useRouteStore((s) => s.route);
   const pickMode = useRouteStore((s) => s.pickMode);
+  const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
   const setStart = useRouteStore((s) => s.setStart);
   const clearStart = useRouteStore((s) => s.clearStart);
   const setDestination = useRouteStore((s) => s.setDestination);
   const clearDestination = useRouteStore((s) => s.clearDestination);
   const setAvoidCircle = useRouteStore((s) => s.setAvoidCircle);
   const setPickMode = useRouteStore((s) => s.setPickMode);
+  const setDrawAvoidArmed = useRouteStore((s) => s.setDrawAvoidArmed);
+  const clearAvoidCircle = useRouteStore((s) => s.clearAvoidCircle);
   const setEvacuationRoute = useRouteStore((s) => s.setEvacuationRoute);
   const clearEvacuationRoute = useRouteStore((s) => s.clearEvacuationRoute);
   const isBrightBasemap = useBrightBasemap();
@@ -73,7 +76,8 @@ export function EvacuationPanel() {
   const step = evacStep(start, destination, route !== null);
   const stepIndex = step === 'start' ? 0 : step === 'destination' ? 1 : step === 'avoid' ? 2 : 3;
 
-  // Escape disarms map picking.
+  // Escape disarms map picking. (Avoid-draw cancellation, including
+  // preview cleanup, lives in the map components next to the draw state.)
   useEffect(() => {
     if (!pickMode) return undefined;
     const onKey = (event: KeyboardEvent) => {
@@ -259,6 +263,35 @@ export function EvacuationPanel() {
             </button>
           )}
         </div>
+
+        <div className="mb-3 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setDrawAvoidArmed(!drawAvoidArmed)}
+            aria-pressed={drawAvoidArmed}
+            title="Draw a circular avoid zone on the map (Esc cancels)"
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-[12px] font-medium transition ${drawAvoidArmed ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
+          >
+            <ShieldAlert className="h-4 w-4" aria-hidden />
+            {drawAvoidArmed ? 'Drawing… click-drag on the map' : 'Draw avoid area'}
+          </button>
+          {avoidCircle && (
+            <button
+              type="button"
+              onClick={clearAvoidCircle}
+              aria-label="Remove avoid zone"
+              title={`Remove avoid zone (${avoidCircle.radiusKm.toFixed(1)} km)`}
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        {avoidCircle && (
+          <p className={`mb-3 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+            Avoid zone: {avoidCircle.radiusKm.toFixed(1)} km radius
+          </p>
+        )}
 
         <div className="mb-3 grid grid-cols-2 gap-2">
           <div>

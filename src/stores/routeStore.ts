@@ -25,7 +25,9 @@ interface RouteState {
   destination: EvacPin | null;
   avoidCircle: EvacCircle | null;
   pickMode: EvacPickMode;
+  drawAvoidArmed: boolean;
   setEvacuationRoute: (route: EvacRoute) => void;
+  setDrawAvoidArmed: (armed: boolean) => void;
   setStart: (pin: EvacPin) => void;
   clearStart: () => void;
   setDestination: (pin: EvacPin) => void;
@@ -45,8 +47,10 @@ export const useRouteStore = create<RouteState>((set) => ({
   destination: null,
   avoidCircle: null,
   pickMode: null,
+  drawAvoidArmed: false,
   setEvacuationRoute: (route) => set({ route }),
   setPickMode: (pickMode) => set({ pickMode }),
+  setDrawAvoidArmed: (drawAvoidArmed) => set({ drawAvoidArmed }),
   setStart: (start) => set({ start, route: null }),
   clearStart: () => set({ start: null, destination: null, route: null }),
   setDestination: (destination) => set({ destination, route: null }),

@@ -13,11 +13,24 @@ export interface EvacCircle {
 
 export const AVOID_CIRCLE_STEPS = 32;
 
-export function circleToRing(circle: EvacCircle): EvacRoutePoint[] {
-  const polygon = turf.circle([circle.lon, circle.lat], circle.radiusKm, {
+export function circlePolygon(circle: EvacCircle): GeoJSON.Feature<GeoJSON.Polygon> {
+  return turf.circle([circle.lon, circle.lat], circle.radiusKm, {
     steps: AVOID_CIRCLE_STEPS,
     units: 'kilometers',
-  });
+  }) as GeoJSON.Feature<GeoJSON.Polygon>;
+}
+
+/** Smallest drawable radius — a plain click without drag draws nothing. */
+export const MIN_AVOID_RADIUS_KM = 0.1;
+
+/** Live preview circle from a drag: anchor center plus current cursor point. */
+export function previewCircle(centerLon: number, centerLat: number, cursorLon: number, cursorLat: number): EvacCircle {
+  const radiusKm = turf.distance([centerLon, centerLat], [cursorLon, cursorLat], { units: 'kilometers' });
+  return { lon: centerLon, lat: centerLat, radiusKm };
+}
+
+export function circleToRing(circle: EvacCircle): EvacRoutePoint[] {
+  const polygon = circlePolygon(circle);
   return (polygon.geometry.coordinates[0] as [number, number][]).map(([lon, lat]) => ({ lon, lat }));
 }
 

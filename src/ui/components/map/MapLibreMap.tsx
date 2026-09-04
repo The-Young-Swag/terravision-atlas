@@ -16,6 +16,8 @@ import {
   removeIncidentLayers,
   setTrafficVisible,
 } from '../../../core/map/maplibre/traffic';
+import { setAvoidPreview, setAvoidVisible } from '../../../core/map/maplibre/avoid';
+import { MIN_AVOID_RADIUS_KM, previewCircle } from '../../../features/routing/avoidZone';
 import { useTrafficStore } from '../../../stores/trafficStore';
 import { tomtomApiKey } from '../../../features/traffic/tomtom';
 import { refreshTraffic } from '../../../features/traffic/refresh';
@@ -152,6 +154,74 @@ export function MapLibreMap() {
         .catch(() => undefined);
     });
 
+    // Avoid-zone draw tool: press-drag-release sketches a circle while
+    // armed, with a live radius tooltip following the cursor (positioned
+    // via map.project). Release finalizes the same circle Valhalla gets.
+    const drawTooltip = document.createElement('div');
+    drawTooltip.style.cssText =
+      'position:absolute;display:none;pointer-events:none;background:rgba(13,27,42,.92);' +
+      'border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 8px;' +
+      'font:11px monospace;color:#f8fafc;white-space:nowrap;z-index:30;';
+    map.getCanvasContainer().appendChild(drawTooltip);
+
+    const onDrawDown = (event: { lngLat: { lng: number; lat: number }; originalEvent: MouseEvent }) => {
+      if (!useRouteStore.getState().drawAvoidArmed || event.originalEvent.button !== 0) {
+        // Not drawing: clear any leftover preview (e.g. after Escape).
+        drawCenterRef.current = null;
+        drawTooltip.style.display = 'none';
+        if (mapRef.current) setAvoidPreview(mapRef.current, null);
+        return;
+      }
+      event.originalEvent.preventDefault();
+      drawCenterRef.current = { lon: event.lngLat.lng, lat: event.lngLat.lat };
+      map.dragPan.disable();
+    };
+    const onDrawMove = (event: { lngLat: { lng: number; lat: number } }) => {
+      const center = drawCenterRef.current;
+      const liveMap = mapRef.current;
+      if (!center || !liveMap || !useRouteStore.getState().drawAvoidArmed) return;
+      const circle = previewCircle(center.lon, center.lat, event.lngLat.lng, event.lngLat.lat);
+      setAvoidPreview(liveMap, circle);
+      const point = liveMap.project(event.lngLat);
+      drawTooltip.textContent = `${circle.radiusKm.toFixed(1)} km — release to set`;
+      drawTooltip.style.display = 'block';
+      drawTooltip.style.left = `${point.x + 14}px`;
+      drawTooltip.style.top = `${point.y - 10}px`;
+    };
+    const onDrawUp = (event: { lngLat: { lng: number; lat: number } }) => {
+      const center = drawCenterRef.current;
+      drawCenterRef.current = null;
+      map.dragPan.enable();
+      if (!center || !useRouteStore.getState().drawAvoidArmed) {
+        if (mapRef.current) setAvoidPreview(mapRef.current, null);
+        drawTooltip.style.display = 'none';
+        return;
+      }
+      const circle = previewCircle(center.lon, center.lat, event.lngLat.lng, event.lngLat.lat);
+      const store = useRouteStore.getState();
+      if (mapRef.current) setAvoidPreview(mapRef.current, null);
+      drawTooltip.style.display = 'none';
+      if (circle.radiusKm >= MIN_AVOID_RADIUS_KM) {
+        store.setAvoidCircle(circle);
+      }
+      store.setDrawAvoidArmed(false);
+    };
+    map.on('mousedown', onDrawDown);
+    map.on('mousemove', onDrawMove);
+    map.on('mouseup', onDrawUp);
+
+    // Escape cancels an in-progress draw immediately (clears the preview,
+    // disarms the tool, restores panning).
+    const onDrawKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || !useRouteStore.getState().drawAvoidArmed) return;
+      drawCenterRef.current = null;
+      drawTooltip.style.display = 'none';
+      if (mapRef.current) setAvoidPreview(mapRef.current, null);
+      map.dragPan.enable();
+      useRouteStore.getState().setDrawAvoidArmed(false);
+    };
+    window.addEventListener('keydown', onDrawKey);
+
     // Re-apply styles when map style changes (basemap switch)
     map.on('style.load', applyControlStyles);
     map.on('render', () => {
@@ -167,6 +237,11 @@ export function MapLibreMap() {
     mapRef.current = map;
 
     return () => {
+      map.off('mousedown', onDrawDown);
+      map.off('mousemove', onDrawMove);
+      map.off('mouseup', onDrawUp);
+      window.removeEventListener('keydown', onDrawKey);
+      drawTooltip.remove();
       map.remove();
       mapRef.current = null;
     };
@@ -178,6 +253,9 @@ export function MapLibreMap() {
   const measurePoints = useMapStore((s) => s.measurePoints);
   const evacStart = useRouteStore((s) => s.start);
   const evacDestination = useRouteStore((s) => s.destination);
+  const avoidCircle = useRouteStore((s) => s.avoidCircle);
+  const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
+  const drawCenterRef = useRef<{ lon: number; lat: number } | null>(null);
   const startMarkerRef = useRef<Marker | null>(null);
   const destinationMarkerRef = useRef<Marker | null>(null);
   const searchMarker = useSearchStore((s) => s.marker);
@@ -281,6 +359,7 @@ export function MapLibreMap() {
       const trafficState = useTrafficStore.getState();
       setContoursVisible(liveMap, mapState.showTerrainContours);
       setTrafficVisible(liveMap, mapState.showTraffic && trafficState.status === 'ok', tomtomApiKey());
+      setAvoidVisible(liveMap, useRouteStore.getState().avoidCircle);
       setSearchMarkerVisible(liveMap, useSearchStore.getState().marker);
     });
   }, [basemap]);
@@ -342,6 +421,25 @@ export function MapLibreMap() {
       destinationMarkerRef.current = null;
     };
   }, [evacStart, evacDestination]);
+
+  // Finalized avoid zone — hatched overlay, visible with or without a route.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    setAvoidVisible(map, avoidCircle);
+  }, [avoidCircle]);
+
+  // Avoid-draw arming: crosshair cursor and pan-drag state. Stale previews
+  // are discarded lazily by the next pointer-down (see onDrawDown).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return undefined;
+    map.getCanvas().style.cursor = drawAvoidArmed ? 'crosshair' : '';
+    if (!drawAvoidArmed) {
+      map.dragPan.enable();
+    }
+    return undefined;
+  }, [drawAvoidArmed]);
 
   // Sync center/zoom when store changes externally — only fly when meaningfully different
   useEffect(() => {

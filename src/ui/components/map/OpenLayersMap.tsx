@@ -2,13 +2,17 @@ import { useEffect, useRef, useMemo } from 'react';
 import Map from 'ol/Map';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import Point from 'ol/geom/Point';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { useMapStore } from '../../../stores/mapStore';
 import { useDisasterStore } from '../../../stores/disasterStore';
 import { createMap, updateBasemap } from '../../../core/map/openlayers/createMap';
 import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';
 import { createRouteLayer } from '../../../core/map/openlayers/routeLayer';
-import { circleToRing } from '../../../features/routing/avoidZone';
+import { createAvoidLayer } from '../../../core/map/openlayers/avoidLayer';
+import { circleToRing, previewCircle, MIN_AVOID_RADIUS_KM } from '../../../features/routing/avoidZone';
+import DragPan from 'ol/interaction/DragPan';
 import { createEvacPinLayer } from '../../../core/map/openlayers/pinLayer';
 import Translate from 'ol/interaction/Translate';
 import { useRouteStore } from '../../../stores/routeStore';
@@ -51,6 +55,10 @@ export function OpenLayersMap() {
   const reversePopupRef = useRef<Overlay | null>(null);
   const { events: disasterEvents } = useDisasterStore();
   const { route, avoidCircle } = useRouteStore();
+  const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
+  const avoidLayerRef = useRef<ReturnType<typeof createAvoidLayer> | null>(null);
+  const drawPreviewLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
+  const drawCenterRef = useRef<[number, number] | null>(null);
   const evacStart = useRouteStore((s) => s.start);
   const evacDestination = useRouteStore((s) => s.destination);
   const pinLayerRef = useRef<ReturnType<typeof createEvacPinLayer> | null>(null);
@@ -249,7 +257,91 @@ export function OpenLayersMap() {
       })();
     });
 
-    // Store for external sync (mirrors MapLibreMap's __maplibre handle).
+    // Avoid-zone draw tool: press-drag-release sketches a circle while
+    // armed. The live radius comes from turf; release finalizes the same
+    // circle object the Valhalla request will use.
+    const drawTooltip = document.createElement('div');
+    drawTooltip.style.cssText =
+      'position:absolute;display:none;pointer-events:none;background:rgba(13,27,42,.92);' +
+      'border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 8px;' +
+      'font:11px monospace;color:#f8fafc;white-space:nowrap;z-index:30;';
+    map.getTargetElement().appendChild(drawTooltip);
+
+    const hideDrawPreview = () => {
+      if (drawPreviewLayerRef.current) {
+        map.removeLayer(drawPreviewLayerRef.current);
+        drawPreviewLayerRef.current = null;
+      }
+      drawCenterRef.current = null;
+      drawTooltip.style.display = 'none';
+    };
+
+    const onDrawDown = (event: MouseEvent) => {
+      if (!useRouteStore.getState().drawAvoidArmed || event.button !== 0) {
+        // Not drawing: clear any leftover preview (e.g. after Escape).
+        drawCenterRef.current = null;
+        drawTooltip.style.display = 'none';
+        if (drawPreviewLayerRef.current) {
+          map.removeLayer(drawPreviewLayerRef.current);
+          drawPreviewLayerRef.current = null;
+        }
+        return;
+      }
+      const pixel = map.getEventPixel(event);
+      const [lon, lat] = toLonLat(map.getCoordinateFromPixel(pixel));
+      drawCenterRef.current = [lon, lat];
+    };
+    const onDrawMove = (event: MouseEvent) => {
+      const center = drawCenterRef.current;
+      if (!center || !useRouteStore.getState().drawAvoidArmed) return;
+      const pixel = map.getEventPixel(event);
+      const [lon, lat] = toLonLat(map.getCoordinateFromPixel(pixel));
+      const circle = previewCircle(center[0], center[1], lon, lat);
+      if (drawPreviewLayerRef.current) {
+        map.removeLayer(drawPreviewLayerRef.current);
+      }
+      const preview = createAvoidLayer(circleToRing(circle));
+      map.addLayer(preview);
+      drawPreviewLayerRef.current = preview;
+      drawTooltip.textContent = `${circle.radiusKm.toFixed(1)} km — release to set`;
+      drawTooltip.style.display = 'block';
+      drawTooltip.style.left = `${pixel[0] + 14}px`;
+      drawTooltip.style.top = `${pixel[1] - 10}px`;
+    };
+    const onDrawUp = (event: MouseEvent) => {
+      const center = drawCenterRef.current;
+      drawCenterRef.current = null;
+      if (!center || !useRouteStore.getState().drawAvoidArmed) {
+        hideDrawPreview();
+        return;
+      }
+      const pixel = map.getEventPixel(event);
+      const [lon, lat] = toLonLat(map.getCoordinateFromPixel(pixel));
+      const circle = previewCircle(center[0], center[1], lon, lat);
+      const store = useRouteStore.getState();
+      hideDrawPreview();
+      if (circle.radiusKm >= MIN_AVOID_RADIUS_KM) {
+        store.setAvoidCircle(circle);
+      }
+      store.setDrawAvoidArmed(false);
+    };
+    const viewport = map.getViewport();
+    viewport.addEventListener('mousedown', onDrawDown);
+    viewport.addEventListener('mousemove', onDrawMove);
+    viewport.addEventListener('mouseup', onDrawUp);
+
+    // Escape cancels an in-progress draw immediately.
+    const onDrawKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || !useRouteStore.getState().drawAvoidArmed) return;
+      drawCenterRef.current = null;
+      drawTooltip.style.display = 'none';
+      if (drawPreviewLayerRef.current) {
+        map.removeLayer(drawPreviewLayerRef.current);
+        drawPreviewLayerRef.current = null;
+      }
+      useRouteStore.getState().setDrawAvoidArmed(false);
+    };
+    window.addEventListener('keydown', onDrawKey);
     (mapRef.current as unknown as { __olmap?: Map }).__olmap = map;
     mapInstanceRef.current = map;
 
@@ -260,6 +352,11 @@ export function OpenLayersMap() {
     return () => {
       resizeObserver.disconnect();
       map.getViewport()?.removeEventListener('contextmenu', handleContextMenu);
+      viewport.removeEventListener('mousedown', onDrawDown);
+      viewport.removeEventListener('mousemove', onDrawMove);
+      viewport.removeEventListener('mouseup', onDrawUp);
+      window.removeEventListener('keydown', onDrawKey);
+      drawTooltip.remove();
       map.setTarget(undefined);
       mapInstanceRef.current = null;
     };
@@ -303,11 +400,28 @@ export function OpenLayersMap() {
     }
 
     if (route) {
-      const layer = createRouteLayer(route, avoidCircle ? circleToRing(avoidCircle) : []);
+      const layer = createRouteLayer(route);
       map.addLayer(layer);
       routeLayerRef.current = layer;
     }
-  }, [route, avoidCircle]);
+  }, [route]);
+
+  // Standalone avoid-zone overlay — visible with or without a route.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (avoidLayerRef.current) {
+      map.removeLayer(avoidLayerRef.current);
+      avoidLayerRef.current = null;
+    }
+
+    if (avoidCircle) {
+      const layer = createAvoidLayer(circleToRing(avoidCircle));
+      map.addLayer(layer);
+      avoidLayerRef.current = layer;
+    }
+  }, [avoidCircle]);
 
   // Measure overlay — line, markers and distance label for picked points
   useEffect(() => {
@@ -392,6 +506,23 @@ export function OpenLayersMap() {
     map.addInteraction(translate);
     pinTranslateRef.current = translate;
   }, [evacStart, evacDestination]);
+
+  // Avoid-draw arming: crosshair cursor and pan-drag state. Stale previews
+  // are discarded lazily by the next pointer-down (see onDrawDown).
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return undefined;
+    const viewport = map.getViewport();
+    viewport.style.cursor = drawAvoidArmed ? 'crosshair' : '';
+    const pan = map
+      .getInteractions()
+      .getArray()
+      .find((interaction): interaction is DragPan => interaction instanceof DragPan);
+    if (pan) pan.setActive(!drawAvoidArmed);
+    return () => {
+      if (pan) pan.setActive(true);
+    };
+  }, [drawAvoidArmed]);
 
   // Shelter markers — rebuilt whenever the shelter list changes
   useEffect(() => {
