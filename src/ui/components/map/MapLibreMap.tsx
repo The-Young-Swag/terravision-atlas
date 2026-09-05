@@ -8,7 +8,9 @@ import { maplibreStyleFor } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
 import { removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
-import { setRouteVisible } from '../../../core/map/maplibre/route';
+import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_DIRECTION_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
+import { TRAFFIC_LAYER_ID } from '../../../core/map/maplibre/traffic';
+import { TRAFFIC_FLOW_DIM_OPACITY, TRAFFIC_FLOW_FULL_OPACITY_ML } from '../../../core/map/routeStyle';
 import { setSearchMarkerVisible } from '../../../core/map/maplibre/search';
 import { useSearchStore } from '../../../stores/searchStore';
 import {
@@ -326,6 +328,12 @@ export function MapLibreMap() {
       removeIncidentLayers(map);
       return undefined;
     }
+    // A displayed route dims flow (and sits above it); re-apply both when
+    // traffic is (re)added while a route is already up.
+    if (useRouteStore.getState().route && map.getLayer(TRAFFIC_LAYER_ID) && map.getLayer(ROUTE_CASING_LAYER_ID)) {
+      map.moveLayer(TRAFFIC_LAYER_ID, ROUTE_CASING_LAYER_ID);
+      map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_DIM_OPACITY);
+    }
     addIncidentLayers(map, trafficIncidents);
     const handleIncidentClick = (event: MapLayerMouseEvent) => {
       const incidentId = event.features?.[0]?.properties?.incidentId;
@@ -447,10 +455,28 @@ export function MapLibreMap() {
   }, [drawAvoidArmed]);
 
   // Evacuation route line — added after the avoid hatch so it draws above.
+  // The route is moved above the traffic flow layer (topmost line layer)
+  // and flow dims underneath so the blue line reads as dominant while
+  // traffic stays visible for context and the traffic-aware ETA.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
     setRouteVisible(map, evacRoute);
+    // Incident markers stay clickable above the route line: move the route
+    // stack to just below the incident layer.
+    if (evacRoute && map.getLayer(TRAFFIC_INCIDENT_LAYER_ID)) {
+      for (const routeId of [ROUTE_CASING_LAYER_ID, ROUTE_LINE_LAYER_ID, ROUTE_DIRECTION_LAYER_ID]) {
+        if (map.getLayer(routeId)) map.moveLayer(routeId, TRAFFIC_INCIDENT_LAYER_ID);
+      }
+    }
+    if (map.getLayer(TRAFFIC_LAYER_ID)) {
+      if (evacRoute) {
+        map.moveLayer(TRAFFIC_LAYER_ID, ROUTE_CASING_LAYER_ID);
+        map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_DIM_OPACITY);
+      } else {
+        map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_FULL_OPACITY_ML);
+      }
+    }
   }, [evacRoute]);
 
   // Sync center/zoom when store changes externally — only fly when meaningfully different

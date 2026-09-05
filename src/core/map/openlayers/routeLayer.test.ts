@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import LineString from 'ol/geom/LineString';
 import Point from 'ol/geom/Point';
+import { Stroke } from 'ol/style';
 import { createRouteLayer } from './routeLayer';
 import { createAvoidLayer } from './avoidLayer';
+import { ROUTE_LINE_COLOR } from '../routeStyle';
 
 const route = {
   path: [
@@ -16,15 +18,25 @@ const route = {
 };
 
 describe('createRouteLayer', () => {
-  it('builds casing, line, and endpoint markers from the path', () => {
+  it('builds casing, line, chevrons, and endpoint markers from the path', () => {
     const layer = createRouteLayer(route);
     const features = layer.getSource()?.getFeatures() ?? [];
-    expect(features).toHaveLength(4);
+    // casing + line + 4 direction chevrons + 2 endpoint markers
+    expect(features).toHaveLength(8);
     const lines = features.filter((f) => f.getGeometry() instanceof LineString);
     expect(lines).toHaveLength(2);
     expect((lines[0].getGeometry() as LineString).getCoordinates()).toHaveLength(3);
     const points = features.filter((f) => f.getGeometry() instanceof Point);
-    expect(points).toHaveLength(2);
+    expect(points).toHaveLength(6);
+  });
+
+  it('uses the unified blue line color regardless of the avoid verdict', () => {
+    for (const avoidsArea of [true, false]) {
+      const layer = createRouteLayer({ ...route, avoidsArea });
+      const lines = (layer.getSource()?.getFeatures() ?? []).filter((f) => f.getGeometry() instanceof LineString);
+      const strokes = lines.map((f) => (f.getStyle() as { getStroke(): Stroke }).getStroke().getColor());
+      expect(strokes).toContain(ROUTE_LINE_COLOR);
+    }
   });
 });
 

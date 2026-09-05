@@ -25,6 +25,7 @@ import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/sna
 import { createMeasureLayer } from '../../../core/map/openlayers/measureLayer';
 import { geodesicKilometers, formatDistanceKilometers } from '../../../core/geodetic/measurements/distance';
 import { createTrafficFlowLayer, createTrafficIncidentLayer } from '../../../core/map/openlayers/trafficLayer';
+import { TRAFFIC_FLOW_DIM_OPACITY, TRAFFIC_FLOW_FULL_OPACITY } from '../../../core/map/routeStyle';
 import { useTrafficStore } from '../../../stores/trafficStore';
 import { tomtomApiKey } from '../../../features/traffic/tomtom';
 import { refreshTraffic } from '../../../features/traffic/refresh';
@@ -393,7 +394,10 @@ export function OpenLayersMap() {
     }
   }, [showHazards, hazardFeatures, markerStroke]);
 
-  // Evacuation route overlay — rebuilt whenever the route or avoid area changes
+  // Evacuation route overlay — rebuilt whenever the route or avoid area changes.
+  // The route renders above the traffic flow layer (explicit z-index, not
+  // add-order) and dims flow underneath so the blue line reads as dominant
+  // while traffic stays visible for context.
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -405,8 +409,15 @@ export function OpenLayersMap() {
 
     if (route) {
       const layer = createRouteLayer(route);
+      layer.setZIndex(10);
       map.addLayer(layer);
       routeLayerRef.current = layer;
+    }
+
+    for (const candidate of map.getLayers().getArray()) {
+      if (candidate.get('layerId') === 'traffic-flow') {
+        candidate.setOpacity(route ? TRAFFIC_FLOW_DIM_OPACITY : TRAFFIC_FLOW_FULL_OPACITY);
+      }
     }
   }, [route]);
 
@@ -422,6 +433,7 @@ export function OpenLayersMap() {
 
     if (avoidCircle) {
       const layer = createAvoidLayer(circleToRing(avoidCircle));
+      layer.setZIndex(9);
       map.addLayer(layer);
       avoidLayerRef.current = layer;
     }
@@ -488,6 +500,8 @@ export function OpenLayersMap() {
 
     if (!evacStart && !evacDestination) return;
     const layer = createEvacPinLayer(evacStart, evacDestination);
+    // Waypoint markers stay above the route line; incident markers above all.
+    layer.setZIndex(11);
     map.addLayer(layer);
     pinLayerRef.current = layer;
 
@@ -565,11 +579,17 @@ export function OpenLayersMap() {
       const key = tomtomApiKey();
       if (key) {
         const flowLayer = createTrafficFlowLayer(key);
+        // A displayed route dims flow (see the route effect); a flow layer
+        // created while a route is already up must start dimmed too.
+        if (useRouteStore.getState().route) {
+          flowLayer.setOpacity(TRAFFIC_FLOW_DIM_OPACITY);
+        }
         map.addLayer(flowLayer);
         trafficFlowLayerRef.current = flowLayer;
       }
       if (trafficIncidents.length > 0) {
         const incidentLayer = createTrafficIncidentLayer(trafficIncidents);
+        incidentLayer.setZIndex(12);
         map.addLayer(incidentLayer);
         trafficIncidentLayerRef.current = incidentLayer;
       }

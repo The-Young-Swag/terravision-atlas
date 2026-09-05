@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
 import { useMapStore } from '../../../stores/mapStore';
+import { useRouteStore } from '../../../stores/routeStore';
+import { ROUTE_LINE_COLOR } from '../../../core/map/routeStyle';
 import {
   createCesiumViewer,
   flyToCesium,
@@ -132,6 +134,56 @@ export function CesiumGlobe() {
     if (!viewer || viewer.isDestroyed()) return;
     flyToCesium(viewer, center, zoom);
   }, [center, zoom]);
+
+  // Navigation route overlay: white-cased brand-blue polyline clamped to
+  // terrain (Ion mesh when available) plus green start / red end points —
+  // the same shared treatment as the 2D and Vector maps. Polyline widths
+  // above 1px are best-effort (platform-dependent); the blue hue outside
+  // the traffic-speed palette carries the distinction.
+  const navRoute = useRouteStore((s) => s.route);
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || viewer.isDestroyed()) return;
+    const entities = viewer.entities;
+    for (const entity of [...entities.values]) {
+      if ((entity.properties?.getValue?.(Cesium.JulianDate.now()) as { nav?: boolean } | undefined)?.nav) {
+        entities.remove(entity);
+      }
+    }
+    if (!navRoute || navRoute.path.length < 2) return;
+    const positions = navRoute.path.map((point) => Cesium.Cartesian3.fromDegrees(point.lon, point.lat));
+    const addLine = (width: number, color: Cesium.Color) => {
+      entities.add({
+        properties: { nav: true },
+        polyline: {
+          positions,
+          width,
+          material: color,
+          clampToGround: true,
+        },
+      });
+    };
+    addLine(7, Cesium.Color.WHITE);
+    addLine(4, Cesium.Color.fromCssColorString(ROUTE_LINE_COLOR));
+    const addPin = (lon: number, lat: number, color: Cesium.Color) => {
+      entities.add({
+        properties: { nav: true },
+        position: Cesium.Cartesian3.fromDegrees(lon, lat),
+        point: {
+          pixelSize: 12,
+          color,
+          outlineColor: Cesium.Color.WHITE,
+          outlineWidth: 2,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        },
+      });
+    };
+    const first = navRoute.path[0];
+    const last = navRoute.path[navRoute.path.length - 1];
+    if (first) addPin(first.lon, first.lat, Cesium.Color.fromCssColorString('#00d890'));
+    if (last) addPin(last.lon, last.lat, Cesium.Color.fromCssColorString('#E63946'));
+  }, [navRoute]);
 
   return (
     <div
