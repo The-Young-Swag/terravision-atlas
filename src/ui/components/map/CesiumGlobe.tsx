@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
+import * as turf from '@turf/turf';
 import { useMapStore } from '../../../stores/mapStore';
 import { useRouteStore } from '../../../stores/routeStore';
 import { ROUTE_LINE_COLOR } from '../../../core/map/routeStyle';
@@ -178,6 +179,61 @@ export function CesiumGlobe() {
     };
     addLine(7, Cesium.Color.WHITE, 0);
     addLine(4, Cesium.Color.fromCssColorString(ROUTE_LINE_COLOR), 1);
+    // Direction chevrons: V-shaped ground-clamped segments at intervals,
+    // apex pointing along travel. Turf stations the points and bearings,
+    // mirroring the 2D overlay; white casing + blue inner layer above the
+    // route line via higher zIndex. Decorative — a failed computation never
+    // blocks the route line itself.
+    try {
+      const geoLine = turf.lineString(navLine.path.map((point) => [point.lon, point.lat]));
+      const lengthKm = turf.length(geoLine, { units: 'kilometers' });
+      if (lengthKm > 0) {
+        const wingKm = Math.min(0.4, Math.max(0.05, lengthKm * 0.012));
+        for (const fraction of [0.2, 0.4, 0.6, 0.8]) {
+          const along = turf.along(geoLine, fraction * lengthKm, { units: 'kilometers' });
+          const before = turf.along(geoLine, Math.max(0, fraction * lengthKm - lengthKm * 0.01), {
+            units: 'kilometers',
+          });
+          const after = turf.along(geoLine, Math.min(lengthKm, fraction * lengthKm + lengthKm * 0.01), {
+            units: 'kilometers',
+          });
+          const bearing = turf.bearing(before, after);
+          const [chevronLon, chevronLat] = along.geometry.coordinates;
+          const apex = Cesium.Cartesian3.fromDegrees(chevronLon, chevronLat);
+          const wing = (wingBearing: number) => {
+            const dest = turf.destination(turf.point([chevronLon, chevronLat]), wingKm, wingBearing, {
+              units: 'kilometers',
+            });
+            const [wingLon, wingLat] = dest.geometry.coordinates;
+            return Cesium.Cartesian3.fromDegrees(wingLon, wingLat);
+          };
+          const chevronPositions = [wing(bearing + 150), apex, wing(bearing - 150)];
+          entities.add({
+            properties: { nav: true },
+            polyline: {
+              positions: chevronPositions,
+              width: 5,
+              material: Cesium.Color.WHITE,
+              clampToGround: true,
+              zIndex: 2,
+            },
+          });
+          entities.add({
+            properties: { nav: true },
+            polyline: {
+              positions: chevronPositions,
+              width: 3,
+              material: Cesium.Color.fromCssColorString(ROUTE_LINE_COLOR),
+              clampToGround: true,
+              zIndex: 3,
+            },
+          });
+        }
+      }
+    } catch {
+      // Chevron placement is decorative — a failed computation never blocks
+      // the route line itself.
+    }
     const addPin = (lon: number, lat: number, color: Cesium.Color) => {
       entities.add({
         properties: { nav: true },
