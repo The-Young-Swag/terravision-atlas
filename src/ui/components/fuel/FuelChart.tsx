@@ -13,9 +13,6 @@ interface FuelChartProps {
 export function FuelChart({ fuelNeeded, totalCost, fuelUnit }: FuelChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
-  // Chart labels follow the shared dynamic font-color utility so they stay
-  // legible on bright and dark map backgrounds alike. (The tooltip keeps
-  // light text: its background is fixed dark.)
   const isBrightBasemap = useBrightBasemap();
   const labelPrimary = isBrightBasemap ? '#1e293b' : '#F8F9FA';
   const labelSecondary = isBrightBasemap ? '#475569' : '#94a3b8';
@@ -27,7 +24,6 @@ export function FuelChart({ fuelNeeded, totalCost, fuelUnit }: FuelChartProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Destroy previous chart
     if (chartRef.current) {
       chartRef.current.destroy();
       chartRef.current = null;
@@ -39,11 +35,24 @@ export function FuelChart({ fuelNeeded, totalCost, fuelUnit }: FuelChartProps) {
         labels: [`Fuel (${fuelUnit})`, 'Cost (₱)'],
         datasets: [
           {
-            data: [fuelNeeded, totalCost],
-            backgroundColor: ['#5500a4', '#00d890'],
+            label: `Fuel (${fuelUnit})`,
+            data: [fuelNeeded, null],
+            backgroundColor: '#5500a4',
             borderRadius: 8,
             borderSkipped: false,
             barThickness: 18,
+            xAxisID: 'x-fuel',
+            order: 2,
+          },
+          {
+            label: 'Cost (₱)',
+            data: [null, totalCost],
+            backgroundColor: '#00d890',
+            borderRadius: 8,
+            borderSkipped: false,
+            barThickness: 18,
+            xAxisID: 'x-cost',
+            order: 1,
           },
         ],
       },
@@ -61,14 +70,35 @@ export function FuelChart({ fuelNeeded, totalCost, fuelUnit }: FuelChartProps) {
             borderWidth: 1,
             padding: 10,
             displayColors: true,
+            callbacks: {
+              label: (context) => {
+                const value = context.raw as number;
+                if (context.dataset.label?.includes('Fuel')) {
+                  return `Fuel needed: ${value.toFixed(1)} ${fuelUnit}`;
+                }
+                return `Total cost: ₱${value.toFixed(2)}`;
+              },
+            },
           },
         },
         scales: {
-          x: {
+          'x-fuel': {
+            type: 'linear',
+            position: 'bottom',
             beginAtZero: true,
             grid: { color: 'rgba(255,255,255,0.06)' },
             ticks: { color: labelSecondary, font: { family: 'IBM Plex Mono', size: 10 } },
             border: { display: false },
+            offset: true,
+          },
+          'x-cost': {
+            type: 'linear',
+            position: 'top',
+            beginAtZero: true,
+            grid: { drawOnChartArea: false },
+            ticks: { color: 'transparent' },
+            border: { display: false },
+            offset: true,
           },
           y: {
             grid: { display: false },
