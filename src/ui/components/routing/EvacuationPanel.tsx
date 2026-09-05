@@ -6,6 +6,9 @@ import { useMapStore } from '../../../stores/mapStore';
 import { useRouteStore } from '../../../stores/routeStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { TRAVEL_COSTINGS, routeWithOptions, type TravelCosting } from '../../../features/routing/valhalla';
+import { trafficAdjustedMinutes } from '../../../features/traffic/flowEta';
+import { tomtomApiKey } from '../../../features/traffic/tomtom';
+import { useTrafficStore } from '../../../stores/trafficStore';
 import { circleToRing, evacStep, EVAC_STEP_INSTRUCTIONS, type EvacCircle } from '../../../features/routing/avoidZone';
 import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
 import type { GeocodedPlace } from '../../../features/search/geocode';
@@ -53,6 +56,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
   const travelMode = useRouteStore((s) => s.travelMode);
   const setTravelMode = useRouteStore((s) => s.setTravelMode);
   const setTrafficAdjustment = useRouteStore((s) => s.setTrafficAdjustment);
+  const trafficAdjustment = useRouteStore((s) => s.trafficAdjustment);
   const isBrightBasemap = useBrightBasemap();
 
   // Field text is render-derived: user typing lives in the draft, while an
@@ -152,6 +156,17 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
         : true;
       setEvacuationRoute({ ...route, avoidsArea: verdict });
       setResult({ distanceKm: route.distanceKm, durationMinutes: route.durationMinutes, avoidsArea: verdict });
+      // Deterministic traffic adjustment from real TomTom flow speeds —
+      // never blocks routing and never presented as prediction/AI. Falls
+      // back to the base duration when Traffic data is unavailable.
+      const trafficKey = tomtomApiKey();
+      if (trafficKey && useTrafficStore.getState().status === 'ok') {
+        trafficAdjustedMinutes(route.path, route.durationMinutes, trafficKey)
+          .then((adjustment) => {
+            if (adjustment && adjustment.factor > 1.02) setTrafficAdjustment(adjustment);
+          })
+          .catch(() => {});
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -440,6 +455,12 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
             <p className={`font-mono ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
               {result.distanceKm.toFixed(1)} km · {result.durationMinutes.toFixed(0)} min {durationNoun}
             </p>
+            {trafficAdjustment && (
+              <p className={`mt-1 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+                ≈{trafficAdjustment.adjustedMinutes.toFixed(0)} min with current traffic ({trafficAdjustment.samples}{' '}
+                samples)
+              </p>
+            )}
             {isEvacuation && (
               <p className={`mt-1 flex items-center gap-1.5 ${result.avoidsArea ? 'text-[#00d890]' : 'text-[#FF9F1C]'}`}>
                 <ShieldAlert className="h-3.5 w-3.5 shrink-0" aria-hidden />
