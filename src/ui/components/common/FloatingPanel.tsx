@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { motion, useDragControls } from 'framer-motion';
 import { Grip, Minimize2, Maximize2, X } from 'lucide-react';
-import { useMapStore } from '../../../stores/mapStore';
+import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 
 interface FloatingPanelProps {
   id: string;
@@ -33,10 +33,10 @@ export function FloatingPanel({
 }: FloatingPanelProps) {
   const [isMinimized, setIsMinimized] = useState(defaultMinimized);
   const dragControls = useDragControls();
-  // Bright basemap: only adjust text/icon color, preserve glassmorphism/borders/backgrounds
-  const basemap = useMapStore((s) => s.basemap);
-  const viewMode = useMapStore((s) => s.viewMode);
-  const isBrightBasemap = viewMode === 'vector' || ['streets', 'terrain'].includes(basemap);
+  // Panel-chrome text/icons follow the shared dynamic font-color utility.
+  // (Minimize bubbles and the mobile sheet keep static white: their
+  // backgrounds are fixed dark, so they never need adapting.)
+  const isBrightBasemap = useBrightBasemap();
   // Track whether the last interaction was a drag vs a tap — prevents
   // the bubble from reopening immediately after a drag release
   const hasDraggedRef = useState(() => ({ current: false }))[0];

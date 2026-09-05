@@ -43,7 +43,7 @@ export function StoryBuilder() {
   return (
     <div className="glass w-full max-w-md rounded-2xl p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-[13px] font-semibold text-slate-200">
+        <h3 className={`flex items-center gap-2 text-[13px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>
           <BookOpen className="h-4 w-4 text-[#5500a4]" />
           Storytelling
         </h3>
@@ -60,7 +60,7 @@ export function StoryBuilder() {
         </button>
         <button
           onClick={addScene}
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-medium text-slate-200 hover:bg-white/10"
+          className={`flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-medium hover:bg-white/10 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
         >
           <Plus className="h-3.5 w-3.5" />
           Add scene
@@ -82,10 +82,10 @@ export function StoryBuilder() {
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 font-mono text-[10px] text-slate-300">
+                <span className={`flex h-6 w-6 items-center justify-center rounded-full bg-white/10 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
                   {index + 1}
                 </span>
-                <p className="text-[12px] font-medium text-slate-200">{scene.title}</p>
+                <p className={`text-[12px] font-medium ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>{scene.title}</p>
               </div>
               <button
                 onClick={(e) => {

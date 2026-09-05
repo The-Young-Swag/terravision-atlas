@@ -34,7 +34,7 @@ export function CoordinatePanel() {
       <div>
         <div className="mb-3">
         <p className={`mb-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>WGS84 (EPSG:4326)</p>
-        <p className="font-mono text-[12px] text-slate-200">{wgs84Label}</p>
+        <p className={`font-mono text-[12px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>{wgs84Label}</p>
       </div>
 
       <div className="mb-3">
@@ -59,7 +59,7 @@ export function CoordinatePanel() {
         {transformed.error ? (
           <p className="font-mono text-[11px] text-[#E63946]">{transformed.error}</p>
         ) : (
-          <p className="font-mono text-[12px] text-slate-200">
+          <p className={`font-mono text-[12px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>
             E: {transformed.x.toFixed(2)}<br />
             N: {transformed.y.toFixed(2)} <span className={isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}>m</span>
           </p>
@@ -86,13 +86,13 @@ export function CoordinatePanel() {
           <span>{datumBlend}%</span>
           <span>Shifted</span>
         </div>
-        <p className="mt-2 font-mono text-[11px] text-slate-300">
+        <p className={`mt-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
           ΔN: {(datumBlend * 0.12).toFixed(2)} m · ΔE: {(datumBlend * 0.08).toFixed(2)} m
         </p>
       </div>
 
       <div className="mt-3">
-        <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-slate-300 hover:bg-white/10">
+        <label className={`flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11px] hover:bg-white/10 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>
           <Upload className="h-3.5 w-3.5" />
           <span>{gridFile ? gridFile : 'Load NTv2 grid (.gsb)'}</span>
           <input

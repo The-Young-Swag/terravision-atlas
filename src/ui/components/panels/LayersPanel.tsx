@@ -103,7 +103,7 @@ export function LayersPanel() {
                 onClick={() => setBasemap(option.id)}
                 aria-label={`Basemap ${option.label}`}
                 aria-pressed={isActive}
-                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${isActive ? 'border-[#5500a4] bg-[#5500a4]/10 text-white' : isBrightBasemap ? 'border-white/10 bg-white/[0.04] text-slate-800 hover:text-slate-900' : 'border-white/10 bg-white/[0.04] text-slate-300 hover:text-white'}`}
+                className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${isActive ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4]/10 text-slate-900' : 'border-[#5500a4] bg-[#5500a4]/10 text-white') : isBrightBasemap ? 'border-white/10 bg-white/[0.04] text-slate-800 hover:text-slate-900' : 'border-white/10 bg-white/[0.04] text-slate-300 hover:text-white'}`}
               >
                 <span
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[12px] transition ${isActive ? 'border-[#5500a4]/30 bg-[#5500a4] text-white' : 'border-white/10 bg-white/5 text-slate-400 group-hover:text-slate-200'}`}
@@ -112,8 +112,8 @@ export function LayersPanel() {
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="flex-1">
-                  <span className={`block text-[13px] font-medium leading-none ${isActive ? 'text-[#10B981]' : 'text-slate-400'}`}>{option.label}</span>
-                  <span className="block text-[11px] text-slate-400">{option.desc}</span>
+                  <span className={`block text-[13px] font-medium leading-none ${isActive ? 'text-[#10B981]' : isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>{option.label}</span>
+                  <span className={`block text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>{option.desc}</span>
                 </span>
                 {isActive ? (
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#5500a4] text-white">
@@ -143,11 +143,11 @@ export function LayersPanel() {
                     onClick={() => setSatelliteSource(source.id)}
                     aria-label={`Satellite source ${source.label}`}
                     aria-pressed={isSourceActive}
-                    className={`flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-1.5 text-left transition ${isSourceActive ? 'border-[#5500a4] bg-[#5500a4]/10 text-white' : isBrightBasemap ? 'border-transparent text-slate-800 hover:bg-white/10' : 'border-transparent text-slate-300 hover:bg-white/5 hover:text-white'}`}
+                    className={`flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-1.5 text-left transition ${isSourceActive ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4]/10 text-slate-900' : 'border-[#5500a4] bg-[#5500a4]/10 text-white') : isBrightBasemap ? 'border-transparent text-slate-800 hover:bg-white/10' : 'border-transparent text-slate-300 hover:bg-white/5 hover:text-white'}`}
                   >
                     <span className="flex-1">
                       <span className={`block text-[12px] font-medium leading-tight ${isSourceActive ? 'text-[#10B981]' : ''}`}>{source.label}</span>
-                      <span className="block font-mono text-[10px] text-slate-400">{source.desc}</span>
+                      <span className={`block font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>{source.desc}</span>
                     </span>
                     {isSourceActive ? (
                       <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#5500a4] text-white">

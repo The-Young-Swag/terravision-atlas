@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Chart, registerables } from 'chart.js';
+import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 
 Chart.register(...registerables);
 
@@ -12,6 +13,12 @@ interface FuelChartProps {
 export function FuelChart({ fuelNeeded, totalCost, fuelUnit }: FuelChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
+  // Chart labels follow the shared dynamic font-color utility so they stay
+  // legible on bright and dark map backgrounds alike. (The tooltip keeps
+  // light text: its background is fixed dark.)
+  const isBrightBasemap = useBrightBasemap();
+  const labelPrimary = isBrightBasemap ? '#1e293b' : '#F8F9FA';
+  const labelSecondary = isBrightBasemap ? '#475569' : '#94a3b8';
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -60,12 +67,12 @@ export function FuelChart({ fuelNeeded, totalCost, fuelUnit }: FuelChartProps) {
           x: {
             beginAtZero: true,
             grid: { color: 'rgba(255,255,255,0.06)' },
-            ticks: { color: '#94a3b8', font: { family: 'IBM Plex Mono', size: 10 } },
+            ticks: { color: labelSecondary, font: { family: 'IBM Plex Mono', size: 10 } },
             border: { display: false },
           },
           y: {
             grid: { display: false },
-            ticks: { color: '#F8F9FA', font: { family: 'Inter', size: 11, weight: 500 } },
+            ticks: { color: labelPrimary, font: { family: 'Inter', size: 11, weight: 500 } },
             border: { display: false },
           },
         },
@@ -77,7 +84,7 @@ export function FuelChart({ fuelNeeded, totalCost, fuelUnit }: FuelChartProps) {
       chartRef.current?.destroy();
       chartRef.current = null;
     };
-  }, [fuelNeeded, totalCost, fuelUnit]);
+  }, [fuelNeeded, totalCost, fuelUnit, isBrightBasemap, labelPrimary, labelSecondary]);
 
   return (
     <div className="h-[110px] w-full">

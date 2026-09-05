@@ -49,14 +49,14 @@ export function MinecraftExport() {
     <div className="glass w-full max-w-md rounded-2xl p-4">
       <div className="mb-3 flex items-center gap-2">
         <Box className="h-4 w-4 text-[#00d890]" />
-        <h3 className="text-[13px] font-semibold text-slate-200">Minecraft Export</h3>
+        <h3 className={`text-[13px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Minecraft Export</h3>
         <span className="ml-auto rounded-full bg-[#00d890]/20 px-2 py-0.5 font-mono text-[10px] text-[#00d890]">
           Java Edition
         </span>
       </div>
 
       <div className="mb-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-        <div className="flex items-center gap-2 text-[12px] text-slate-300">
+        <div className={`flex items-center gap-2 text-[12px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>
           <MapPin className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`} />
           Current map area
         </div>
@@ -75,7 +75,7 @@ export function MinecraftExport() {
           className={`flex-1 rounded-xl border px-3 py-2 text-[12px] font-medium ${
             format === 'java'
               ? 'border-[#5500a4] bg-[#5500a4] text-white'
-              : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+              : `border-white/10 bg-white/5 hover:bg-white/10 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`
           }`}
         >
           Java Edition
@@ -110,7 +110,7 @@ export function MinecraftExport() {
       )}
 
       {phase === 'done' && summary && (
-        <div className="mt-2 rounded-lg border border-[#00d890]/30 bg-[#00d890]/10 px-3 py-2 text-[11px] text-slate-200">
+        <div className={`mt-2 rounded-lg border border-[#00d890]/30 bg-[#00d890]/10 px-3 py-2 text-[11px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>
           <p className="font-mono">
             r.0.0.mca {(summary.regionBytes.length / 1024 / 1024).toFixed(1)} MB · level.dat{' '}
             {summary.levelDatBytes.length} B

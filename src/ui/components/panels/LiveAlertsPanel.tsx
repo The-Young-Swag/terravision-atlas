@@ -130,7 +130,7 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
             {['All', 'High', 'Medium', 'Low'].map((c, i) => (
               <span
                 key={c}
-                className={`rounded-full border border-white/10 px-2.5 py-1 text-[11px] ${i === 0 ? 'bg-white/15 text-white' : isBrightBasemap ? 'bg-white/5 text-slate-700' : 'bg-white/5 text-slate-300'}`}
+                className={`rounded-full border border-white/10 px-2.5 py-1 text-[11px] ${i === 0 ? (isBrightBasemap ? 'bg-white/15 text-slate-800' : 'bg-white/15 text-white') : isBrightBasemap ? 'bg-white/5 text-slate-700' : 'bg-white/5 text-slate-300'}`}
               >
                 {c}
               </span>
