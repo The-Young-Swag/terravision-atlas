@@ -142,9 +142,13 @@ export function CesiumGlobe() {
 
   // Navigation route overlay: white-cased brand-blue polyline clamped to
   // terrain (Ion mesh when available) plus green start / red end points —
-  // the same shared treatment as the 2D and Vector maps. Polyline widths
-  // above 1px are best-effort (platform-dependent); the blue hue outside
-  // the traffic-speed palette carries the distinction.
+  // the same shared treatment as the 2D and Vector maps. The two coplanar
+  // ground-clamped lines are ordered with polyline zIndex (casing below,
+  // blue above): per Cesium's PolylineGraphics docs, zIndex orders ground
+  // geometry when clampToGround is true, which resolves the overlap
+  // deterministically instead of z-fighting. Polyline widths above 1px are
+  // best-effort (platform-dependent); the blue hue outside the
+  // traffic-speed palette carries the distinction.
   const navRoute = useRouteStore((s) => s.route);
   const navJog = useRouteStore((s) => s.jogLoop);
   const navLine = navRoute ?? (navJog ? jogLoopAsEvacRoute(navJog) : null);
@@ -160,7 +164,7 @@ export function CesiumGlobe() {
     }
     if (!navLine || navLine.path.length < 2) return;
     const positions = navLine.path.map((point) => Cesium.Cartesian3.fromDegrees(point.lon, point.lat));
-    const addLine = (width: number, color: Cesium.Color) => {
+    const addLine = (width: number, color: Cesium.Color, zIndex: number) => {
       entities.add({
         properties: { nav: true },
         polyline: {
@@ -168,11 +172,12 @@ export function CesiumGlobe() {
           width,
           material: color,
           clampToGround: true,
+          zIndex,
         },
       });
     };
-    addLine(7, Cesium.Color.WHITE);
-    addLine(4, Cesium.Color.fromCssColorString(ROUTE_LINE_COLOR));
+    addLine(7, Cesium.Color.WHITE, 0);
+    addLine(4, Cesium.Color.fromCssColorString(ROUTE_LINE_COLOR), 1);
     const addPin = (lon: number, lat: number, color: Cesium.Color) => {
       entities.add({
         properties: { nav: true },
