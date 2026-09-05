@@ -160,6 +160,15 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
     return () => window.removeEventListener('keydown', onKey);
   }, [pickMode, setPickMode]);
 
+  // Pin/avoid/mode edits invalidate the computed route in the store; the
+  // local result card follows so stale numbers are never shown under a new
+  // mode or moved pins. (Errors are mutually exclusive with a route and
+  // are left alone.)
+  const routeActive = route !== null;
+  useEffect(() => {
+    if (!routeActive) setResult(null);
+  }, [routeActive]);
+
   const flyToPin = (lon: number, lat: number) => {
     setCenter([lon, lat]);
     if (useMapStore.getState().zoom < 12) setZoom(12);
