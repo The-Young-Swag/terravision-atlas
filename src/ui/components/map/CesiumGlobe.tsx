@@ -17,6 +17,9 @@ export function CesiumGlobe() {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
   const [terrain, setTerrain] = useState<TerrainStatus | null>(null);
+  // Bumped when the async viewer creation finishes: route/pin overlays can
+  // only attach to a live viewer, which does not exist on first render.
+  const [viewerEpoch, setViewerEpoch] = useState(0);
 
   const { center, zoom } = useMapStore();
   const basemap = useMapStore((s) => s.basemap);
@@ -41,6 +44,7 @@ export function CesiumGlobe() {
         viewerRef.current = v;
         viewer = v;
         setTerrain(terrainStatus);
+        setViewerEpoch((epoch) => epoch + 1);
 
         // Apply adaptive widget styles
         const applyWidgetStyles = () => {
@@ -186,7 +190,7 @@ export function CesiumGlobe() {
     const last = navLine.path[navLine.path.length - 1];
     if (first) addPin(first.lon, first.lat, Cesium.Color.fromCssColorString('#00d890'));
     if (last) addPin(last.lon, last.lat, Cesium.Color.fromCssColorString('#E63946'));
-  }, [navLine]);
+  }, [navLine, viewerEpoch]);
 
   return (
     <div
