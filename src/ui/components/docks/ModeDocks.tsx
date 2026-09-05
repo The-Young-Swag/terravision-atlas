@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Grid2x2, Ruler, X, Move3d, Printer } from 'lucide-react';
+import { Grid2x2, Ruler, X, Move3d, Printer, Satellite, Link2, Copy, MapPin } from 'lucide-react';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
 import { downloadA0Png, exportA0Png } from '../../../features/export/print/a0Export';
 import { bearingDegrees, formatBearing, formatDistanceKilometers, geodesicKilometers } from '../../../core/geodetic/measurements/distance';
+import { useSurveyStore } from '../../../stores/surveyStore';
 
 type AppMode = 'explore' | 'monitor' | 'survey';
 
@@ -30,8 +31,20 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [exportNote, setExportNote] = useState<string | null>(null);
 
+  // Survey-specific state
+  const gpsTracking = useSurveyStore((s) => s.gpsTracking);
+  const gpsAccuracy = useSurveyStore((s) => s.gpsAccuracy);
+  const gpsError = useSurveyStore((s) => s.gpsError);
+  const setGpsTracking = useSurveyStore((s) => s.setGpsTracking);
+  const setGpsPosition = useSurveyStore((s) => s.setGpsPosition);
+  const setGpsError = useSurveyStore((s) => s.setGpsError);
+  const encodeSessionToUrl = useSurveyStore((s) => s.encodeSessionToUrl);
+  const generateSessionId = useSurveyStore((s) => s.generateSessionId);
+  const datumVizOpen = useSurveyStore((s) => s.datumVizOpen);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+
   const handleA0Export = async () => {
-    // A0 rendering reads OpenLayers canvases, so it only runs in 2D Map view.
     if (viewMode !== '2d') {
       setExportNote('Switch to 2D Map to export — A0 renders the 2D view');
       return;
@@ -49,6 +62,36 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     }
   };
 
+  // GPS tracking effect
+  useEffect(() => {
+    if (!gpsTracking) return;
+    if (!navigator.geolocation) {
+      setGpsError('Geolocation not supported');
+      setGpsTracking(false);
+      return;
+    }
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setGpsPosition([pos.coords.longitude, pos.coords.latitude], pos.coords.accuracy);
+        // Also update map center to follow GPS
+        useMapStore.getState().setCenter([pos.coords.longitude, pos.coords.latitude]);
+      },
+      (err) => {
+        // Stop first, then report: setGpsTracking preserves an existing
+        // error when stopping, so the message below survives.
+        setGpsTracking(false);
+        setGpsError(err.message);
+      },
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [gpsTracking, setGpsTracking, setGpsPosition, setGpsError]);
+
+  // Sync datum viz open state with map store
+  useEffect(() => {
+    setShowDatumViz(datumVizOpen);
+  }, [datumVizOpen, setShowDatumViz]);
+
   // Escape exits measure mode (and clears the line) from either map.
   useEffect(() => {
     if (!measureActive) return undefined;
@@ -65,6 +108,32 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
   const measuredKm = geodesicKilometers(measurePoints);
   const measuredBearing =
     measurePoints.length === 2 ? formatBearing(bearingDegrees(measurePoints[0], measurePoints[1])) : null;
+
+  const handleShareClick = useCallback(() => {
+    const url = encodeSessionToUrl(window.location.origin + window.location.pathname);
+    setShareUrl(url);
+    // Clipboard may reject (permissions/headless) — the link stays visible
+    // in the dock either way, so sharing never silently fails.
+    try {
+      const result = navigator.clipboard.writeText(url);
+      if (result && typeof (result as Promise<void>).catch === 'function') {
+        (result as Promise<void>).catch(() => {});
+      }
+    } catch {
+      // ignore — link remains visible for manual copy
+    }
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
+  }, [encodeSessionToUrl]);
+
+  const handleNewSession = useCallback(() => {
+    generateSessionId();
+    setShareUrl(null);
+    setShareCopied(false);
+    // Clear measurement points
+    clearMeasure();
+    setMeasureActive(false);
+  }, [generateSessionId, clearMeasure, setMeasureActive]);
 
   return (
     <>
@@ -142,6 +211,41 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               <Move3d className="h-3.5 w-3.5" />
               Datum shift viz
             </button>
+            {/* Live GPS tracking — uses browser Geolocation API (free, no key) */}
+            <button
+              onClick={() => setGpsTracking(!gpsTracking)}
+              aria-pressed={gpsTracking}
+              disabled={gpsError !== null && !gpsTracking}
+              title={gpsTracking
+                ? `Live GPS tracking active — accuracy ${gpsAccuracy ? `${Math.round(gpsAccuracy)}m` : '?'} — click to stop`
+                : gpsError
+                  ? `GPS error: ${gpsError} — click to retry`
+                  : 'Start live GPS tracking (uses device location)'}
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${gpsTracking ? 'bg-[#00d890]/20 text-[#00d890] border border-[#00d890]/30' : gpsError ? 'text-[#E63946] hover:text-[#E63946]' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+            >
+              <Satellite className="h-3.5 w-3.5" />
+              {gpsTracking ? 'GPS live' : gpsError ? 'GPS error' : 'Live GPS'}
+            </button>
+            {/* Shareable session link */}
+            <button
+              onClick={handleShareClick}
+              aria-label={shareCopied ? 'Copied!' : 'Copy shareable survey session link'}
+              title={shareCopied ? 'Link copied to clipboard' : 'Copy a link that restores this survey session (view, measurements, tools)'}
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${shareCopied ? 'bg-[#00d890]/20 text-[#00d890] border border-[#00d890]/30' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+            >
+              <Link2 className="h-3.5 w-3.5" />
+              {shareCopied ? <Copy className="h-3.5 w-3.5" /> : 'Share session'}
+            </button>
+            {/* New session button */}
+            <button
+              onClick={handleNewSession}
+              aria-label="Start new survey session"
+              title="Clear all measurements and generate a new session ID"
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+            >
+              <MapPin className="h-3.5 w-3.5" />
+              New session
+            </button>
             <button
               onClick={() => void handleA0Export()}
               disabled={isExporting}
@@ -153,6 +257,11 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
             </button>
             {exportNote && !isExporting && (
               <span className={`px-3 py-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{exportNote}</span>
+            )}
+            {shareUrl && !shareCopied && (
+              <span className={`px-2 py-1 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`} title={shareUrl}>
+                {shareUrl.slice(0, 50)}…
+              </span>
             )}
           </motion.div>
         )}

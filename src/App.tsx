@@ -1,9 +1,10 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, Box, BookOpen, X } from 'lucide-react';
 import { OpenLayersMap } from './ui/components/map/OpenLayersMap';
 import { MapLibreMap } from './ui/components/map/MapLibreMap';
 import { useMapStore } from './stores/mapStore';
+import { useSurveyStore } from './stores/surveyStore';
 import { TopBar } from './ui/components/header/TopBar';
 import { LayersPanel } from './ui/components/panels/LayersPanel';
 import { GeodeticPanel } from './ui/components/panels/GeodeticPanel';
@@ -29,6 +30,16 @@ export default function App() {
   const [storyOpen, setStoryOpen] = useState(false);
   const [minecraftOpen, setMinecraftOpen] = useState(false);
   const { viewMode, showDatumViz } = useMapStore();
+  const decodeSessionFromUrl = useSurveyStore((s) => s.decodeSessionFromUrl);
+  const applySessionState = useSurveyStore((s) => s.applySessionState);
+
+  // Restore survey session from URL on initial load
+  useEffect(() => {
+    const sessionState = decodeSessionFromUrl(window.location.search);
+    if (sessionState) {
+      applySessionState(sessionState);
+    }
+  }, [decodeSessionFromUrl, applySessionState]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[#0A0E19] text-slate-100 selection:bg-[#5500a4]/30">
@@ -41,7 +52,7 @@ export default function App() {
                 <div className="glass rounded-2xl px-6 py-8 text-center">
                   <Globe className="mx-auto mb-3 h-8 w-8 animate-pulse text-[#5500a4]" />
                   <p className="text-[14px] font-medium text-slate-200">Loading 3D Globe…</p>
-                  <p className="mt-1 font-mono text-[11px] text-slate-400">Cesium engine initializing</p>
+                  <p className="mt-1 font-mono text-[11px] text-slate-300">Cesium engine initializing</p>
                 </div>
               </div>
             }
