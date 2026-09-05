@@ -9,6 +9,7 @@ import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
 import { removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
 import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_DIRECTION_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
+import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import { TRAFFIC_LAYER_ID } from '../../../core/map/maplibre/traffic';
 import { TRAFFIC_FLOW_DIM_OPACITY, TRAFFIC_FLOW_FULL_OPACITY_ML } from '../../../core/map/routeStyle';
 import { setSearchMarkerVisible } from '../../../core/map/maplibre/search';
@@ -259,6 +260,8 @@ export function MapLibreMap() {
   const evacStart = useRouteStore((s) => s.start);
   const evacDestination = useRouteStore((s) => s.destination);
   const evacRoute = useRouteStore((s) => s.route);
+  const jogLoop = useRouteStore((s) => s.jogLoop);
+  const routeLine = evacRoute ?? (jogLoop ? jogLoopAsEvacRoute(jogLoop) : null);
   const avoidCircle = useRouteStore((s) => s.avoidCircle);
   const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
   const drawCenterRef = useRef<{ lon: number; lat: number } | null>(null);
@@ -330,7 +333,11 @@ export function MapLibreMap() {
     }
     // A displayed route dims flow (and sits above it); re-apply both when
     // traffic is (re)added while a route is already up.
-    if (useRouteStore.getState().route && map.getLayer(TRAFFIC_LAYER_ID) && map.getLayer(ROUTE_CASING_LAYER_ID)) {
+    if (
+      (useRouteStore.getState().route ?? useRouteStore.getState().jogLoop) &&
+      map.getLayer(TRAFFIC_LAYER_ID) &&
+      map.getLayer(ROUTE_CASING_LAYER_ID)
+    ) {
       map.moveLayer(TRAFFIC_LAYER_ID, ROUTE_CASING_LAYER_ID);
       map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_DIM_OPACITY);
     }
@@ -372,7 +379,9 @@ export function MapLibreMap() {
       setContoursVisible(liveMap, mapState.showTerrainContours);
       setTrafficVisible(liveMap, mapState.showTraffic && trafficState.status === 'ok', tomtomApiKey());
       setAvoidVisible(liveMap, useRouteStore.getState().avoidCircle);
-      setRouteVisible(liveMap, useRouteStore.getState().route);
+      const liveRoute = useRouteStore.getState().route;
+      const liveJog = useRouteStore.getState().jogLoop;
+      setRouteVisible(liveMap, liveRoute ?? (liveJog ? jogLoopAsEvacRoute(liveJog) : null));
       setSearchMarkerVisible(liveMap, useSearchStore.getState().marker);
     });
   }, [basemap, satelliteSource]);
@@ -461,23 +470,23 @@ export function MapLibreMap() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
-    setRouteVisible(map, evacRoute);
+    setRouteVisible(map, routeLine);
     // Incident markers stay clickable above the route line: move the route
     // stack to just below the incident layer.
-    if (evacRoute && map.getLayer(TRAFFIC_INCIDENT_LAYER_ID)) {
+    if (routeLine && map.getLayer(TRAFFIC_INCIDENT_LAYER_ID)) {
       for (const routeId of [ROUTE_CASING_LAYER_ID, ROUTE_LINE_LAYER_ID, ROUTE_DIRECTION_LAYER_ID]) {
         if (map.getLayer(routeId)) map.moveLayer(routeId, TRAFFIC_INCIDENT_LAYER_ID);
       }
     }
     if (map.getLayer(TRAFFIC_LAYER_ID)) {
-      if (evacRoute) {
+      if (routeLine) {
         map.moveLayer(TRAFFIC_LAYER_ID, ROUTE_CASING_LAYER_ID);
         map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_DIM_OPACITY);
       } else {
         map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_FULL_OPACITY_ML);
       }
     }
-  }, [evacRoute]);
+  }, [routeLine]);
 
   // Sync center/zoom when store changes externally — only fly when meaningfully different
   useEffect(() => {

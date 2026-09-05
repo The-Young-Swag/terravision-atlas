@@ -193,6 +193,88 @@ export async function routeAvoidingArea(
   return routeWithOptions(from, to, { avoidRing });
 }
 
+export interface MultiStopRoute {
+  path: RoutePoint[];
+  distanceKm: number;
+  durationMinutes: number;
+  maneuverCount: number;
+}
+
+/**
+ * Route through an ordered list of stops (3+ locations) with any costing.
+ * Leg shapes are concatenated (shared endpoints de-duplicated) and the
+ * summary totals the whole itinerary. Same rate limit, timeout, client id,
+ * and honest errors as point-to-point routing.
+ */
+export async function routeThroughPoints(
+  locations: RoutePoint[],
+  costing: TravelCosting = 'pedestrian',
+  costingOptions?: Record<string, number | string>,
+): Promise<MultiStopRoute> {
+  if (locations.length < 3) {
+    throw new Error('A multi-stop route needs at least 3 locations');
+  }
+  await respectRateLimit();
+  let data: ValhallaResponse;
+  try {
+    const response = await axios.post<ValhallaResponse>(
+      VALHALLA_ROUTE_URL,
+      {
+        locations: locations.map((point) => ({ lat: point.lat, lon: point.lon })),
+        costing,
+        ...(costingOptions ? { costing_options: { [costing]: costingOptions } } : {}),
+        directions_options: { units: 'kilometers' },
+      },
+      {
+        timeout: REQUEST_TIMEOUT_MS,
+        headers: { 'X-Client-Id': VALHALLA_CLIENT_ID, 'Content-Type': 'application/json' },
+      },
+    );
+    data = response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      if (status === 429) {
+        const rateLimited = new Error('Routing server is rate-limited right now — wait a few seconds and retry');
+        (rateLimited as { cause?: unknown }).cause = error;
+        throw rateLimited;
+      }
+      const failed = new Error(
+        status !== undefined ? `Routing server returned HTTP ${status}` : `Routing server unreachable: ${error.message}`,
+      );
+      (failed as { cause?: unknown }).cause = error;
+      throw failed;
+    }
+    throw error;
+  }
+  const trip = data.trip;
+  if (!trip || data.error) {
+    throw new Error(data.error ?? 'Routing server returned no route');
+  }
+  if (trip.status !== undefined && trip.status !== 0) {
+    throw new Error(trip.status_message ?? `Route not found (status ${trip.status}) — try road points closer together`);
+  }
+  const legs = trip.legs ?? [];
+  if (legs.length === 0 || !legs[0].shape) {
+    throw new Error('Routing server returned a route without geometry');
+  }
+  const path: RoutePoint[] = [];
+  let maneuverCount = 0;
+  for (const leg of legs) {
+    if (!leg.shape) continue;
+    const points = decodePolyline6(leg.shape);
+    if (path.length > 0) points.shift();
+    path.push(...points);
+    maneuverCount += leg.maneuvers?.length ?? 0;
+  }
+  return {
+    path,
+    distanceKm: trip.summary?.length ?? 0,
+    durationMinutes: (trip.summary?.time ?? 0) / 60,
+    maneuverCount,
+  };
+}
+
 /** Pure response transform, exported for unit tests. */
 export function parseAvoidanceResponse(data: ValhallaResponse): AvoidanceRoute {
   const trip = data.trip;

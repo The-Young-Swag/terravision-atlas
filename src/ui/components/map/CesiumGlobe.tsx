@@ -3,6 +3,7 @@ import * as Cesium from 'cesium';
 import { useMapStore } from '../../../stores/mapStore';
 import { useRouteStore } from '../../../stores/routeStore';
 import { ROUTE_LINE_COLOR } from '../../../core/map/routeStyle';
+import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import {
   createCesiumViewer,
   flyToCesium,
@@ -141,6 +142,8 @@ export function CesiumGlobe() {
   // above 1px are best-effort (platform-dependent); the blue hue outside
   // the traffic-speed palette carries the distinction.
   const navRoute = useRouteStore((s) => s.route);
+  const navJog = useRouteStore((s) => s.jogLoop);
+  const navLine = navRoute ?? (navJog ? jogLoopAsEvacRoute(navJog) : null);
 
   useEffect(() => {
     const viewer = viewerRef.current;
@@ -151,8 +154,8 @@ export function CesiumGlobe() {
         entities.remove(entity);
       }
     }
-    if (!navRoute || navRoute.path.length < 2) return;
-    const positions = navRoute.path.map((point) => Cesium.Cartesian3.fromDegrees(point.lon, point.lat));
+    if (!navLine || navLine.path.length < 2) return;
+    const positions = navLine.path.map((point) => Cesium.Cartesian3.fromDegrees(point.lon, point.lat));
     const addLine = (width: number, color: Cesium.Color) => {
       entities.add({
         properties: { nav: true },
@@ -179,11 +182,11 @@ export function CesiumGlobe() {
         },
       });
     };
-    const first = navRoute.path[0];
-    const last = navRoute.path[navRoute.path.length - 1];
+    const first = navLine.path[0];
+    const last = navLine.path[navLine.path.length - 1];
     if (first) addPin(first.lon, first.lat, Cesium.Color.fromCssColorString('#00d890'));
     if (last) addPin(last.lon, last.lat, Cesium.Color.fromCssColorString('#E63946'));
-  }, [navRoute]);
+  }, [navLine]);
 
   return (
     <div

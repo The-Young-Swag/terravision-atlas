@@ -10,6 +10,7 @@ import { useDisasterStore } from '../../../stores/disasterStore';
 import { createMap, updateBasemap } from '../../../core/map/openlayers/createMap';
 import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';
 import { createRouteLayer } from '../../../core/map/openlayers/routeLayer';
+import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import { createAvoidLayer } from '../../../core/map/openlayers/avoidLayer';
 import { circleToRing, previewCircle, MIN_AVOID_RADIUS_KM } from '../../../features/routing/avoidZone';
 import DragPan from 'ol/interaction/DragPan';
@@ -56,6 +57,9 @@ export function OpenLayersMap() {
   const reversePopupRef = useRef<Overlay | null>(null);
   const { events: disasterEvents } = useDisasterStore();
   const { route, avoidCircle } = useRouteStore();
+  const jogLoop = useRouteStore((s) => s.jogLoop);
+  // The jogging loop shares the route line treatment (neutral verdict).
+  const routeLine = route ?? (jogLoop ? jogLoopAsEvacRoute(jogLoop) : null);
   const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
   const avoidLayerRef = useRef<ReturnType<typeof createAvoidLayer> | null>(null);
   const drawPreviewLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
@@ -407,8 +411,8 @@ export function OpenLayersMap() {
       routeLayerRef.current = null;
     }
 
-    if (route) {
-      const layer = createRouteLayer(route);
+    if (routeLine) {
+      const layer = createRouteLayer(routeLine);
       layer.setZIndex(10);
       map.addLayer(layer);
       routeLayerRef.current = layer;
@@ -416,10 +420,10 @@ export function OpenLayersMap() {
 
     for (const candidate of map.getLayers().getArray()) {
       if (candidate.get('layerId') === 'traffic-flow') {
-        candidate.setOpacity(route ? TRAFFIC_FLOW_DIM_OPACITY : TRAFFIC_FLOW_FULL_OPACITY);
+        candidate.setOpacity(routeLine ? TRAFFIC_FLOW_DIM_OPACITY : TRAFFIC_FLOW_FULL_OPACITY);
       }
     }
-  }, [route]);
+  }, [routeLine]);
 
   // Standalone avoid-zone overlay — visible with or without a route.
   useEffect(() => {
@@ -581,7 +585,7 @@ export function OpenLayersMap() {
         const flowLayer = createTrafficFlowLayer(key);
         // A displayed route dims flow (see the route effect); a flow layer
         // created while a route is already up must start dimmed too.
-        if (useRouteStore.getState().route) {
+        if (useRouteStore.getState().route ?? useRouteStore.getState().jogLoop) {
           flowLayer.setOpacity(TRAFFIC_FLOW_DIM_OPACITY);
         }
         map.addLayer(flowLayer);

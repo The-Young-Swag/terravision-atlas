@@ -6,6 +6,7 @@ import { useMapStore } from '../../../stores/mapStore';
 import { useRouteStore } from '../../../stores/routeStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { TRAVEL_COSTINGS, routeWithOptions, type TravelCosting } from '../../../features/routing/valhalla';
+import { buildJogLoop, type Hilliness } from '../../../features/routing/joggingLoop';
 import { trafficAdjustedMinutes } from '../../../features/traffic/flowEta';
 import { tomtomApiKey } from '../../../features/traffic/tomtom';
 import { useTrafficStore } from '../../../stores/trafficStore';
@@ -57,7 +58,42 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
   const setTravelMode = useRouteStore((s) => s.setTravelMode);
   const setTrafficAdjustment = useRouteStore((s) => s.setTrafficAdjustment);
   const trafficAdjustment = useRouteStore((s) => s.trafficAdjustment);
+  const jogLoop = useRouteStore((s) => s.jogLoop);
+  const setJogLoop = useRouteStore((s) => s.setJogLoop);
   const isBrightBasemap = useBrightBasemap();
+  const [jogTargetKm, setJogTargetKm] = useState('5');
+  const [jogHilliness, setJogHilliness] = useState<Hilliness>('flat');
+  const [isJogging, setIsJogging] = useState(false);
+  const [jogError, setJogError] = useState<string | null>(null);
+
+  const handleJogLoop = () => {
+    const targetKm = Number(jogTargetKm);
+    if (!Number.isFinite(targetKm) || targetKm < 0.5 || targetKm > 42) {
+      setJogError('Target distance must be between 0.5 and 42 km');
+      return;
+    }
+    const origin = start ?? { lon: mapCenter[0], lat: mapCenter[1], label: 'Map center' };
+    setIsJogging(true);
+    setJogError(null);
+    setTrafficAdjustment(null);
+    clearEvacuationRoute();
+    setResult(null);
+    buildJogLoop({ start: origin, targetKm, hilliness: jogHilliness })
+      .then((loop) => {
+        setJogLoop({ path: loop.path, distanceKm: loop.distanceKm, durationMinutes: loop.durationMinutes, targetKm, hilliness: jogHilliness });
+        if (!loop.withinTolerance) {
+          setJogError(
+            `Closest walkable loop is ${loop.distanceKm.toFixed(1)} km (target ${targetKm.toFixed(1)} km) after ${loop.attempts} tries`,
+          );
+        }
+      })
+      .catch((err) => {
+        setJogError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        setIsJogging(false);
+      });
+  };
 
   // Field text is render-derived: user typing lives in the draft, while an
   // externally set pin (map click, drag, autocomplete select) resets the
@@ -176,6 +212,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
 
   const handleGuidedRoute = () => {
     if (!start || !destination) return;
+    setJogLoop(null);
     // Evacuation is always driving; general navigation uses the selector.
     void submitRoute(start, destination, isEvacuation ? avoidCircle : null, isEvacuation ? 'auto' : travelMode);
   };
@@ -432,8 +469,79 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
           {isRouting ? 'Requesting route…' : isEvacuation ? 'Find evacuation route' : 'Find route'}
         </button>
 
-        {isEvacuation && route && (
-          <div
+        {!isEvacuation && (
+          <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <p className={`mb-2 text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+              Jogging loop
+            </p>
+            <div className="mb-2 flex items-center gap-2">
+              <div className="flex-1">
+                <label className={labelClass}>Target distance (km)</label>
+                <input
+                  value={jogTargetKm}
+                  onChange={(e) => setJogTargetKm(e.target.value)}
+                  inputMode="decimal"
+                  placeholder="5"
+                  aria-label="Jogging loop target distance in kilometers"
+                  className={inputClass}
+                />
+              </div>
+              <div className="flex flex-1 flex-col">
+                <span className={labelClass}>Terrain</span>
+                <div className="flex rounded-xl bg-white/[0.04] p-1 text-[11px]" role="group" aria-label="Loop hilliness">
+                  {(['flat', 'hilly'] as const).map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setJogHilliness(option)}
+                      aria-pressed={jogHilliness === option}
+                      className={`flex-1 rounded-lg py-1.5 capitalize transition ${jogHilliness === option ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}
+                    >
+                      {option === 'flat' ? 'Flatter' : 'Hillier'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={handleJogLoop}
+              disabled={isJogging}
+              title="Generate a walking loop from the start pin (or map center)"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-medium text-slate-200 transition hover:bg-white/10 disabled:opacity-60"
+            >
+              {isJogging ? 'Planning loop…' : 'Generate loop'}
+            </button>
+            <p className={`mt-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>
+              Starts/ends at {start ? 'the start pin' : 'map center'} · footpaths preferred
+            </p>
+            {jogLoop && (
+              <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-[12px]">
+                <p className={`font-mono ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
+                  {jogLoop.distanceKm.toFixed(1)} km loop · {jogLoop.durationMinutes.toFixed(0)} min on foot
+                </p>
+                <p className={`mt-0.5 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Target was {jogLoop.targetKm.toFixed(1)} km · {jogLoop.hilliness === 'flat' ? 'flatter' : 'hillier'} route
+                </p>
+                <button
+                  onClick={() => {
+                    setJogLoop(null);
+                    setJogError(null);
+                  }}
+                  className={`mt-2 text-[11px] underline ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}
+                >
+                  Clear loop
+                </button>
+              </div>
+            )}
+            {jogError && (
+              <p className="mt-2 rounded-lg border border-[#FF9F1C]/30 bg-[#FF9F1C]/10 px-3 py-2 text-[11px] text-[#ffc46b]">
+                {jogError}
+              </p>
+            )}
+          </div>
+        )}
+
+        {isEvacuation && route && (          <div
             className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium ${
               route.avoidsArea ? 'bg-[#00d890]/15 text-[#00d890]' : 'bg-[#FF9F1C]/15 text-[#FF9F1C]'
             }`}
