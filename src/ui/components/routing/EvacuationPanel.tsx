@@ -122,6 +122,10 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
   const [radiusKm, setRadiusKm] = useState('1');
   const [isRouting, setIsRouting] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  // Collapsed by default on panel open. There is no panel-close/restore
+  // toolbar yet, so no restore-persistence logic: whichever future pass
+  // adds a panel toolbar must confirm it respects this default.
+  const [jogOpen, setJogOpen] = useState(false);
   const [result, setResult] = useState<{ distanceKm: number; durationMinutes: number; avoidsArea: boolean } | null>(
     null,
   );
@@ -470,6 +474,19 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
         </button>
 
         {!isEvacuation && (
+          <>
+            <div className="mb-3">
+              <button
+                type="button"
+                onClick={() => setJogOpen(!jogOpen)}
+                aria-expanded={jogOpen}
+                className={`flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-[11px] transition hover:bg-white/[0.06] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
+              >
+                <span>Jogging loop</span>
+                <span aria-hidden>{jogOpen ? '▴' : '▾'}</span>
+              </button>
+            </div>
+            {jogOpen && (
           <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
             <p className={`mb-2 text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
               Jogging loop
@@ -539,6 +556,8 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
               </p>
             )}
           </div>
+            )}
+          </>
         )}
 
         {isEvacuation && route && (          <div
