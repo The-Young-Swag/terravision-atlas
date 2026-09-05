@@ -32,6 +32,13 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
   // selecting a result (which also flies the map, changing center) doesn't
   // pop the dropdown back open with a fresh lookup of the picked place.
   const submittedRef = useRef<string | null>(null);
+  // Last text set through user typing or suggestion pick (as opposed to an
+  // external value reset, e.g. the parent replacing the field with a pin's
+  // short label after geocoding). External resets are adopted as submitted
+  // below so later map-center changes never reopen the dropdown over them —
+  // the submitted-query guard alone can't cover this because the pin label
+  // generally differs from the submitted suggestion text.
+  const lastEditedRef = useRef(value);
 
   const searchable = value.trim().length >= 2;
 
@@ -45,6 +52,15 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
       return undefined;
     }
     const query = value.trim();
+    // Parent-driven value change (pin select label swap, external clear):
+    // adopt it as the submitted text so subsequent center changes never
+    // trigger a lookup for it. User typing always flows through onChange,
+    // which keeps lastEditedRef in sync, so genuine typing still searches.
+    if (value !== lastEditedRef.current) {
+      lastEditedRef.current = value;
+      submittedRef.current = query;
+      return undefined;
+    }
     if (submittedRef.current !== null && submittedRef.current === query) return undefined;
     submittedRef.current = null;
     const timer = setTimeout(async () => {
@@ -138,7 +154,10 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
       <Search className={`h-4 w-4 shrink-0 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`} aria-hidden />
       <input
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          lastEditedRef.current = e.target.value;
+          onChange(e.target.value);
+        }}
         onKeyDown={handleKeyDown}
         onFocus={() => {
           if (suggestions.length > 0) setOpen(true);
