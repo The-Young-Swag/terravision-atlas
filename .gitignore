@@ -149,5 +149,7 @@ opencode.json
 terravision-atlas.md
 SKILL.md
 devcontainer.json
+.devcontainer
+.agents
 setup.sh
 API.txt

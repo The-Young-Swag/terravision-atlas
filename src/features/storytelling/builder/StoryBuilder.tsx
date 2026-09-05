@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Play, Pause, Plus, MapPin, Trash2 } from 'lucide-react';
+import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 
 interface StoryScene {
   id: string;
@@ -22,6 +23,7 @@ export function StoryBuilder() {
   ]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentScene, setCurrentScene] = useState(0);
+  const isBrightBasemap = useBrightBasemap();
 
   const addScene = () => {
     const newScene: StoryScene = {
@@ -45,7 +47,7 @@ export function StoryBuilder() {
           <BookOpen className="h-4 w-4 text-[#5500a4]" />
           Storytelling
         </h3>
-        <span className="font-mono text-[10px] text-slate-400">{scenes.length} scenes</span>
+        <span className={`font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{scenes.length} scenes</span>
       </div>
 
       <div className="mb-3 flex gap-2">
@@ -90,14 +92,14 @@ export function StoryBuilder() {
                   e.stopPropagation();
                   removeScene(scene.id);
                 }}
-                className="text-slate-400 hover:text-[#E63946]"
+                className={`hover:text-[#E63946] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
                 aria-label="Remove scene"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
-            <p className="mt-1 text-[11px] text-slate-400">{scene.description}</p>
-            <p className="mt-1 flex items-center gap-1 font-mono text-[10px] text-slate-500">
+            <p className={`mt-1 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{scene.description}</p>
+            <p className={`mt-1 flex items-center gap-1 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
               <MapPin className="h-3 w-3" />
               {scene.center[1].toFixed(4)}, {scene.center[0].toFixed(4)} · Z{scene.zoom}
             </p>
@@ -105,7 +107,7 @@ export function StoryBuilder() {
         ))}
       </div>
 
-      <p className="mt-3 text-center font-mono text-[10px] text-slate-500">
+      <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
         Scenes are saved locally · Share via link (coming soon)
       </p>
     </div>

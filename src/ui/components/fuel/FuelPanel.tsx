@@ -4,6 +4,7 @@ import { FloatingPanel } from '../common/FloatingPanel';
 import { calculateFuel as calcFuel } from '../../../features/fuel/calculator/fuelMath';
 import type { EfficiencyUnit, UnitSystem } from '../../../features/fuel/calculator/fuelMath';
 import { FuelChart } from './FuelChart';
+import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 
 interface FuelState {
   distance: number;
@@ -55,6 +56,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
       distanceSuffix: 'mi',
     };
   }, [fuelState.unitSystem]);
+  const isBrightBasemap = useBrightBasemap();
 
   if (!open) return null;
 
@@ -72,7 +74,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
 
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-[11px] uppercase tracking-wide text-slate-500">{unitLabels.distance}</label>
+            <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{unitLabels.distance}</label>
             <input
               type="number"
               value={fuelState.distance}
@@ -82,7 +84,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] uppercase tracking-wide text-slate-500">Fuel efficiency</label>
+            <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Fuel efficiency</label>
             <div className="flex gap-2">
               <input
                 type="number"
@@ -110,7 +112,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] uppercase tracking-wide text-slate-500">{unitLabels.price}</label>
+            <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{unitLabels.price}</label>
             <input
               type="number"
               step="0.01"
@@ -123,7 +125,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
 
         <div className="mt-5 border-t border-white/10 pt-4">
           <div className="mb-3">
-            <div className="mb-1.5 flex justify-between text-[11px] text-slate-400">
+            <div className={`mb-1.5 flex justify-between text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
               <span>Thirsty</span>
               <span>Average</span>
               <span>Efficient</span>
@@ -135,23 +137,23 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-              <p className="mb-1 text-[11px] text-slate-400">Fuel needed</p>
+              <p className={`mb-1 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Fuel needed</p>
               <p className="font-mono text-[16px] font-semibold">
                 {fuelResult.fuelNeeded.toFixed(1)} {unitLabels.fuelSuffix}
               </p>
             </div>
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-              <p className="mb-1 text-[11px] text-slate-400">Total cost</p>
+              <p className={`mb-1 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Total cost</p>
               <p className="font-mono text-[16px] font-semibold text-[#00d890]">₱{fuelResult.totalCost.toFixed(2)}</p>
             </div>
             <div className="col-span-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3">
-              <span className="text-[12px] text-slate-400">Cost per {unitLabels.distanceSuffix}</span>
+              <span className={`text-[12px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Cost per {unitLabels.distanceSuffix}</span>
               <span className="font-mono text-[13px] text-slate-200">₱{fuelResult.costPerUnit.toFixed(2)} / {unitLabels.distanceSuffix}</span>
             </div>
           </div>
 
           <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-400">Breakdown</p>
+            <p className={`mb-2 text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Breakdown</p>
             <FuelChart fuelNeeded={fuelResult.fuelNeeded} totalCost={fuelResult.totalCost} fuelUnit={unitLabels.fuelSuffix as 'L' | 'gal'} />
           </div>
 
@@ -175,7 +177,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
               Print / PDF
             </button>
           </div>
-          <p className="mt-3 text-center font-mono text-[11px] text-slate-500">Example: 25 km · 8.5 L/100km · ₱1.60/L → 2.1 L · ₱3.40</p>
+          <p className={`mt-3 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Example: 25 km · 8.5 L/100km · ₱1.60/L → 2.1 L · ₱3.40</p>
         </div>
       </div>
     </FloatingPanel>
