@@ -5,7 +5,7 @@ import { FloatingPanel } from '../common/FloatingPanel';
 import { useMapStore } from '../../../stores/mapStore';
 import { useRouteStore } from '../../../stores/routeStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { routeAvoidingArea } from '../../../features/routing/valhalla';
+import { TRAVEL_COSTINGS, routeWithOptions, type TravelCosting } from '../../../features/routing/valhalla';
 import { circleToRing, evacStep, EVAC_STEP_INSTRUCTIONS, type EvacCircle } from '../../../features/routing/avoidZone';
 import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
 import type { GeocodedPlace } from '../../../features/search/geocode';
@@ -19,8 +19,18 @@ function parseCoordinate(text: string, label: string, min: number, max: number):
 }
 
 const STEPS = ['Set start', 'Set destination', 'Avoid area (optional)', 'Find route'] as const;
+const GENERAL_STEPS = ['Set start', 'Set destination', 'Find route'] as const;
 
-export function EvacuationPanel() {
+/**
+ * Shared navigation surface for Explore (general point-to-point) and
+ * Monitor (evacuation with avoid-zone). One panel, one guided-pin UX, one
+ * route store — the avoid-zone section only exists in the evacuation
+ * context. Origin/destination fields reuse the shared PlaceAutocomplete
+ * (Photon + Nominatim), never a second search input.
+ */
+export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general' | 'evacuation' }) {
+  const isEvacuation = context === 'evacuation';
+  const steps = isEvacuation ? STEPS : GENERAL_STEPS;
   const mapCenter = useMapStore((s) => s.center);
   const setCenter = useMapStore((s) => s.setCenter);
   const setZoom = useMapStore((s) => s.setZoom);
@@ -40,6 +50,9 @@ export function EvacuationPanel() {
   const clearAvoidCircle = useRouteStore((s) => s.clearAvoidCircle);
   const setEvacuationRoute = useRouteStore((s) => s.setEvacuationRoute);
   const clearEvacuationRoute = useRouteStore((s) => s.clearEvacuationRoute);
+  const travelMode = useRouteStore((s) => s.travelMode);
+  const setTravelMode = useRouteStore((s) => s.setTravelMode);
+  const setTrafficAdjustment = useRouteStore((s) => s.setTrafficAdjustment);
   const isBrightBasemap = useBrightBasemap();
 
   // Field text is render-derived: user typing lives in the draft, while an
@@ -75,7 +88,22 @@ export function EvacuationPanel() {
   const [error, setError] = useState<string | null>(null);
 
   const step = evacStep(start, destination, route !== null);
-  const stepIndex = step === 'start' ? 0 : step === 'destination' ? 1 : step === 'avoid' ? 2 : 3;
+  const stepIndex = isEvacuation
+    ? step === 'start'
+      ? 0
+      : step === 'destination'
+        ? 1
+        : step === 'avoid'
+          ? 2
+          : 3
+    : step === 'start'
+      ? 0
+      : step === 'destination'
+        ? 1
+        : 2;
+  const durationNoun =
+    (isEvacuation ? TRAVEL_COSTINGS[0] : TRAVEL_COSTINGS.find((c) => c.id === travelMode) ?? TRAVEL_COSTINGS[0])
+      .durationNoun;
 
   // Escape disarms map picking. (Avoid-draw cancellation, including
   // preview cleanup, lives in the map components next to the draw state.)
@@ -107,13 +135,15 @@ export function EvacuationPanel() {
     from: { lon: number; lat: number },
     to: { lon: number; lat: number },
     avoid: EvacCircle | null,
+    costing: TravelCosting,
   ) => {
     setIsRouting(true);
     setResult(null);
     setError(null);
+    setTrafficAdjustment(null);
     try {
       const ring = avoid ? circleToRing(avoid) : null;
-      const route = await routeAvoidingArea(from, to, ring);
+      const route = await routeWithOptions(from, to, { avoidRing: ring, costing });
       const verdict = ring
         ? turf.booleanDisjoint(
             turf.lineString(route.path.map((point) => [point.lon, point.lat])),
@@ -131,7 +161,8 @@ export function EvacuationPanel() {
 
   const handleGuidedRoute = () => {
     if (!start || !destination) return;
-    void submitRoute(start, destination, avoidCircle);
+    // Evacuation is always driving; general navigation uses the selector.
+    void submitRoute(start, destination, isEvacuation ? avoidCircle : null, isEvacuation ? 'auto' : travelMode);
   };
 
   const handleManualRoute = () => {
@@ -147,7 +178,7 @@ export function EvacuationPanel() {
         radiusKm: parseCoordinate(radiusKm, 'Avoid radius (max 1.5 km per Valhalla limits)', 0.1, 1.5),
       };
       setAvoidCircle(avoid);
-      void submitRoute(from, to, avoid);
+      void submitRoute(from, to, avoid, 'auto');
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -161,14 +192,14 @@ export function EvacuationPanel() {
   return (
     <FloatingPanel
       id="evacuation"
-      title="Evacuation routing"
+      title={isEvacuation ? 'Evacuation routing' : 'Navigation'}
       icon={<Navigation className="h-3.5 w-3.5" />}
       initialPosition={{ x: 350, y: 96 }}
-      bubbleLabel="Evacuation routing"
+      bubbleLabel={isEvacuation ? 'Evacuation routing' : 'Navigation'}
     >
       <div>
         <ol className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px]">
-          {STEPS.map((label, index) => (
+          {steps.map((label, index) => (
             <li key={label} className="flex items-center gap-1.5">
               <span
                 className={`flex h-5 w-5 items-center justify-center rounded-full font-mono text-[10px] ${
@@ -186,13 +217,29 @@ export function EvacuationPanel() {
               <span className={index === stepIndex ? (isBrightBasemap ? 'text-slate-800' : 'text-slate-100') : isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}>
                 {label}
               </span>
-              {index < STEPS.length - 1 && <span className={isBrightBasemap ? 'text-slate-400' : 'text-slate-500'}>→</span>}
+              {index < steps.length - 1 && <span className={isBrightBasemap ? 'text-slate-400' : 'text-slate-500'}>→</span>}
             </li>
           ))}
         </ol>
         <p className={`mb-3 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
-          {EVAC_STEP_INSTRUCTIONS[step]}
+          {isEvacuation || step !== 'avoid' ? EVAC_STEP_INSTRUCTIONS[step] : 'Both points set — press Find route'}
         </p>
+
+        {!isEvacuation && (
+          <div className="mb-3 flex rounded-xl bg-white/[0.04] p-1 text-[11px]" role="group" aria-label="Travel mode">
+            {TRAVEL_COSTINGS.map((mode) => (
+              <button
+                key={mode.id}
+                type="button"
+                onClick={() => setTravelMode(mode.id)}
+                aria-pressed={travelMode === mode.id}
+                className={`flex-1 rounded-lg py-1.5 transition ${travelMode === mode.id ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-700 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+              >
+                {mode.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="mb-2 flex items-center gap-2">
           <div className="min-w-0 flex-1">
@@ -268,47 +315,53 @@ export function EvacuationPanel() {
           )}
         </div>
 
-        <div className="mb-3 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setDrawAvoidArmed(!drawAvoidArmed)}
-            aria-pressed={drawAvoidArmed}
-            title="Draw a circular avoid zone on the map (Esc cancels)"
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-[12px] font-medium transition ${drawAvoidArmed ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
-          >
-            <ShieldAlert className="h-4 w-4" aria-hidden />
-            {drawAvoidArmed ? 'Drawing… click-drag on the map' : 'Draw avoid area'}
-          </button>
-          {avoidCircle && (
-            <button
-              type="button"
-              onClick={clearAvoidCircle}
-              aria-label="Remove avoid zone"
-              title={`Remove avoid zone (${avoidCircle.radiusKm.toFixed(1)} km)`}
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-        {avoidCircle && (
-          <p className={`mb-3 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
-            Avoid zone: {avoidCircle.radiusKm.toFixed(1)} km radius
-          </p>
+        {isEvacuation && (
+          <>
+            <div className="mb-3 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDrawAvoidArmed(!drawAvoidArmed)}
+                aria-pressed={drawAvoidArmed}
+                title="Draw a circular avoid zone on the map (Esc cancels)"
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-[12px] font-medium transition ${drawAvoidArmed ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
+              >
+                <ShieldAlert className="h-4 w-4" aria-hidden />
+                {drawAvoidArmed ? 'Drawing… click-drag on the map' : 'Draw avoid area'}
+              </button>
+              {avoidCircle && (
+                <button
+                  type="button"
+                  onClick={clearAvoidCircle}
+                  aria-label="Remove avoid zone"
+                  title={`Remove avoid zone (${avoidCircle.radiusKm.toFixed(1)} km)`}
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {avoidCircle && (
+              <p className={`mb-3 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+                Avoid zone: {avoidCircle.radiusKm.toFixed(1)} km radius
+              </p>
+            )}
+          </>
         )}
 
-        <div className="mb-3">
-          <button
-            type="button"
-            onClick={() => setManualOpen(!manualOpen)}
-            aria-expanded={manualOpen}
-            className={`flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-[11px] transition hover:bg-white/[0.06] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
-          >
-            <span>Enter coordinates manually</span>
-            <span aria-hidden>{manualOpen ? '▴' : '▾'}</span>
-          </button>
-        </div>
-        {manualOpen && (
+        {isEvacuation && (
+          <div className="mb-3">
+            <button
+              type="button"
+              onClick={() => setManualOpen(!manualOpen)}
+              aria-expanded={manualOpen}
+              className={`flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-[11px] transition hover:bg-white/[0.06] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
+            >
+              <span>Enter coordinates manually</span>
+              <span aria-hidden>{manualOpen ? '▴' : '▾'}</span>
+            </button>
+          </div>
+        )}
+        {isEvacuation && manualOpen && (
           <>
             <div className="mb-3 grid grid-cols-2 gap-2">
               <div>
@@ -358,13 +411,13 @@ export function EvacuationPanel() {
         <button
           onClick={handleGuidedRoute}
           disabled={isRouting || !start || !destination}
-          title={!start || !destination ? 'Set start and destination first' : 'Find evacuation route'}
+          title={!start || !destination ? 'Set start and destination first' : isEvacuation ? 'Find evacuation route' : 'Find route'}
           className="w-full rounded-xl bg-[#5500a4] py-2 text-[12.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-60"
         >
-          {isRouting ? 'Requesting route…' : 'Find evacuation route'}
+          {isRouting ? 'Requesting route…' : isEvacuation ? 'Find evacuation route' : 'Find route'}
         </button>
 
-        {route && (
+        {isEvacuation && route && (
           <div
             className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium ${
               route.avoidsArea ? 'bg-[#00d890]/15 text-[#00d890]' : 'bg-[#FF9F1C]/15 text-[#FF9F1C]'
@@ -385,14 +438,16 @@ export function EvacuationPanel() {
         {result && (
           <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-[12px]">
             <p className={`font-mono ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
-              {result.distanceKm.toFixed(1)} km · {result.durationMinutes.toFixed(0)} min by car
+              {result.distanceKm.toFixed(1)} km · {result.durationMinutes.toFixed(0)} min {durationNoun}
             </p>
-            <p className={`mt-1 flex items-center gap-1.5 ${result.avoidsArea ? 'text-[#00d890]' : 'text-[#FF9F1C]'}`}>
-              <ShieldAlert className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              {result.avoidsArea
-                ? 'Route avoids the area'
-                : 'Route enters the area — widen the radius and retry'}
-            </p>
+            {isEvacuation && (
+              <p className={`mt-1 flex items-center gap-1.5 ${result.avoidsArea ? 'text-[#00d890]' : 'text-[#FF9F1C]'}`}>
+                <ShieldAlert className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                {result.avoidsArea
+                  ? 'Route avoids the area'
+                  : 'Route enters the area — widen the radius and retry'}
+              </p>
+            )}
             <button
               onClick={() => {
                 clearEvacuationRoute();
@@ -412,7 +467,7 @@ export function EvacuationPanel() {
         )}
 
         <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
-          Valhalla demo server · max 1 request/sec · driving
+          Valhalla demo server · max 1 request/sec · {isEvacuation ? 'driving' : (TRAVEL_COSTINGS.find((c) => c.id === travelMode)?.label.toLowerCase() ?? 'driving')}
         </p>
       </div>
     </FloatingPanel>

@@ -78,7 +78,8 @@ export default function App() {
       <LayersPanel />
       {activeMode === 'survey' && <GeodeticPanel />}
       {activeMode === 'survey' && showDatumViz && <CoordinatePanel />}
-      {activeMode === 'monitor' && <EvacuationPanel />}
+      {activeMode === 'explore' && <EvacuationPanel context="general" />}
+      {activeMode === 'monitor' && <EvacuationPanel context="evacuation" />}
       {activeMode === 'monitor' && <ShelterPanel />}
       <LiveAlertsPanel activeMode={activeMode} />
       <ModeDocks activeMode={activeMode} />

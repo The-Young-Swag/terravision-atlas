@@ -4,8 +4,17 @@ import axios from 'axios';
 // Valhalla — not OSRM — because only Valhalla supports avoid-polygon
 // routing via `exclude_polygons` (OSRM cannot route around areas).
 // Fair-use rules per the operator: max 1 request/sec per user and an
-// X-Client-Id header identifying the app. Normal (non-avoidance) routing
-// stays wherever it already is; only avoidance requests go here.
+// X-Client-Id header identifying the app.
+// Costing models and option names below were verified against Valhalla's
+// current API reference + OpenAPI spec (openapi.yaml):
+// - costing: 'auto' | 'bicycle' | 'pedestrian' (CostingType enum)
+// - costing_options keyed by costing name, e.g.
+//   { pedestrian: { walking_speed, walkway_factor, use_hills } }
+// - pedestrian.walkway_factor (default 1.0) slightly favors footways;
+//   use_hills 0 avoids hills, 1 ignores them (default 0.5)
+// - bicycle.bicycle_type: road|hybrid|city|cross|mountain
+// Valhalla has no native "generate a loop of X km" endpoint, so jogging
+// loops are built client-side (see joggingLoop.ts) on top of this module.
 
 export const VALHALLA_ROUTE_URL = 'https://valhalla1.openstreetmap.de/route';
 export const VALHALLA_CLIENT_ID = 'terravision-atlas';
@@ -83,22 +92,34 @@ export interface ValhallaResponse {
 export interface AvoidanceRequestBody {
   locations: { lat: number; lon: number }[];
   costing: string;
+  costing_options?: Record<string, Record<string, number | string>>;
   exclude_polygons?: [number, number][][];
   directions_options: { units: string };
 }
+
+export type TravelCosting = 'auto' | 'bicycle' | 'pedestrian';
+
+export const TRAVEL_COSTINGS: { id: TravelCosting; label: string; durationNoun: string }[] = [
+  { id: 'auto', label: 'Driving', durationNoun: 'by car' },
+  { id: 'bicycle', label: 'Cycling', durationNoun: 'by bike' },
+  { id: 'pedestrian', label: 'Walking', durationNoun: 'on foot' },
+];
 
 /** Pure request builder, exported for unit tests. */
 export function buildAvoidanceRequestBody(
   from: RoutePoint,
   to: RoutePoint,
   avoidRing: RoutePoint[] | null,
+  costing: TravelCosting = 'auto',
+  costingOptions?: Record<string, number | string>,
 ): AvoidanceRequestBody {
   return {
     locations: [
       { lat: from.lat, lon: from.lon },
       { lat: to.lat, lon: to.lon },
     ],
-    costing: 'auto',
+    costing,
+    ...(costingOptions ? { costing_options: { [costing]: costingOptions } } : {}),
     // NOTE: exclusion polygons are GeoJSON-style [lon, lat] pairs, NOT the
     // {lat, lon} objects that locations use. Sending objects fails with
     // "Failed to parse polygon: IsArray()".
@@ -107,16 +128,23 @@ export function buildAvoidanceRequestBody(
   };
 }
 
+export interface RouteRequestOptions {
+  costing?: TravelCosting;
+  costingOptions?: Record<string, number | string>;
+  avoidRing?: RoutePoint[] | null;
+}
+
 /**
- * Route from A to B while avoiding a closed polygon ring. Throws with a
+ * General point-to-point routing with any costing. Throws with a
  * plain-language message on any failure — callers show it, never a
  * fabricated fallback route.
  */
-export async function routeAvoidingArea(
+export async function routeWithOptions(
   from: RoutePoint,
   to: RoutePoint,
-  avoidRing: RoutePoint[] | null,
+  options: RouteRequestOptions = {},
 ): Promise<AvoidanceRoute> {
+  const { costing = 'auto', costingOptions, avoidRing = null } = options;
   if (avoidRing && avoidRing.length < 4) {
     throw new Error('Avoidance area needs at least 3 distinct points plus closure');
   }
@@ -125,7 +153,7 @@ export async function routeAvoidingArea(
   try {
     const response = await axios.post<ValhallaResponse>(
       VALHALLA_ROUTE_URL,
-      buildAvoidanceRequestBody(from, to, avoidRing),
+      buildAvoidanceRequestBody(from, to, avoidRing, costing, costingOptions),
       {
         timeout: REQUEST_TIMEOUT_MS,
         headers: { 'X-Client-Id': VALHALLA_CLIENT_ID, 'Content-Type': 'application/json' },
@@ -150,6 +178,19 @@ export async function routeAvoidingArea(
   }
 
   return parseAvoidanceResponse(data);
+}
+
+/**
+ * Route from A to B while avoiding a closed polygon ring. Throws with a
+ * plain-language message on any failure — callers show it, never a
+ * fabricated fallback route.
+ */
+export async function routeAvoidingArea(
+  from: RoutePoint,
+  to: RoutePoint,
+  avoidRing: RoutePoint[] | null,
+): Promise<AvoidanceRoute> {
+  return routeWithOptions(from, to, { avoidRing });
 }
 
 /** Pure response transform, exported for unit tests. */
