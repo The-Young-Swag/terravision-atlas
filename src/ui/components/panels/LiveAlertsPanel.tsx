@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, AlertTriangle, Navigation } from 'lucide-react';
+import { Search, AlertTriangle, Navigation, ShieldAlert } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { useDisaster } from '../../../hooks/useDisaster';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { useMapStore } from '../../../stores/mapStore';
+import { useRouteStore } from '../../../stores/routeStore';
 import {
   reverseGeocode,
   getCachedHierarchy,
@@ -36,6 +38,20 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
   const { events: disasterEvents, loading: disasterLoading, lastUpdated, refresh: refreshDisasters } = useDisaster();
   const disasterCount = disasterEvents.length;
   const isBrightBasemap = useBrightBasemap();
+  const setCenter = useMapStore((s) => s.setCenter);
+  const setZoom = useMapStore((s) => s.setZoom);
+  const setAvoidCircle = useRouteStore((s) => s.setAvoidCircle);
+
+  // One-click event avoidance (Monitor): centers a 1.5 km avoid zone on the
+  // event's real coordinates. The radius is the documented Valhalla
+  // exclusion-polygon size cap — NOT derived from severity, which has no
+  // documented real-world radius mapping. The shared navigation surface
+  // (Monitor's evacuation context) picks the zone up from the route store.
+  const routeAroundEvent = (event: { longitude: number; latitude: number }) => {
+    setAvoidCircle({ lon: event.longitude, lat: event.latitude, radiusKm: 1.5 });
+    setCenter([event.longitude, event.latitude]);
+    if (useMapStore.getState().zoom < 12) setZoom(12);
+  };
 
   const filteredDisasterEvents = useMemo(() => {
     if (!alertQuery.trim()) return disasterEvents;
@@ -168,6 +184,17 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
                     {cached?.countryCode ? ` · ${cached.countryCode}` : ''}
                     {cached ? '' : ' · reverse-geocoding…'}
                   </p>
+                  {activeMode === 'monitor' && (
+                    <button
+                      type="button"
+                      onClick={() => routeAroundEvent(event)}
+                      title="Center a 1.5 km avoid zone on this event (Valhalla exclusion limit) for evacuation routing"
+                      className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[11px] font-medium transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}
+                    >
+                      <ShieldAlert className="h-3.5 w-3.5" aria-hidden />
+                      Route around this event
+                    </button>
+                  )}
                 </div>
               );
             })
