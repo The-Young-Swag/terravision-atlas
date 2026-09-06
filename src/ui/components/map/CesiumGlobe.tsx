@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
-import * as turf from '@turf/turf';
 import { useMapStore } from '../../../stores/mapStore';
 import { useRouteStore } from '../../../stores/routeStore';
 import { useDisasterStore } from '../../../stores/disasterStore';
@@ -22,15 +21,12 @@ export function CesiumGlobe() {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
   const [terrain, setTerrain] = useState<TerrainStatus | null>(null);
-  // Bumped when the async viewer creation finishes: route/pin overlays can
-  // only attach to a live viewer, which does not exist on first render.
   const [viewerEpoch, setViewerEpoch] = useState(0);
 
   const { center, zoom } = useMapStore();
   const basemap = useMapStore((s) => s.basemap);
   const satelliteSource = useMapStore((s) => s.satelliteSource);
 
-  // Adaptive contrast for in-map Cesium widgets
   const { theme } = useMapOverlayContrast();
 
   useEffect(() => {
@@ -51,7 +47,6 @@ export function CesiumGlobe() {
         setTerrain(terrainStatus);
         setViewerEpoch((epoch) => epoch + 1);
 
-        // Apply adaptive widget styles
         const applyWidgetStyles = () => {
           if (!viewer || viewer.isDestroyed()) return;
 
@@ -60,14 +55,12 @@ export function CesiumGlobe() {
             (widgetContainer as HTMLElement).style.color = theme === 'light' ? '#475569' : '#cbd5e1';
           }
 
-          // Home button
           const homeButton = container.querySelector('.cesium-home-button');
           if (homeButton) {
             (homeButton as HTMLElement).style.backgroundColor = theme === 'light' ? '#ffffff' : '#1e293b';
             (homeButton as HTMLElement).style.borderColor = theme === 'light' ? '#cbd5e1' : '#475569';
           }
 
-          // Zoom controls
           const zoomControls = container.querySelectorAll('.cesium-zoom-control button');
           zoomControls.forEach((btn) => {
             const b = btn as HTMLElement;
@@ -76,13 +69,11 @@ export function CesiumGlobe() {
             b.style.borderColor = theme === 'light' ? '#cbd5e1' : '#475569';
           });
 
-          // Compass
           const compass = container.querySelector('.cesium-compass');
           if (compass) {
             (compass as HTMLElement).style.filter = theme === 'light' ? 'invert(0)' : 'invert(1)';
           }
 
-          // Geocoder (if enabled)
           const geocoder = container.querySelector('.cesium-geocoder');
           if (geocoder) {
             (geocoder as HTMLElement).style.backgroundColor = theme === 'light' ? '#ffffff' : '#1e293b';
@@ -90,14 +81,12 @@ export function CesiumGlobe() {
           }
         };
 
-        // Handle resize
         const ro = new ResizeObserver(() => {
           v.resize();
           applyWidgetStyles();
         });
         ro.observe(container);
 
-        // Apply styles after initial render and on each frame
         let frameId = 0;
         const applyLoop = () => {
           applyWidgetStyles();
@@ -105,7 +94,6 @@ export function CesiumGlobe() {
         };
         applyLoop();
 
-        // Store for cleanup
         (container as unknown as { __ro?: ResizeObserver; __frameId?: number }).__ro = ro;
         (container as unknown as { __frameId?: number }).__frameId = frameId;
       })
@@ -134,28 +122,14 @@ export function CesiumGlobe() {
         }
       }
     };
-    // Only initialize once — center/zoom sync handled below
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [basemap, satelliteSource]); // Re-create viewer when basemap/satellite source changes
+  }, [basemap, satelliteSource, center, zoom, theme]);
 
-  // Sync center/zoom when store changes (e.g., search fly-to)
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer || viewer.isDestroyed()) return;
     flyToCesium(viewer, center, zoom);
   }, [center, zoom]);
 
-  // Navigation route overlay: brand-blue polyline with white casing clamped
-  // to terrain (Ion mesh when available) plus green start / red end points —
-  // the same shared treatment as the 2D and Vector maps. With live flow
-  // samples, per-segment colors from the shared flow-status bands replace
-  // the blue core (dark casing for contrast) so the route communicates
-  // traffic conditions. The two coplanar ground-clamped lines are ordered
-  // with polyline zIndex (casing below, color above): per Cesium's
-  // PolylineGraphics docs, zIndex orders ground geometry when clampToGround
-  // is true, which resolves the overlap deterministically instead of
-  // z-fighting. Polyline widths above 1px are best-effort
-  // (platform-dependent).
   const navRoute = useRouteStore((s) => s.route);
   const navJog = useRouteStore((s) => s.jogLoop);
   const navLine = navRoute ?? (navJog ? jogLoopAsEvacRoute(navJog) : null);
@@ -201,61 +175,6 @@ export function CesiumGlobe() {
         addLine(part, 4, Cesium.Color.fromCssColorString(segment.color), 1);
       }
     }
-    // Direction chevrons: V-shaped ground-clamped segments at intervals,
-    // apex pointing along travel. Turf stations the points and bearings,
-    // mirroring the 2D overlay; white casing + blue inner layer above the
-    // route line via higher zIndex. Decorative — a failed computation never
-    // blocks the route line itself.
-    try {
-      const geoLine = turf.lineString(navLine.path.map((point) => [point.lon, point.lat]));
-      const lengthKm = turf.length(geoLine, { units: 'kilometers' });
-      if (lengthKm > 0) {
-        const wingKm = Math.min(0.4, Math.max(0.05, lengthKm * 0.012));
-        for (const fraction of [0.2, 0.4, 0.6, 0.8]) {
-          const along = turf.along(geoLine, fraction * lengthKm, { units: 'kilometers' });
-          const before = turf.along(geoLine, Math.max(0, fraction * lengthKm - lengthKm * 0.01), {
-            units: 'kilometers',
-          });
-          const after = turf.along(geoLine, Math.min(lengthKm, fraction * lengthKm + lengthKm * 0.01), {
-            units: 'kilometers',
-          });
-          const bearing = turf.bearing(before, after);
-          const [chevronLon, chevronLat] = along.geometry.coordinates;
-          const apex = Cesium.Cartesian3.fromDegrees(chevronLon, chevronLat);
-          const wing = (wingBearing: number) => {
-            const dest = turf.destination(turf.point([chevronLon, chevronLat]), wingKm, wingBearing, {
-              units: 'kilometers',
-            });
-            const [wingLon, wingLat] = dest.geometry.coordinates;
-            return Cesium.Cartesian3.fromDegrees(wingLon, wingLat);
-          };
-          const chevronPositions = [wing(bearing + 150), apex, wing(bearing - 150)];
-          entities.add({
-            properties: { nav: true },
-            polyline: {
-              positions: chevronPositions,
-              width: 5,
-              material: Cesium.Color.WHITE,
-              clampToGround: true,
-              zIndex: 2,
-            },
-          });
-          entities.add({
-            properties: { nav: true },
-            polyline: {
-              positions: chevronPositions,
-              width: 3,
-              material: Cesium.Color.fromCssColorString(ROUTE_LINE_COLOR),
-              clampToGround: true,
-              zIndex: 3,
-            },
-          });
-        }
-      }
-    } catch {
-      // Chevron placement is decorative — a failed computation never blocks
-      // the route line itself.
-    }
     const addPin = (lon: number, lat: number, color: Cesium.Color) => {
       entities.add({
         properties: { nav: true },
@@ -275,10 +194,6 @@ export function CesiumGlobe() {
     if (last) addPin(last.lon, last.lat, Cesium.Color.fromCssColorString('#E63946'));
   }, [navLine, navStatusSegments, viewerEpoch]);
 
-  // Live disaster pins: GeoJsonDataSource from the merged feed, styled per
-  // entity (severity color/size + label) and clamped to the Ion terrain mesh
-  // so pins sit on real elevation. Points + labels mirror the 2D pins
-  // rather than inventing a separate icon language per map.
   const disasterEvents = useDisasterStore((s) => s.events);
   const [pickedDisasterId, setPickedDisasterId] = useState<string | null>(null);
   const disasterDsRef = useRef<Cesium.DataSource | null>(null);
@@ -346,8 +261,6 @@ export function CesiumGlobe() {
     };
   }, [disasterEvents, viewerEpoch]);
 
-  // Disaster pin picking: left-click shows the event's real fields in a
-  // glass card; clicking empty globe dismisses it.
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer || viewer.isDestroyed()) return undefined;
@@ -411,6 +324,85 @@ export function CesiumGlobe() {
           </p>
         </div>
       )}
+      {/* 3D Globe tilt control — on-screen affordance for camera pitch.
+          The middle-click-drag gesture still works; this provides a discoverable
+          alternative with live feedback and a reset-to-top-down affordance. */}
+      <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1.5">
+        <div className="glass-strong flex flex-col gap-1 rounded-xl p-2">
+          <button
+            type="button"
+            onMouseDown={() => {
+              if (!viewerRef.current) return;
+              const pos = viewerRef.current.camera.positionCartographic;
+              viewerRef.current.camera.setView({
+                destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
+                orientation: {
+                  heading: viewerRef.current.camera.heading,
+                  pitch: Math.max(-Cesium.Math.PI_OVER_TWO, viewerRef.current.camera.pitch - Cesium.Math.toRadians(10)),
+                  roll: 0,
+                },
+              });
+            }}
+            onMouseUp={() => {}}
+            onMouseLeave={() => {}}
+            className="glass-strong flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/10 active:bg-white/20"
+            aria-label="Tilt down"
+            title="Tilt down"
+          >
+            <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onMouseDown={() => {
+              if (!viewerRef.current) return;
+              const pos = viewerRef.current.camera.positionCartographic;
+              viewerRef.current.camera.setView({
+                destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
+                orientation: {
+                  heading: viewerRef.current.camera.heading,
+                  pitch: Math.min(0, viewerRef.current.camera.pitch + Cesium.Math.toRadians(10)),
+                  roll: 0,
+                },
+              });
+            }}
+            onMouseUp={() => {}}
+            onMouseLeave={() => {}}
+            className="glass-strong flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/10 active:bg-white/20"
+            aria-label="Tilt up"
+            title="Tilt up"
+          >
+            <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (!viewerRef.current) return;
+            const pos = viewerRef.current.camera.positionCartographic;
+            viewerRef.current.camera.flyTo({
+              destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
+              orientation: {
+                heading: viewerRef.current.camera.heading,
+                pitch: 0,
+                roll: 0,
+              },
+              duration: 1.5,
+            });
+          }}
+          className="glass-strong flex h-8 w-8 items-center justify-center rounded-xl transition hover:bg-white/10"
+          aria-label="Reset to top-down view"
+          title="Reset to top-down view"
+        >
+          <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
