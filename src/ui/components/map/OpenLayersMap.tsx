@@ -33,6 +33,8 @@ import { tomtomApiKey } from '../../../features/traffic/tomtom';
 import { refreshTraffic } from '../../../features/traffic/refresh';
 import { incidentPopupHtml } from '../../../features/traffic/incidentPopup';
 import '../../../features/traffic/incidentPopup.css';
+import { shelterPopupHtml } from '../../../features/shelters/shelterPopup';
+import '../../../features/shelters/shelterPopup.css';
 import Overlay from 'ol/Overlay';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'ol/ol.css';
@@ -47,6 +49,7 @@ export function OpenLayersMap() {
   const trafficIncidentLayerRef = useRef<ReturnType<typeof createTrafficIncidentLayer> | null>(null);
   const trafficRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const incidentPopupRef = useRef<Overlay | null>(null);
+  const shelterPopupRef = useRef<Overlay | null>(null);
   const measureLayerRef = useRef<ReturnType<typeof createMeasureLayer> | null>(null);
   const isProgrammaticRef = useRef(false);
 
@@ -183,6 +186,17 @@ export function OpenLayersMap() {
     map.addOverlay(popup);
     incidentPopupRef.current = popup;
 
+    // Shelter popup — same Overlay pattern, real Overpass fields only.
+    const shelterPopupElement = document.createElement('div');
+    const shelterPopup = new Overlay({
+      element: shelterPopupElement,
+      positioning: 'bottom-center',
+      offset: [0, -10],
+      stopEvent: true,
+    });
+    map.addOverlay(shelterPopup);
+    shelterPopupRef.current = shelterPopup;
+
     const handleMapClick = (event: MapBrowserEvent) => {
       const feature = map.forEachFeatureAtPixel(event.pixel, (found) => found, {
         layerFilter: (layer) => layer.get('layerId') === 'traffic-incidents',
@@ -191,15 +205,33 @@ export function OpenLayersMap() {
       const incidentId = feature?.get('incidentId');
       if (typeof incidentId !== 'string' || !(geometry instanceof Point)) {
         popup.setPosition(undefined);
+      } else {
+        const incident = useTrafficStore.getState().incidents.find((item) => item.id === incidentId);
+        if (!incident) {
+          popup.setPosition(undefined);
+        } else {
+          popupElement.innerHTML = incidentPopupHtml(incident);
+          popup.setPosition(geometry.getCoordinates());
+          shelterPopup.setPosition(undefined);
+          return;
+        }
+      }
+      const shelterFeature = map.forEachFeatureAtPixel(event.pixel, (found) => found, {
+        layerFilter: (layer) => layer.get('layerId') === 'shelters',
+      });
+      const shelterGeometry = shelterFeature?.getGeometry();
+      const shelterId = shelterFeature?.get('shelterId');
+      if (typeof shelterId !== 'string' || !(shelterGeometry instanceof Point)) {
+        shelterPopup.setPosition(undefined);
         return;
       }
-      const incident = useTrafficStore.getState().incidents.find((item) => item.id === incidentId);
-      if (!incident) {
-        popup.setPosition(undefined);
+      const shelter = useShelterStore.getState().shelters.find((item) => item.id === shelterId);
+      if (!shelter) {
+        shelterPopup.setPosition(undefined);
         return;
       }
-      popupElement.innerHTML = incidentPopupHtml(incident);
-      popup.setPosition(geometry.getCoordinates());
+      shelterPopupElement.innerHTML = shelterPopupHtml(shelter);
+      shelterPopup.setPosition(shelterGeometry.getCoordinates());
     };
     map.on('click', handleMapClick);
 
@@ -563,6 +595,8 @@ export function OpenLayersMap() {
       map.removeLayer(shelterLayerRef.current);
       shelterLayerRef.current = null;
     }
+    // A rebuilt list invalidates any open popup position.
+    shelterPopupRef.current?.setPosition(undefined);
 
     if (shelters.length > 0) {
       const layer = createShelterLayer(shelters);
