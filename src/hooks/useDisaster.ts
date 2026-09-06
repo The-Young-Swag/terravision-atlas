@@ -1,38 +1,50 @@
 import { useCallback, useEffect } from 'react';
 import { useDisasterStore } from '../stores/disasterStore';
+import { useMapStore } from '../stores/mapStore';
 import { fetchUsgsEarthquakes } from '../core/data/fetchers/usgsFetcher';
 import { fetchEonetEvents } from '../core/data/fetchers/eonetFetcher';
+import { fetchFirmsHotspots } from '../core/data/fetchers/firmsFetcher';
 import { cacheDisasterEvents, getCachedDisasterEvents } from '../core/data/cache/disasterCache';
 import type { DisasterEvent } from '../types';
 
-// Aggregates USGS + EONET, caches to IndexedDB, shows real data only.
-// No fake fallback — if APIs fail and cache is empty, UI shows empty/error state.
+// Aggregates USGS + EONET + FIRMS hotspots, caches to IndexedDB, shows real
+// data only. FIRMS is view-centered (map center bbox) and key-gated —
+// without VITE_NASA_FIRMS_MAP_KEY it contributes nothing and EONET stays
+// the wildfire source. No fake fallback — if APIs fail and cache is empty,
+// UI shows empty/error state.
 export function useDisaster() {
   const { events, loading, lastUpdated, error, setEvents, setLoading, setError, setLastUpdated } =
     useDisasterStore();
+  const mapCenter = useMapStore((s) => s.center);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const [usgsResult, eonetResult] = await Promise.allSettled([
+      const [usgsResult, eonetResult, firmsResult] = await Promise.allSettled([
         fetchUsgsEarthquakes(),
         fetchEonetEvents(),
+        fetchFirmsHotspots(mapCenter[0], mapCenter[1]),
       ]);
 
       const usgs = usgsResult.status === 'fulfilled' ? usgsResult.value : [];
       const eonet = eonetResult.status === 'fulfilled' ? eonetResult.value : [];
+      const firms = firmsResult.status === 'fulfilled' ? firmsResult.value : [];
 
       // Collect errors for UI if both fail
       if (usgsResult.status === 'rejected' && eonetResult.status === 'rejected') {
         const msg = 'Live disaster feeds unavailable — showing cached data if available';
         setError(msg);
-      } else if (usgsResult.status === 'rejected' || eonetResult.status === 'rejected') {
+      } else if (
+        usgsResult.status === 'rejected' ||
+        eonetResult.status === 'rejected' ||
+        firmsResult.status === 'rejected'
+      ) {
         setError('One or more disaster feeds temporarily unavailable');
       }
 
-      const combined: DisasterEvent[] = [...usgs, ...eonet]
+      const combined: DisasterEvent[] = [...usgs, ...eonet, ...firms]
         .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
         .slice(0, 30);
 
@@ -64,7 +76,7 @@ export function useDisaster() {
     } finally {
       setLoading(false);
     }
-  }, [setEvents, setError, setLastUpdated, setLoading]);
+  }, [mapCenter, setEvents, setError, setLastUpdated, setLoading]);
 
   // Auto-refresh on mount and every 5 minutes
   useEffect(() => {

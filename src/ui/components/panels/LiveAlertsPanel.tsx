@@ -39,7 +39,7 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
   const [alertScope, setAlertScope] = useState<'global' | 'country' | 'local'>('global');
   const [locationCache, setLocationCache] = useState<Map<string, LocationHierarchy>>(new Map());
   const [centerCountry, setCenterCountry] = useState<string | null>(null);
-  const { events: disasterEvents, loading: disasterLoading, lastUpdated, refresh: refreshDisasters } = useDisaster();
+  const { events: disasterEvents, loading: disasterLoading, lastUpdated, error: disasterError, refresh: refreshDisasters } = useDisaster();
   const disasterCount = disasterEvents.length;
   const isBrightBasemap = useBrightBasemap();
   const mapCenter = useMapStore((s) => s.center);
@@ -296,6 +296,11 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
         <button onClick={() => refreshDisasters()} className="mt-3 w-full rounded-xl bg-[#5500a4] py-2 text-[12.5px] font-medium text-white transition hover:brightness-110">
           {disasterLoading ? 'Refreshing…' : 'Refresh live data'}
         </button>
+        {disasterError && (
+          <p className="mt-2 rounded-lg border border-[#FF9F1C]/30 bg-[#FF9F1C]/10 px-3 py-2 text-[11px] text-[#ffc46b]">
+            {disasterError}
+          </p>
+        )}
         {lastUpdated && (
           <p className={`mt-2 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-500'}`}>Updated {formatTimeAgo(lastUpdated)}</p>
         )}
