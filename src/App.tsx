@@ -14,6 +14,7 @@ import { FuelPanel } from './ui/components/fuel/FuelPanel';
 import { ModeDocks } from './ui/components/docks/ModeDocks';
 import { EvacuationPanel } from './ui/components/routing/EvacuationPanel';
 import { ShelterPanel } from './ui/components/shelters/ShelterPanel';
+import { WeatherPanel } from './ui/components/weather/WeatherPanel';
 import { StatusBar } from './ui/components/footer/StatusBar';
 import { StoryBuilder } from './features/storytelling/builder/StoryBuilder';
 import { MinecraftExport } from './features/export/minecraft/MinecraftExport';
@@ -81,6 +82,7 @@ export default function App() {
       {activeMode === 'explore' && <EvacuationPanel context="general" />}
       {activeMode === 'monitor' && <EvacuationPanel context="evacuation" />}
       {activeMode === 'monitor' && <ShelterPanel />}
+      {(activeMode === 'explore' || activeMode === 'monitor') && <WeatherPanel />}
       <LiveAlertsPanel activeMode={activeMode} />
       <ModeDocks activeMode={activeMode} />
       <StatusBar activeMode={activeMode} />
