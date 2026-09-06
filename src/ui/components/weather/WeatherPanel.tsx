@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { CloudSun, RefreshCw } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { useWeather } from '../../../hooks/useWeather';
@@ -9,6 +9,9 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(relativeTime);
+
+// Archive latency: Open-Meteo serves history ~5 days behind real time.
+const HISTORY_MAX = new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString().slice(0, 10);
 
 // Live weather for the map viewport center (in Monitor mode, one-click
 // event avoidance flies the center to the event, so the forecast follows
@@ -29,8 +32,6 @@ export function WeatherPanel() {
   } = useWeather();
   const isBrightBasemap = useBrightBasemap();
   const [historyDate, setHistoryDate] = useState('');
-  // Archive latency: Open-Meteo serves history ~5 days behind real time.
-  const historyMax = useMemo(() => new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString().slice(0, 10), []);
 
   const labelClass = `mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`;
   const valueClass = `font-mono text-[12px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`;
@@ -87,7 +88,7 @@ export function WeatherPanel() {
             <input
               type="date"
               value={historyDate}
-              max={historyMax}
+              max={HISTORY_MAX}
               onChange={(e) => setHistoryDate(e.target.value)}
               aria-label="Historical weather date"
               className={`flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-mono text-[12px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}
