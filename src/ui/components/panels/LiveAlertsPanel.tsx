@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, AlertTriangle, Navigation, ShieldAlert } from 'lucide-react';
+import { Search, AlertTriangle, Navigation, ShieldAlert, Globe, MapPin } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { useDisaster } from '../../../hooks/useDisaster';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
@@ -13,6 +13,7 @@ import {
 } from '../../../core/data/geocode/reverseGeocode';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import * as turf from '@turf/turf';
 
 dayjs.extend(relativeTime);
 
@@ -34,13 +35,30 @@ interface LiveAlertsPanelProps {
 
 export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
   const [alertQuery, setAlertQuery] = useState('');
+  const [selectedSeverity, setSelectedSeverity] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [alertScope, setAlertScope] = useState<'global' | 'country' | 'local'>('global');
   const [locationCache, setLocationCache] = useState<Map<string, LocationHierarchy>>(new Map());
+  const [centerCountry, setCenterCountry] = useState<string | null>(null);
   const { events: disasterEvents, loading: disasterLoading, lastUpdated, refresh: refreshDisasters } = useDisaster();
   const disasterCount = disasterEvents.length;
   const isBrightBasemap = useBrightBasemap();
+  const mapCenter = useMapStore((s) => s.center);
   const setCenter = useMapStore((s) => s.setCenter);
   const setZoom = useMapStore((s) => s.setZoom);
   const setAvoidCircle = useRouteStore((s) => s.setAvoidCircle);
+
+  // Reverse-geocode map center to get its country for Country-wide filter
+  useEffect(() => {
+    let cancelled = false;
+    reverseGeocode(mapCenter[1], mapCenter[0])
+      .then((h) => {
+        if (!cancelled && h?.country) setCenterCountry(h.country);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [mapCenter]);
 
   // One-click event avoidance (Monitor): centers a 1.5 km avoid zone on the
   // event's real coordinates. The radius is the documented Valhalla
@@ -53,23 +71,58 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
     if (useMapStore.getState().zoom < 12) setZoom(12);
   };
 
+  // Local scope radius: 100 km — a reasonable "local" radius that captures
+  // nearby events without being so large it effectively becomes country-wide.
+  // Chosen as a balance between granularity and coverage for typical disaster
+  // monitoring use cases.
+  const LOCAL_RADIUS_KM = 100;
+
   const filteredDisasterEvents = useMemo(() => {
-    if (!alertQuery.trim()) return disasterEvents;
-    const q = alertQuery.toLowerCase();
-    return disasterEvents.filter((e) => {
-      if (e.title.toLowerCase().includes(q)) return true;
-      const key = `${e.latitude},${e.longitude}`;
-      const cached = locationCache.get(key) ?? getCachedHierarchy(e.latitude, e.longitude);
-      if (cached?.hierarchy.toLowerCase().includes(q)) return true;
-      if (cached?.country?.toLowerCase().includes(q)) return true;
-      if (cached?.state?.toLowerCase().includes(q)) return true;
-      if (cached?.city?.toLowerCase().includes(q)) return true;
-      if (cached?.town?.toLowerCase().includes(q)) return true;
-      const fallback = deriveHierarchyFromTitle(e.title);
-      if (fallback?.toLowerCase().includes(q)) return true;
-      return false;
-    });
-  }, [disasterEvents, alertQuery, locationCache]);
+    let result = disasterEvents;
+
+    // Search query filter
+    if (alertQuery.trim()) {
+      const q = alertQuery.toLowerCase();
+      result = result.filter((e) => {
+        if (e.title.toLowerCase().includes(q)) return true;
+        const key = `${e.latitude},${e.longitude}`;
+        const cached = locationCache.get(key) ?? getCachedHierarchy(e.latitude, e.longitude);
+        if (cached?.hierarchy.toLowerCase().includes(q)) return true;
+        if (cached?.country?.toLowerCase().includes(q)) return true;
+        if (cached?.state?.toLowerCase().includes(q)) return true;
+        if (cached?.city?.toLowerCase().includes(q)) return true;
+        if (cached?.town?.toLowerCase().includes(q)) return true;
+        const fallback = deriveHierarchyFromTitle(e.title);
+        if (fallback?.toLowerCase().includes(q)) return true;
+        return false;
+      });
+    }
+
+    // Severity filter
+    if (selectedSeverity !== 'all') {
+      result = result.filter((e) => e.severity === selectedSeverity);
+    }
+
+    // Scope filter (Global / Country-wide / Local)
+    if (alertScope === 'country') {
+      if (centerCountry) {
+        result = result.filter((e) => {
+          const key = `${e.latitude},${e.longitude}`;
+          const cached = locationCache.get(key) ?? getCachedHierarchy(e.latitude, e.longitude);
+          return cached?.country === centerCountry;
+        });
+      }
+    } else if (alertScope === 'local') {
+      const centerPoint = turf.point([mapCenter[0], mapCenter[1]]);
+      result = result.filter((e) => {
+        const eventPoint = turf.point([e.longitude, e.latitude]);
+        const distanceKm = turf.distance(centerPoint, eventPoint, { units: 'kilometers' });
+        return distanceKm <= LOCAL_RADIUS_KM;
+      });
+    }
+
+    return result;
+  }, [disasterEvents, alertQuery, locationCache, selectedSeverity, alertScope, centerCountry, mapCenter]);
 
   const displayEvents = useMemo(() => filteredDisasterEvents.slice(0, 5), [filteredDisasterEvents]);
 
@@ -126,17 +179,56 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
         </div>
 
         {activeMode === 'monitor' && (
-          <div className="mb-3 flex gap-1.5">
-            {['All', 'High', 'Medium', 'Low'].map((c, i) => (
-              <span
-                key={c}
-                className={`rounded-full border border-white/10 px-2.5 py-1 text-[11px] ${i === 0 ? (isBrightBasemap ? 'bg-white/15 text-slate-800' : 'bg-white/15 text-white') : isBrightBasemap ? 'bg-white/5 text-slate-700' : 'bg-white/5 text-slate-300'}`}
-              >
-                {c}
-              </span>
-            ))}
+          <div className="mb-3 flex gap-1.5 flex-wrap">
+            {(['All', 'High', 'Medium', 'Low'] as const).map((c) => {
+              const severityKey = c.toLowerCase() as 'all' | 'high' | 'medium' | 'low';
+              const isSelected = selectedSeverity === severityKey;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setSelectedSeverity(severityKey)}
+                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
+                    isSelected
+                      ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-[#5500a4] bg-[#5500a4] text-white')
+                      : isBrightBasemap
+                        ? 'border-white/10 bg-white/5 text-slate-700 hover:bg-white/10'
+                        : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                  }`}
+                >
+                  {c}
+                </button>
+              );
+            })}
           </div>
         )}
+
+        {/* Alert Scope Selector — Global / Country-wide / Local */}
+        <div className="mb-3 flex gap-1.5 flex-wrap">
+          {(['Global', 'Country-wide', 'Local'] as const).map((s) => {
+            const scopeKey = s.toLowerCase().replace('-', '') as 'global' | 'country' | 'local';
+            const isSelected = alertScope === scopeKey;
+            const icon = s === 'Global' ? <Globe className="h-3 w-3" /> : <MapPin className="h-3 w-3" />;
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setAlertScope(scopeKey)}
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition flex items-center gap-1.5 ${
+                  isSelected
+                    ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-[#5500a4] bg-[#5500a4] text-white')
+                    : isBrightBasemap
+                      ? 'border-white/10 bg-white/5 text-slate-700 hover:bg-white/10'
+                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                }`}
+                title={s === 'Global' ? 'All events worldwide' : s === 'Country-wide' ? 'Events in the same country as the map center' : `Events within ${100} km of the map center`}
+              >
+                {icon}
+                {s}
+              </button>
+            );
+          })}
+        </div>
 
         {alertQuery.trim() && filteredDisasterEvents.length > 0 && (
           <div className={`mb-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>
