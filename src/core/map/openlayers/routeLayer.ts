@@ -7,35 +7,67 @@ import { fromLonLat } from 'ol/proj';
 import { Style, Stroke, Fill, Circle, Text } from 'ol/style';
 import * as turf from '@turf/turf';
 import type { EvacRoute } from '../../../stores/routeStore';
-import { ROUTE_CASING_COLOR, ROUTE_CASING_WIDTH, ROUTE_LINE_COLOR, ROUTE_LINE_WIDTH } from '../routeStyle';
+import type { RouteStatusSegment } from '../../../features/traffic/flowStatus';
+import {
+  ROUTE_CASING_COLOR,
+  ROUTE_CASING_WIDTH,
+  ROUTE_LINE_COLOR,
+  ROUTE_LINE_WIDTH,
+  ROUTE_STATUS_CASING_COLOR,
+} from '../routeStyle';
 
 // Evacuation route overlay: white-cased brand-blue line (a hue outside the
 // TomTom traffic-speed palette, so it never reads as a traffic segment)
 // plus direction chevrons at intervals and green start / red end markers.
-// Verdict semantics (avoids vs enters) live in the panel chip, not the
-// line color. The avoid zone itself renders in a dedicated layer so it
-// stays visible with or without a route.
-export function createRouteLayer(route: EvacRoute): VectorLayer<VectorSource> {
+// When live flow samples exist, per-segment colors from the shared
+// flow-status bands replace the blue core (with a dark casing for contrast)
+// so the route itself communicates traffic conditions; verdict semantics
+// (avoids vs enters) live in the panel chip, not the line color. The avoid
+// zone itself renders in a dedicated layer so it stays visible with or
+// without a route.
+export function createRouteLayer(route: EvacRoute, statusSegments: RouteStatusSegment[] = []): VectorLayer<VectorSource> {
   const features: Feature[] = [];
 
   const coords = route.path.map((point) => fromLonLat([point.lon, point.lat]));
-  const casing = new Feature({
-    geometry: new LineString(coords),
-  });
-  casing.setStyle(
-    new Style({
-      stroke: new Stroke({ color: ROUTE_CASING_COLOR, width: ROUTE_CASING_WIDTH }),
-    }),
-  );
-  const line = new Feature({
-    geometry: new LineString(coords),
-  });
-  line.setStyle(
-    new Style({
-      stroke: new Stroke({ color: ROUTE_LINE_COLOR, width: ROUTE_LINE_WIDTH }),
-    }),
-  );
-  features.push(casing, line);
+  if (statusSegments.length === 0) {
+    const casing = new Feature({
+      geometry: new LineString(coords),
+    });
+    casing.setStyle(
+      new Style({
+        stroke: new Stroke({ color: ROUTE_CASING_COLOR, width: ROUTE_CASING_WIDTH }),
+      }),
+    );
+    const line = new Feature({
+      geometry: new LineString(coords),
+    });
+    line.setStyle(
+      new Style({
+        stroke: new Stroke({ color: ROUTE_LINE_COLOR, width: ROUTE_LINE_WIDTH }),
+      }),
+    );
+    features.push(casing, line);
+  } else {
+    for (const segment of statusSegments) {
+      const from = Math.max(0, Math.min(segment.fromIndex, coords.length - 1));
+      const to = Math.max(from + 1, Math.min(segment.toIndex, coords.length - 1));
+      const part = coords.slice(from, to + 1);
+      if (part.length < 2) continue;
+      const casing = new Feature({ geometry: new LineString(part) });
+      casing.setStyle(
+        new Style({
+          stroke: new Stroke({ color: ROUTE_STATUS_CASING_COLOR, width: ROUTE_CASING_WIDTH }),
+        }),
+      );
+      const line = new Feature({ geometry: new LineString(part) });
+      line.setStyle(
+        new Style({
+          stroke: new Stroke({ color: segment.color, width: ROUTE_LINE_WIDTH }),
+        }),
+      );
+      features.push(casing, line);
+    }
+  }
 
   // Direction chevrons along the line: turf stations the points and angles
   // them to the local bearing. '▶' points east at rotation 0; OpenLayers

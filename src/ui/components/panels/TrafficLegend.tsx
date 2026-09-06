@@ -1,16 +1,12 @@
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { FLOW_BANDS } from '../../../features/traffic/flowStatus';
 
 // Legend for the TomTom Traffic Flow overlay. This app requests the
 // `absolute` tile style, whose colors reflect measured absolute speed —
-// main line colors and km/h bands below are taken verbatim from TomTom's
-// Raster Flow Tiles documentation (not guessed). The © TomTom line doubles
-// as attribution where the 2D map renders no attribution control.
-const FLOW_BANDS = [
-  { color: '#777777', label: 'Stopped · <1 km/h' },
-  { color: '#FF2323', label: 'Slow · 1–60 km/h' },
-  { color: '#FFFF37', label: 'Moderate · 60–120 km/h' },
-  { color: '#2BC82B', label: 'Fast · ≥120 km/h' },
-];
+// band colors and km/h labels come from the shared flowStatus module
+// (verbatim from TomTom's Raster Flow Tiles documentation, not guessed).
+// The © TomTom line doubles as attribution where the 2D map renders no
+// attribution control.
 
 export function TrafficLegend() {
   const isBrightBasemap = useBrightBasemap();

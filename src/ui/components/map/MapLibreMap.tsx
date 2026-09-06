@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Map as MapLibre, Marker, NavigationControl, AttributionControl, Popup, setWorkerUrl } from 'maplibre-gl';
 import { useRouteStore } from '../../../stores/routeStore';
 import { reverseNominatim } from '../../../features/search/geocode';
@@ -9,6 +9,7 @@ import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
 import { removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
 import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_DIRECTION_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
+import { routeStatusSegments } from '../../../features/traffic/flowStatus';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import { TRAFFIC_LAYER_ID } from '../../../core/map/maplibre/traffic';
 import { TRAFFIC_FLOW_DIM_OPACITY, TRAFFIC_FLOW_FULL_OPACITY_ML } from '../../../core/map/routeStyle';
@@ -262,6 +263,13 @@ export function MapLibreMap() {
   const evacRoute = useRouteStore((s) => s.route);
   const jogLoop = useRouteStore((s) => s.jogLoop);
   const routeLine = evacRoute ?? (jogLoop ? jogLoopAsEvacRoute(jogLoop) : null);
+  // Live flow samples recolor the route by traffic status (no extra
+  // requests — the same samples behind the traffic-aware ETA).
+  const routeTraffic = useRouteStore((s) => s.trafficAdjustment);
+  const routeTrafficSegments = useMemo(
+    () => (routeLine && routeTraffic ? routeStatusSegments(routeLine.path.length, routeTraffic.samples) : []),
+    [routeLine, routeTraffic],
+  );
   const avoidCircle = useRouteStore((s) => s.avoidCircle);
   const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
   const drawCenterRef = useRef<{ lon: number; lat: number } | null>(null);
@@ -381,7 +389,13 @@ export function MapLibreMap() {
       setAvoidVisible(liveMap, useRouteStore.getState().avoidCircle);
       const liveRoute = useRouteStore.getState().route;
       const liveJog = useRouteStore.getState().jogLoop;
-      setRouteVisible(liveMap, liveRoute ?? (liveJog ? jogLoopAsEvacRoute(liveJog) : null));
+      const liveLine = liveRoute ?? (liveJog ? jogLoopAsEvacRoute(liveJog) : null);
+      const liveTraffic = useRouteStore.getState().trafficAdjustment;
+      setRouteVisible(
+        liveMap,
+        liveLine,
+        liveLine && liveTraffic ? routeStatusSegments(liveLine.path.length, liveTraffic.samples) : [],
+      );
       setSearchMarkerVisible(liveMap, useSearchStore.getState().marker);
     });
   }, [basemap, satelliteSource]);
@@ -465,12 +479,12 @@ export function MapLibreMap() {
 
   // Evacuation route line — added after the avoid hatch so it draws above.
   // The route is moved above the traffic flow layer (topmost line layer)
-  // and flow dims underneath so the blue line reads as dominant while
+  // and flow dims underneath so the route reads as dominant while
   // traffic stays visible for context and the traffic-aware ETA.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
-    setRouteVisible(map, routeLine);
+    setRouteVisible(map, routeLine, routeTrafficSegments);
     // Incident markers stay clickable above the route line: move the route
     // stack to just below the incident layer.
     if (routeLine && map.getLayer(TRAFFIC_INCIDENT_LAYER_ID)) {
@@ -486,7 +500,7 @@ export function MapLibreMap() {
         map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_FULL_OPACITY_ML);
       }
     }
-  }, [routeLine]);
+  }, [routeLine, routeTrafficSegments]);
 
   // Sync center/zoom when store changes externally — only fly when meaningfully different
   useEffect(() => {

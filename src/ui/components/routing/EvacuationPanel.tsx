@@ -593,7 +593,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
             </p>
             {trafficAdjustment && (
               <p className={`mt-1 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
-                ≈{trafficAdjustment.adjustedMinutes.toFixed(0)} min with current traffic ({trafficAdjustment.samples}{' '}
+                ≈{trafficAdjustment.adjustedMinutes.toFixed(0)} min with current traffic ({trafficAdjustment.samples.length}{' '}
                 samples)
               </p>
             )}

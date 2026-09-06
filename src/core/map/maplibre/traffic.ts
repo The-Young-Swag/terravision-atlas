@@ -1,6 +1,7 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { GeoJSONSource } from 'maplibre-gl';
 import { flowTileUrl, type TrafficIncident } from '../../../features/traffic/tomtom';
+import { TRAFFIC_FLOW_FULL_OPACITY_ML } from '../routeStyle';
 
 // TomTom traffic flow raster overlay for the Vector (MapLibre) map.
 // Same tiles as the 2D overlay; MapLibre caches them per session.
@@ -24,7 +25,7 @@ export function addTrafficLayers(map: MapLibreMap, apiKey: string): void {
       id: TRAFFIC_LAYER_ID,
       type: 'raster',
       source: TRAFFIC_SOURCE_ID,
-      paint: { 'raster-opacity': 0.85 },
+      paint: { 'raster-opacity': TRAFFIC_FLOW_FULL_OPACITY_ML },
     });
   }
 }

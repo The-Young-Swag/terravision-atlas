@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
 import * as turf from '@turf/turf';
 import { useMapStore } from '../../../stores/mapStore';
 import { useRouteStore } from '../../../stores/routeStore';
-import { ROUTE_LINE_COLOR } from '../../../core/map/routeStyle';
+import { ROUTE_LINE_COLOR, ROUTE_STATUS_CASING_COLOR } from '../../../core/map/routeStyle';
+import { routeStatusSegments } from '../../../features/traffic/flowStatus';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import {
   createCesiumViewer,
@@ -141,18 +142,25 @@ export function CesiumGlobe() {
     flyToCesium(viewer, center, zoom);
   }, [center, zoom]);
 
-  // Navigation route overlay: white-cased brand-blue polyline clamped to
-  // terrain (Ion mesh when available) plus green start / red end points —
-  // the same shared treatment as the 2D and Vector maps. The two coplanar
-  // ground-clamped lines are ordered with polyline zIndex (casing below,
-  // blue above): per Cesium's PolylineGraphics docs, zIndex orders ground
-  // geometry when clampToGround is true, which resolves the overlap
-  // deterministically instead of z-fighting. Polyline widths above 1px are
-  // best-effort (platform-dependent); the blue hue outside the
-  // traffic-speed palette carries the distinction.
+  // Navigation route overlay: brand-blue polyline with white casing clamped
+  // to terrain (Ion mesh when available) plus green start / red end points —
+  // the same shared treatment as the 2D and Vector maps. With live flow
+  // samples, per-segment colors from the shared flow-status bands replace
+  // the blue core (dark casing for contrast) so the route communicates
+  // traffic conditions. The two coplanar ground-clamped lines are ordered
+  // with polyline zIndex (casing below, color above): per Cesium's
+  // PolylineGraphics docs, zIndex orders ground geometry when clampToGround
+  // is true, which resolves the overlap deterministically instead of
+  // z-fighting. Polyline widths above 1px are best-effort
+  // (platform-dependent).
   const navRoute = useRouteStore((s) => s.route);
   const navJog = useRouteStore((s) => s.jogLoop);
   const navLine = navRoute ?? (navJog ? jogLoopAsEvacRoute(navJog) : null);
+  const navTraffic = useRouteStore((s) => s.trafficAdjustment);
+  const navStatusSegments = useMemo(
+    () => (navLine && navTraffic ? routeStatusSegments(navLine.path.length, navTraffic.samples) : []),
+    [navLine, navTraffic],
+  );
 
   useEffect(() => {
     const viewer = viewerRef.current;
@@ -165,11 +173,11 @@ export function CesiumGlobe() {
     }
     if (!navLine || navLine.path.length < 2) return;
     const positions = navLine.path.map((point) => Cesium.Cartesian3.fromDegrees(point.lon, point.lat));
-    const addLine = (width: number, color: Cesium.Color, zIndex: number) => {
+    const addLine = (linePositions: Cesium.Cartesian3[], width: number, color: Cesium.Color, zIndex: number) => {
       entities.add({
         properties: { nav: true },
         polyline: {
-          positions,
+          positions: linePositions,
           width,
           material: color,
           clampToGround: true,
@@ -177,8 +185,19 @@ export function CesiumGlobe() {
         },
       });
     };
-    addLine(7, Cesium.Color.WHITE, 0);
-    addLine(4, Cesium.Color.fromCssColorString(ROUTE_LINE_COLOR), 1);
+    if (navStatusSegments.length === 0) {
+      addLine(positions, 7, Cesium.Color.WHITE, 0);
+      addLine(positions, 4, Cesium.Color.fromCssColorString(ROUTE_LINE_COLOR), 1);
+    } else {
+      for (const segment of navStatusSegments) {
+        const from = Math.max(0, Math.min(segment.fromIndex, positions.length - 1));
+        const to = Math.max(from + 1, Math.min(segment.toIndex, positions.length - 1));
+        const part = positions.slice(from, to + 1);
+        if (part.length < 2) continue;
+        addLine(part, 7, Cesium.Color.fromCssColorString(ROUTE_STATUS_CASING_COLOR), 0);
+        addLine(part, 4, Cesium.Color.fromCssColorString(segment.color), 1);
+      }
+    }
     // Direction chevrons: V-shaped ground-clamped segments at intervals,
     // apex pointing along travel. Turf stations the points and bearings,
     // mirroring the 2D overlay; white casing + blue inner layer above the
@@ -251,7 +270,7 @@ export function CesiumGlobe() {
     const last = navLine.path[navLine.path.length - 1];
     if (first) addPin(first.lon, first.lat, Cesium.Color.fromCssColorString('#00d890'));
     if (last) addPin(last.lon, last.lat, Cesium.Color.fromCssColorString('#E63946'));
-  }, [navLine, viewerEpoch]);
+  }, [navLine, navStatusSegments, viewerEpoch]);
 
   return (
     <div

@@ -1,13 +1,21 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { EvacRoute } from '../../../stores/routeStore';
-import { ROUTE_CASING_WIDTH, ROUTE_LINE_COLOR, ROUTE_LINE_WIDTH } from '../routeStyle';
+import type { RouteStatusSegment } from '../../../features/traffic/flowStatus';
+import {
+  ROUTE_CASING_WIDTH,
+  ROUTE_LINE_COLOR,
+  ROUTE_LINE_WIDTH,
+  ROUTE_STATUS_CASING_COLOR,
+} from '../routeStyle';
 
 // Evacuation route line for the Vector map: white casing with a unified
 // brand-blue line on top (a hue outside the TomTom traffic-speed palette),
-// mirroring the 2D overlay. Verdict semantics live in the panel chip, not
-// the line color. Direction chevrons use a canvas-drawn image (no glyph
-// server is configured, so text symbols would not render) placed along the
-// line, rotating with it.
+// mirroring the 2D overlay. With live flow samples, per-segment colors from
+// the shared flow-status bands replace the blue core (dark casing for
+// contrast) so the route communicates traffic conditions; verdict semantics
+// live in the panel chip, not the line color. Direction chevrons use a
+// canvas-drawn image (no glyph server is configured, so text symbols would
+// not render) placed along the line, rotating with it.
 export const ROUTE_SOURCE_ID = 'evac-route';
 export const ROUTE_CASING_LAYER_ID = 'evac-route-casing';
 export const ROUTE_LINE_LAYER_ID = 'evac-route-line';
@@ -46,28 +54,52 @@ function ensureChevronImage(map: MapLibreMap): void {
   map.addImage(ROUTE_CHEVRON_IMAGE_ID, context.getImageData(0, 0, size, size));
 }
 
-export function setRouteVisible(map: MapLibreMap, route: EvacRoute | null): void {
+export function setRouteVisible(
+  map: MapLibreMap,
+  route: EvacRoute | null,
+  statusSegments: RouteStatusSegment[] = [],
+): void {
   removeRouteLayers(map);
   if (!route || route.path.length === 0) return;
   const coordinates = route.path.map((point) => [point.lon, point.lat]);
+  const statusColors = statusSegments.length > 0;
   map.addSource(ROUTE_SOURCE_ID, {
     type: 'geojson',
     data: {
       type: 'FeatureCollection',
-      features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates }, properties: {} }],
+      features: statusColors
+        ? statusSegments.flatMap((segment) => {
+            const from = Math.max(0, Math.min(segment.fromIndex, coordinates.length - 1));
+            const to = Math.max(from + 1, Math.min(segment.toIndex, coordinates.length - 1));
+            if (to - from < 1) return [];
+            return [
+              {
+                type: 'Feature',
+                geometry: { type: 'LineString', coordinates: coordinates.slice(from, to + 1) },
+                properties: { color: segment.color },
+              },
+            ];
+          })
+        : [{ type: 'Feature', geometry: { type: 'LineString', coordinates }, properties: {} }],
     },
   });
   map.addLayer({
     id: ROUTE_CASING_LAYER_ID,
     type: 'line',
     source: ROUTE_SOURCE_ID,
-    paint: { 'line-color': '#ffffff', 'line-width': ROUTE_CASING_WIDTH },
+    paint: {
+      'line-color': statusColors ? ROUTE_STATUS_CASING_COLOR : '#ffffff',
+      'line-width': ROUTE_CASING_WIDTH,
+    },
   });
   map.addLayer({
     id: ROUTE_LINE_LAYER_ID,
     type: 'line',
     source: ROUTE_SOURCE_ID,
-    paint: { 'line-color': ROUTE_LINE_COLOR, 'line-width': ROUTE_LINE_WIDTH },
+    paint: {
+      'line-color': statusColors ? ['get', 'color'] : ROUTE_LINE_COLOR,
+      'line-width': ROUTE_LINE_WIDTH,
+    },
   });
   ensureChevronImage(map);
   if (typeof map.hasImage === 'function' && map.hasImage(ROUTE_CHEVRON_IMAGE_ID)) {

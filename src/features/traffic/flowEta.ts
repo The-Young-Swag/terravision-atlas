@@ -23,6 +23,11 @@ export interface FlowSegment {
   freeFlowSpeed: number;
 }
 
+/** A flow sample pinned to the route-path index it was taken at. */
+export interface FlowSample extends FlowSegment {
+  pathIndex: number;
+}
+
 interface CachedSegment {
   fetchedAt: number;
   segment: FlowSegment | null;
@@ -83,7 +88,8 @@ async function fetchFlowSegment(lat: number, lon: number, key: string): Promise<
 export interface TrafficEta {
   adjustedMinutes: number;
   factor: number;
-  samples: number;
+  /** Per-sample speeds with path positions — also drives route coloring. */
+  samples: FlowSample[];
 }
 
 /**
@@ -99,14 +105,15 @@ export async function trafficAdjustedMinutes(
   if (path.length < 2 || !Number.isFinite(baseMinutes) || baseMinutes <= 0) return null;
   const count = Math.min(MAX_FLOW_SAMPLES, path.length);
   const step = (path.length - 1) / Math.max(1, count - 1);
-  const samples: FlowSegment[] = [];
+  const samples: FlowSample[] = [];
   for (let i = 0; i < count; i++) {
-    const point = path[Math.round(i * step)];
+    const pathIndex = Math.round(i * step);
+    const point = path[pathIndex];
     if (!point) continue;
     const segment = await fetchFlowSegment(point.lat, point.lon, key);
-    if (segment) samples.push(segment);
+    if (segment) samples.push({ ...segment, pathIndex });
   }
   if (samples.length === 0) return null;
   const factor = combineSpeedRatios(samples.map((s) => s.currentSpeed / s.freeFlowSpeed));
-  return { adjustedMinutes: baseMinutes * factor, factor, samples: samples.length };
+  return { adjustedMinutes: baseMinutes * factor, factor, samples };
 }

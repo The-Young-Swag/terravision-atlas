@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { EvacCircle } from '../features/routing/avoidZone';
 import type { TravelCosting } from '../features/routing/valhalla';
+import type { FlowSample } from '../features/traffic/flowEta';
 
 export interface EvacRoutePoint {
   lon: number;
@@ -32,7 +33,8 @@ export interface TrafficAdjustment {
   /** Multiplicative factor applied to the base duration (>= 1 when slowed). */
   factor: number;
   adjustedMinutes: number;
-  samples: number;
+  /** Per-sample speeds with path positions — drives route status coloring. */
+  samples: FlowSample[];
 }
 
 interface RouteState {

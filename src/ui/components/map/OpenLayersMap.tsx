@@ -10,6 +10,7 @@ import { useDisasterStore } from '../../../stores/disasterStore';
 import { createMap, updateBasemap } from '../../../core/map/openlayers/createMap';
 import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';
 import { createRouteLayer } from '../../../core/map/openlayers/routeLayer';
+import { routeStatusSegments } from '../../../features/traffic/flowStatus';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import { createAvoidLayer } from '../../../core/map/openlayers/avoidLayer';
 import { circleToRing, previewCircle, MIN_AVOID_RADIUS_KM } from '../../../features/routing/avoidZone';
@@ -60,6 +61,13 @@ export function OpenLayersMap() {
   const jogLoop = useRouteStore((s) => s.jogLoop);
   // The jogging loop shares the route line treatment (neutral verdict).
   const routeLine = route ?? (jogLoop ? jogLoopAsEvacRoute(jogLoop) : null);
+  // Live flow samples recolor the route by traffic status (no extra
+  // requests — the same samples behind the traffic-aware ETA).
+  const routeTraffic = useRouteStore((s) => s.trafficAdjustment);
+  const routeTrafficSegments = useMemo(
+    () => (routeLine && routeTraffic ? routeStatusSegments(routeLine.path.length, routeTraffic.samples) : []),
+    [routeLine, routeTraffic],
+  );
   const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
   const avoidLayerRef = useRef<ReturnType<typeof createAvoidLayer> | null>(null);
   const drawPreviewLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
@@ -400,7 +408,7 @@ export function OpenLayersMap() {
 
   // Evacuation route overlay — rebuilt whenever the route or avoid area changes.
   // The route renders above the traffic flow layer (explicit z-index, not
-  // add-order) and dims flow underneath so the blue line reads as dominant
+  // add-order) and dims flow underneath so the route reads as dominant
   // while traffic stays visible for context.
   useEffect(() => {
     const map = mapInstanceRef.current;
@@ -412,7 +420,7 @@ export function OpenLayersMap() {
     }
 
     if (routeLine) {
-      const layer = createRouteLayer(routeLine);
+      const layer = createRouteLayer(routeLine, routeTrafficSegments);
       layer.setZIndex(10);
       map.addLayer(layer);
       routeLayerRef.current = layer;
@@ -423,7 +431,7 @@ export function OpenLayersMap() {
         candidate.setOpacity(routeLine ? TRAFFIC_FLOW_DIM_OPACITY : TRAFFIC_FLOW_FULL_OPACITY);
       }
     }
-  }, [routeLine]);
+  }, [routeLine, routeTrafficSegments]);
 
   // Standalone avoid-zone overlay — visible with or without a route.
   useEffect(() => {
