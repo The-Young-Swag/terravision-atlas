@@ -11,6 +11,7 @@ import { removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplib
 import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_DIRECTION_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
 import { routeStatusSegments } from '../../../features/traffic/flowStatus';
 import { setDisastersVisible, DISASTER_LAYER_ID } from '../../../core/map/maplibre/disasters';
+import { setWeatherVisible, WEATHER_LAYER_ID } from '../../../core/map/maplibre/weather';
 import { disasterPopupHtml } from '../../../features/disasters/popup';
 import { weatherPopupHtml } from '../../../features/weather/popup';
 import '../../../features/weather/popup.css';
@@ -55,7 +56,6 @@ export function MapLibreMap() {
   const trafficIncidents = useTrafficStore((s) => s.incidents);
   const incidentPopupRef = useRef<Popup | null>(null);
   const disasterPopupRef = useRef<Popup | null>(null);
-  const weatherMarkerRef = useRef<Marker | null>(null);
   const weatherPopupRef = useRef<Popup | null>(null);
   const disasterEvents = useDisasterStore((s) => s.events);
   const weatherLocation = useWeatherStore((s) => s.location);
@@ -169,6 +169,43 @@ export function MapLibreMap() {
           }
         })
         .catch(() => undefined);
+    });
+
+    // Disaster and weather popups share one global click handler (registered
+    // once with the map instance, reading live store state) so popups keep
+    // working regardless of when layers are added around style reloads.
+    // Layer creation itself stays in the reactive effects below.
+    map.on('click', (event) => {
+      if (map.getLayer(DISASTER_LAYER_ID)) {
+        const hits = map.queryRenderedFeatures(event.point, { layers: [DISASTER_LAYER_ID] });
+        const disasterId = (hits[0]?.properties as { disasterId?: unknown } | undefined)?.disasterId;
+        if (typeof disasterId === 'string') {
+          const disaster = useDisasterStore.getState().events.find((item) => item.id === disasterId);
+          if (disaster) {
+            disasterPopupRef.current?.remove();
+            weatherPopupRef.current?.remove();
+            disasterPopupRef.current = new Popup({ closeButton: true, maxWidth: '260px' })
+              .setLngLat([disaster.longitude, disaster.latitude])
+              .setHTML(disasterPopupHtml(disaster))
+              .addTo(map);
+            return;
+          }
+        }
+      }
+      if (map.getLayer(WEATHER_LAYER_ID)) {
+        const hits = map.queryRenderedFeatures(event.point, { layers: [WEATHER_LAYER_ID] });
+        if (hits.length > 0) {
+          const weather = useWeatherStore.getState();
+          if (weather.current && weather.location) {
+            disasterPopupRef.current?.remove();
+            weatherPopupRef.current?.remove();
+            weatherPopupRef.current = new Popup({ closeButton: true, maxWidth: '260px' })
+              .setLngLat([weather.location.lon, weather.location.lat])
+              .setHTML(weatherPopupHtml(weather.current, weather.location.label))
+              .addTo(map);
+          }
+        }
+      }
     });
 
     // Avoid-zone draw tool: press-drag-release sketches a circle while
@@ -382,64 +419,47 @@ export function MapLibreMap() {
   }, [showTraffic, trafficStatus, trafficIncidents]);
 
   // Live disaster pins — severity-colored circles mirroring the 2D hazard
-  // pins; clicking one pops up its source details.
+  // pins. Clicks are handled by the shared map click handler in the init
+  // effect above; this effect only owns layer lifecycle.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
-    setDisastersVisible(map, disasterEvents, showHazards);
-    disasterPopupRef.current?.remove();
-    disasterPopupRef.current = null;
-    if (!showHazards) return undefined;
-    const handleDisasterClick = (event: MapLayerMouseEvent) => {
-      const disasterId = event.features?.[0]?.properties?.disasterId;
-      if (typeof disasterId !== 'string') return;
-      const disaster = useDisasterStore.getState().events.find((item) => item.id === disasterId);
-      if (!disaster) return;
-      disasterPopupRef.current?.remove();
-      disasterPopupRef.current = new Popup({ closeButton: true, maxWidth: '260px' })
-        .setLngLat([disaster.longitude, disaster.latitude])
-        .setHTML(disasterPopupHtml(disaster))
-        .addTo(map);
-    };
-    map.on('click', DISASTER_LAYER_ID, handleDisasterClick);
-    return () => {
-      map.off('click', DISASTER_LAYER_ID, handleDisasterClick);
+    if (!map) return undefined;
+    const apply = () => {
+      if (!map.isStyleLoaded()) return undefined;
+      setDisastersVisible(map, disasterEvents, showHazards);
       disasterPopupRef.current?.remove();
       disasterPopupRef.current = null;
+      return undefined;
     };
+    if (!map.isStyleLoaded()) {
+      map.once('style.load', apply);
+      return () => {
+        map.off('style.load', apply);
+      };
+    }
+    return apply();
   }, [showHazards, disasterEvents]);
 
-  // Weather marker — brand-purple pin at the weather location; clicking it
-  // pops up current conditions.
+  // Weather marker — brand-purple disc at the weather location. Clicks are
+  // handled by the shared map click handler in the init effect above; this
+  // effect only owns layer lifecycle.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
-    weatherMarkerRef.current?.remove();
-    weatherMarkerRef.current = null;
-    weatherPopupRef.current?.remove();
-    weatherPopupRef.current = null;
-    if (!weatherLocation) return undefined;
-    const marker = new Marker({ color: '#5500a4' });
-    marker.setLngLat([weatherLocation.lon, weatherLocation.lat]);
-    marker.addTo(map);
-    weatherMarkerRef.current = marker;
-    const handleWeatherClick = () => {
-      const weather = useWeatherStore.getState();
-      if (!weather.current || !weather.location) return;
-      weatherPopupRef.current?.remove();
-      weatherPopupRef.current = new Popup({ closeButton: true, maxWidth: '260px' })
-        .setLngLat([weather.location.lon, weather.location.lat])
-        .setHTML(weatherPopupHtml(weather.current, weather.location.label))
-        .addTo(map);
-    };
-    marker.getElement().addEventListener('click', handleWeatherClick);
-    return () => {
-      marker.getElement().removeEventListener('click', handleWeatherClick);
-      marker.remove();
-      weatherMarkerRef.current = null;
+    if (!map) return undefined;
+    const apply = () => {
+      if (!map.isStyleLoaded()) return undefined;
+      setWeatherVisible(map, weatherLocation?.lon ?? null, weatherLocation?.lat ?? null);
       weatherPopupRef.current?.remove();
       weatherPopupRef.current = null;
+      return undefined;
     };
+    if (!map.isStyleLoaded()) {
+      map.once('style.load', apply);
+      return () => {
+        map.off('style.load', apply);
+      };
+    }
+    return apply();
   }, [weatherLocation, weatherCurrent]);
 
   // Base Map reactivity — the four Vector styles mirror the 2D basemaps.
@@ -471,6 +491,8 @@ export function MapLibreMap() {
       );
       setSearchMarkerVisible(liveMap, useSearchStore.getState().marker);
       setDisastersVisible(liveMap, useDisasterStore.getState().events, mapState.showHazards);
+      const liveWeather = useWeatherStore.getState().location;
+      setWeatherVisible(liveMap, liveWeather?.lon ?? null, liveWeather?.lat ?? null);
     });
   }, [basemap, satelliteSource]);
 
