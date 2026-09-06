@@ -101,11 +101,11 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
               >
                 {fuelState.unitSystem === 'metric' ? (
                   <>
-                    <option value="kml">km/L</option>
-                    <option value="l100km">L/100km</option>
+                    <option value="kml" className="bg-[#0D1B2A] text-slate-200">km/L</option>
+                    <option value="l100km" className="bg-[#0D1B2A] text-slate-200">L/100km</option>
                   </>
                 ) : (
-                  <option value="mpg">MPG (US)</option>
+                  <option value="mpg" className="bg-[#0D1B2A] text-slate-200">MPG (US)</option>
                 )}
               </select>
             </div>

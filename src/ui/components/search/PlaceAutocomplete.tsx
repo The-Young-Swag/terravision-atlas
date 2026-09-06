@@ -14,6 +14,13 @@ interface PlaceAutocompleteProps {
 
 type DropdownStatus = 'idle' | 'loading' | 'no-results' | 'unavailable';
 
+// Only one autocomplete dropdown may be visible at a time (Start vs.
+// Destination vs. global search share this component). Instances announce
+// themselves on open; every other instance closes. Window CustomEvent keeps
+// the coordination local to this module — no store or context needed.
+const AUTOCOMPLETE_OPENED_EVENT = 'place-autocomplete-opened';
+let autocompleteInstanceSeq = 0;
+
 /**
  * Shared place autocomplete: Photon suggestions while typing, Nominatim
  * final geocode on select/Enter. Used by the TopBar search and (Item 4) the
@@ -28,6 +35,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
   const [status, setStatus] = useState<DropdownStatus>('idle');
   const requestId = useRef(0);
   const boxRef = useRef<HTMLDivElement>(null);
+  const instanceId = useRef(++autocompleteInstanceSeq);
   // Query text already submitted to Nominatim: the effect skips it so that
   // selecting a result (which also flies the map, changing center) doesn't
   // pop the dropdown back open with a fresh lookup of the picked place.
@@ -41,6 +49,21 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
   const lastEditedRef = useRef(value);
 
   const searchable = value.trim().length >= 2;
+
+  const openDropdown = () => {
+    window.dispatchEvent(new CustomEvent(AUTOCOMPLETE_OPENED_EVENT, { detail: instanceId.current }));
+    setOpen(true);
+  };
+
+  // Another autocomplete instance opened elsewhere: yield so at most one
+  // dropdown renders at a time.
+  useEffect(() => {
+    const yieldToOther = (event: Event) => {
+      if ((event as CustomEvent<number>).detail !== instanceId.current) setOpen(false);
+    };
+    window.addEventListener(AUTOCOMPLETE_OPENED_EVENT, yieldToOther);
+    return () => window.removeEventListener(AUTOCOMPLETE_OPENED_EVENT, yieldToOther);
+  }, []);
 
   // Debounced Photon lookup — 300 ms after the user stops typing. State
   // updates happen only inside the timeout callback or event handlers, and
@@ -71,7 +94,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
         if (requestId.current !== current) return;
         setSuggestions(results);
         setHighlight(results.length > 0 ? 0 : -1);
-        setOpen(true);
+        openDropdown();
         setStatus(results.length > 0 ? 'idle' : 'no-results');
       } catch {
         // Photon failure is silent here: Enter falls through to Nominatim.
@@ -87,7 +110,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
   const submitNominatim = async (query: string) => {
     submittedRef.current = query.trim();
     setStatus('loading');
-    setOpen(true);
+    openDropdown();
     try {
       const place = await geocodeNominatim(query);
       if (!place) {
@@ -128,11 +151,11 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'ArrowDown' && suggestions.length > 0) {
       event.preventDefault();
-      setOpen(true);
+      openDropdown();
       setHighlight((h) => (h + 1) % suggestions.length);
     } else if (event.key === 'ArrowUp' && suggestions.length > 0) {
       event.preventDefault();
-      setOpen(true);
+      openDropdown();
       setHighlight((h) => (h - 1 + suggestions.length) % suggestions.length);
     } else if (event.key === 'Enter') {
       event.preventDefault();
@@ -160,7 +183,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
         }}
         onKeyDown={handleKeyDown}
         onFocus={() => {
-          if (suggestions.length > 0) setOpen(true);
+          if (suggestions.length > 0) openDropdown();
         }}
         className={`flex-1 bg-transparent text-[13.5px] focus:outline-none ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-400'}`}
         placeholder={placeholder ?? 'Search places'}
@@ -172,7 +195,11 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
         autoComplete="off"
       />
       {open && searchable && (
-        <div className="glass-strong absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl">
+        <div
+          className={`absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border shadow-xl ${
+            isBrightBasemap ? 'border-slate-900/10 bg-[#f1f5f9]' : 'border-white/10 bg-[#0D1B2A]'
+          }`}
+        >
           {status === 'loading' && (
             <p className={`px-4 py-3 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>Searching…</p>
           )}
@@ -187,7 +214,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
             </p>
           )}
           {status === 'idle' && suggestions.length > 0 && (
-            <ul id="place-autocomplete-list" role="listbox" className="max-h-56 overflow-y-auto p-1.5">
+            <ul id="place-autocomplete-list" role="listbox" className="custom-scrollbar max-h-56 overflow-y-auto p-1.5">
               {suggestions.map((suggestion, index) => (
                 <li key={`${suggestion.lon},${suggestion.lat},${suggestion.label}`} role="option" id={`place-option-${index}`} aria-selected={index === highlight}>
                   <button
