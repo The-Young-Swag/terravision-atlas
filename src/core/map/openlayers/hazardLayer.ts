@@ -4,6 +4,7 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import { fromLonLat } from 'ol/proj';
 import { Style, Circle, Fill, Stroke } from 'ol/style';
+import { DISASTER_SEVERITY_COLORS } from '../disasterStyle';
 
 export interface HazardFeature {
   id: string;
@@ -13,11 +14,7 @@ export interface HazardFeature {
   type: string;
 }
 
-const severityColor: Record<HazardFeature['severity'], string> = {
-  high: '#E63946',
-  medium: '#FF9F1C',
-  low: '#2EC4B6',
-};
+const severityColor = DISASTER_SEVERITY_COLORS;
 
 // Vector layer for live hazard pins with adaptive stroke for basemap contrast
 export function createHazardLayer(

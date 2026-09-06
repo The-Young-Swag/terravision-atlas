@@ -10,6 +10,12 @@ import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/sna
 import { removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
 import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_DIRECTION_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
 import { routeStatusSegments } from '../../../features/traffic/flowStatus';
+import { setDisastersVisible, DISASTER_LAYER_ID } from '../../../core/map/maplibre/disasters';
+import { disasterPopupHtml } from '../../../features/disasters/popup';
+import { weatherPopupHtml } from '../../../features/weather/popup';
+import '../../../features/weather/popup.css';
+import { useDisasterStore } from '../../../stores/disasterStore';
+import { useWeatherStore } from '../../../stores/weatherStore';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import { TRAFFIC_LAYER_ID } from '../../../core/map/maplibre/traffic';
 import { TRAFFIC_FLOW_DIM_OPACITY, TRAFFIC_FLOW_FULL_OPACITY_ML } from '../../../core/map/routeStyle';
@@ -44,10 +50,16 @@ export function MapLibreMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibre | null>(null);
 
-  const { center, zoom, basemap, satelliteSource, showTerrainContours, showTraffic } = useMapStore();
+  const { center, zoom, basemap, satelliteSource, showTerrainContours, showTraffic, showHazards } = useMapStore();
   const trafficStatus = useTrafficStore((s) => s.status);
   const trafficIncidents = useTrafficStore((s) => s.incidents);
   const incidentPopupRef = useRef<Popup | null>(null);
+  const disasterPopupRef = useRef<Popup | null>(null);
+  const weatherMarkerRef = useRef<Marker | null>(null);
+  const weatherPopupRef = useRef<Popup | null>(null);
+  const disasterEvents = useDisasterStore((s) => s.events);
+  const weatherLocation = useWeatherStore((s) => s.location);
+  const weatherCurrent = useWeatherStore((s) => s.current);
 
   // Adaptive contrast for in-map UI (controls, attribution)
   const { theme, textPrimary, attributionText } = useMapOverlayContrast();
@@ -369,6 +381,67 @@ export function MapLibreMap() {
     };
   }, [showTraffic, trafficStatus, trafficIncidents]);
 
+  // Live disaster pins — severity-colored circles mirroring the 2D hazard
+  // pins; clicking one pops up its source details.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    setDisastersVisible(map, disasterEvents, showHazards);
+    disasterPopupRef.current?.remove();
+    disasterPopupRef.current = null;
+    if (!showHazards) return undefined;
+    const handleDisasterClick = (event: MapLayerMouseEvent) => {
+      const disasterId = event.features?.[0]?.properties?.disasterId;
+      if (typeof disasterId !== 'string') return;
+      const disaster = useDisasterStore.getState().events.find((item) => item.id === disasterId);
+      if (!disaster) return;
+      disasterPopupRef.current?.remove();
+      disasterPopupRef.current = new Popup({ closeButton: true, maxWidth: '260px' })
+        .setLngLat([disaster.longitude, disaster.latitude])
+        .setHTML(disasterPopupHtml(disaster))
+        .addTo(map);
+    };
+    map.on('click', DISASTER_LAYER_ID, handleDisasterClick);
+    return () => {
+      map.off('click', DISASTER_LAYER_ID, handleDisasterClick);
+      disasterPopupRef.current?.remove();
+      disasterPopupRef.current = null;
+    };
+  }, [showHazards, disasterEvents]);
+
+  // Weather marker — brand-purple pin at the weather location; clicking it
+  // pops up current conditions.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    weatherMarkerRef.current?.remove();
+    weatherMarkerRef.current = null;
+    weatherPopupRef.current?.remove();
+    weatherPopupRef.current = null;
+    if (!weatherLocation) return undefined;
+    const marker = new Marker({ color: '#5500a4' });
+    marker.setLngLat([weatherLocation.lon, weatherLocation.lat]);
+    marker.addTo(map);
+    weatherMarkerRef.current = marker;
+    const handleWeatherClick = () => {
+      const weather = useWeatherStore.getState();
+      if (!weather.current || !weather.location) return;
+      weatherPopupRef.current?.remove();
+      weatherPopupRef.current = new Popup({ closeButton: true, maxWidth: '260px' })
+        .setLngLat([weather.location.lon, weather.location.lat])
+        .setHTML(weatherPopupHtml(weather.current, weather.location.label))
+        .addTo(map);
+    };
+    marker.getElement().addEventListener('click', handleWeatherClick);
+    return () => {
+      marker.getElement().removeEventListener('click', handleWeatherClick);
+      marker.remove();
+      weatherMarkerRef.current = null;
+      weatherPopupRef.current?.remove();
+      weatherPopupRef.current = null;
+    };
+  }, [weatherLocation, weatherCurrent]);
+
   // Base Map reactivity — the four Vector styles mirror the 2D basemaps.
   // setStyle drops runtime sources, so contour/traffic overlays are
   // re-applied from live store state once the new style loads.
@@ -397,6 +470,7 @@ export function MapLibreMap() {
         liveLine && liveTraffic ? routeStatusSegments(liveLine.path.length, liveTraffic.samples) : [],
       );
       setSearchMarkerVisible(liveMap, useSearchStore.getState().marker);
+      setDisastersVisible(liveMap, useDisasterStore.getState().events, mapState.showHazards);
     });
   }, [basemap, satelliteSource]);
 

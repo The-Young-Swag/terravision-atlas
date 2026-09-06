@@ -35,6 +35,10 @@ import { incidentPopupHtml } from '../../../features/traffic/incidentPopup';
 import '../../../features/traffic/incidentPopup.css';
 import { shelterPopupHtml } from '../../../features/shelters/shelterPopup';
 import '../../../features/shelters/shelterPopup.css';
+import { createWeatherLayer } from '../../../core/map/openlayers/weatherLayer';
+import { weatherPopupHtml } from '../../../features/weather/popup';
+import '../../../features/weather/popup.css';
+import { useWeatherStore } from '../../../stores/weatherStore';
 import Overlay from 'ol/Overlay';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'ol/ol.css';
@@ -82,6 +86,9 @@ export function OpenLayersMap() {
   const shelters = useShelterStore((s) => s.shelters);
   const trafficStatus = useTrafficStore((s) => s.status);
   const trafficIncidents = useTrafficStore((s) => s.incidents);
+  const weatherLocation = useWeatherStore((s) => s.location);
+  const weatherLayerRef = useRef<ReturnType<typeof createWeatherLayer> | null>(null);
+  const weatherPopupRef = useRef<Overlay | null>(null);
 
   // Adaptive contrast for in-map overlays (hazard markers, etc.)
   const { markerStroke } = useMapOverlayContrast();
@@ -197,6 +204,17 @@ export function OpenLayersMap() {
     map.addOverlay(shelterPopup);
     shelterPopupRef.current = shelterPopup;
 
+    // Weather popup — current conditions at the weather marker.
+    const weatherPopupElement = document.createElement('div');
+    const weatherPopup = new Overlay({
+      element: weatherPopupElement,
+      positioning: 'bottom-center',
+      offset: [0, -10],
+      stopEvent: true,
+    });
+    map.addOverlay(weatherPopup);
+    weatherPopupRef.current = weatherPopup;
+
     const handleMapClick = (event: MapBrowserEvent) => {
       const feature = map.forEachFeatureAtPixel(event.pixel, (found) => found, {
         layerFilter: (layer) => layer.get('layerId') === 'traffic-incidents',
@@ -213,6 +231,7 @@ export function OpenLayersMap() {
           popupElement.innerHTML = incidentPopupHtml(incident);
           popup.setPosition(geometry.getCoordinates());
           shelterPopup.setPosition(undefined);
+          weatherPopup.setPosition(undefined);
           return;
         }
       }
@@ -228,10 +247,27 @@ export function OpenLayersMap() {
       const shelter = useShelterStore.getState().shelters.find((item) => item.id === shelterId);
       if (!shelter) {
         shelterPopup.setPosition(undefined);
+      } else {
+        shelterPopupElement.innerHTML = shelterPopupHtml(shelter);
+        shelterPopup.setPosition(shelterGeometry.getCoordinates());
+        weatherPopup.setPosition(undefined);
         return;
       }
-      shelterPopupElement.innerHTML = shelterPopupHtml(shelter);
-      shelterPopup.setPosition(shelterGeometry.getCoordinates());
+      const weatherFeature = map.forEachFeatureAtPixel(event.pixel, (found) => found, {
+        layerFilter: (layer) => layer.get('layerId') === 'weather',
+      });
+      const weatherGeometry = weatherFeature?.getGeometry();
+      if (weatherFeature?.get('weatherMarker') !== true || !(weatherGeometry instanceof Point)) {
+        weatherPopup.setPosition(undefined);
+        return;
+      }
+      const weather = useWeatherStore.getState();
+      if (!weather.current || !weather.location) {
+        weatherPopup.setPosition(undefined);
+        return;
+      }
+      weatherPopupElement.innerHTML = weatherPopupHtml(weather.current, weather.location.label);
+      weatherPopup.setPosition(weatherGeometry.getCoordinates());
     };
     map.on('click', handleMapClick);
 
@@ -604,6 +640,22 @@ export function OpenLayersMap() {
       shelterLayerRef.current = layer;
     }
   }, [shelters]);
+
+  // Weather marker — rebuilt when the weather location changes.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    if (weatherLayerRef.current) {
+      map.removeLayer(weatherLayerRef.current);
+      weatherLayerRef.current = null;
+    }
+    weatherPopupRef.current?.setPosition(undefined);
+    if (weatherLocation) {
+      const layer = createWeatherLayer(weatherLocation.lon, weatherLocation.lat);
+      map.addLayer(layer);
+      weatherLayerRef.current = layer;
+    }
+  }, [weatherLocation]);
 
   // Traffic flow + incident layers — visible only while the traffic state
   // is ok, so a dead quota never leaves a blank or broken overlay behind.

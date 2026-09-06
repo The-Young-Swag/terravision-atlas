@@ -3,6 +3,9 @@ import * as Cesium from 'cesium';
 import * as turf from '@turf/turf';
 import { useMapStore } from '../../../stores/mapStore';
 import { useRouteStore } from '../../../stores/routeStore';
+import { useDisasterStore } from '../../../stores/disasterStore';
+import type { DisasterSeverity } from '../../../types';
+import { DISASTER_SEVERITY_COLORS } from '../../../core/map/disasterStyle';
 import { ROUTE_LINE_COLOR, ROUTE_STATUS_CASING_COLOR } from '../../../core/map/routeStyle';
 import { routeStatusSegments } from '../../../features/traffic/flowStatus';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
@@ -272,6 +275,96 @@ export function CesiumGlobe() {
     if (last) addPin(last.lon, last.lat, Cesium.Color.fromCssColorString('#E63946'));
   }, [navLine, navStatusSegments, viewerEpoch]);
 
+  // Live disaster pins: GeoJsonDataSource from the merged feed, styled per
+  // entity (severity color/size + label) and clamped to the Ion terrain mesh
+  // so pins sit on real elevation. Points + labels mirror the 2D pins
+  // rather than inventing a separate icon language per map.
+  const disasterEvents = useDisasterStore((s) => s.events);
+  const [pickedDisasterId, setPickedDisasterId] = useState<string | null>(null);
+  const disasterDsRef = useRef<Cesium.DataSource | null>(null);
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || viewer.isDestroyed()) return undefined;
+    let cancelled = false;
+    if (disasterDsRef.current) {
+      void viewer.dataSources.remove(disasterDsRef.current, true);
+      disasterDsRef.current = null;
+    }
+    const geojson = {
+      type: 'FeatureCollection',
+      features: disasterEvents.map((event) => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [event.longitude, event.latitude] },
+        properties: {
+          disasterId: event.id,
+          title: event.title,
+          type: event.type,
+          severity: event.severity,
+          source: event.source,
+          occurredAt: event.occurredAt,
+        },
+      })),
+    };
+    Cesium.GeoJsonDataSource.load(geojson, { clampToGround: true })
+      .then((dataSource) => {
+        if (cancelled || viewer.isDestroyed()) return;
+        for (const entity of dataSource.entities.values) {
+          const severity =
+            (entity.properties?.severity?.getValue(Cesium.JulianDate.now()) as string | undefined) ?? 'low';
+          const color = Cesium.Color.fromCssColorString(
+            DISASTER_SEVERITY_COLORS[severity as DisasterSeverity] ?? DISASTER_SEVERITY_COLORS.low,
+          );
+          entity.billboard = undefined;
+          entity.point = new Cesium.PointGraphics({
+            pixelSize: severity === 'high' ? 12 : 9,
+            color,
+            outlineColor: Cesium.Color.WHITE,
+            outlineWidth: 2,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          });
+          entity.label = new Cesium.LabelGraphics({
+            text: entity.properties?.title?.getValue(Cesium.JulianDate.now()) as string | undefined,
+            font: '11px Inter, sans-serif',
+            fillColor: Cesium.Color.WHITE,
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth: 2,
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+            pixelOffset: new Cesium.Cartesian2(0, -16),
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          });
+        }
+        void viewer.dataSources.add(dataSource);
+        disasterDsRef.current = dataSource;
+      })
+      .catch(() => {
+        // Keep the previous pins on load failure — an empty globe would
+        // misrepresent a feed that may still be live elsewhere.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [disasterEvents, viewerEpoch]);
+
+  // Disaster pin picking: left-click shows the event's real fields in a
+  // glass card; clicking empty globe dismisses it.
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || viewer.isDestroyed()) return undefined;
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    handler.setInputAction((click: { position: Cesium.Cartesian2 }) => {
+      const picked = viewer.scene.pick(click.position);
+      const entity = picked?.id instanceof Cesium.Entity ? picked.id : undefined;
+      const disasterId = entity?.properties?.disasterId?.getValue(Cesium.JulianDate.now()) as string | undefined;
+      setPickedDisasterId(disasterId ?? null);
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    return () => handler.destroy();
+  }, [viewerEpoch]);
+
+  const pickedDisaster = pickedDisasterId
+    ? (disasterEvents.find((event) => event.id === pickedDisasterId) ?? null)
+    : null;
+
   return (
     <div
       ref={containerRef}
@@ -296,6 +389,25 @@ export function CesiumGlobe() {
             {terrain.kind === 'no-token'
               ? 'VITE_CESIUM_ION_TOKEN is missing (see .env.example)'
               : `Cesium Ion error: ${terrain.message}`}
+          </p>
+        </div>
+      )}
+      {/* Disaster pin details — real merged-feed fields, same glass style. */}
+      {pickedDisaster && (
+        <div className="absolute left-1/2 top-16 z-10 w-64 -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0D1B2A]/95 p-3 backdrop-blur">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-[12.5px] font-medium text-slate-100">{pickedDisaster.title}</p>
+            <button
+              type="button"
+              onClick={() => setPickedDisasterId(null)}
+              aria-label="Close disaster details"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white"
+            >
+              ×
+            </button>
+          </div>
+          <p className="mt-1 font-mono text-[10px] text-slate-400">
+            {pickedDisaster.type} · {pickedDisaster.severity} · {pickedDisaster.source}
           </p>
         </div>
       )}
