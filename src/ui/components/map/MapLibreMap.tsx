@@ -99,13 +99,18 @@ export function MapLibreMap() {
         button.style.border = theme === 'light' ? '1px solid #cbd5e1' : '1px solid #475569';
       });
 
-      // Compass (pitch indicator + reset affordance)
-      const compass = container.querySelector('.maplibre-ctrl-compass');
-      if (compass) {
-        (compass as HTMLElement).style.filter = theme === 'light' ? 'invert(0)' : 'invert(1)';
-        compass.setAttribute('title', 'Reset bearing and pitch — right-drag to tilt');
-        compass.setAttribute('aria-label', 'Reset bearing and pitch');
-      }
+      // Compass (pitch indicator + reset affordance). MapLibre manages the
+      // button's own title on camera moves, so (re)tag it here and on every
+      // rotate/pitch below to keep the tilt hint visible.
+      const tagCompass = () => {
+        const compass = container.querySelector('.maplibre-ctrl-compass');
+        if (compass) {
+          (compass as HTMLElement).style.filter = theme === 'light' ? 'invert(0)' : 'invert(1)';
+          compass.setAttribute('title', 'Reset bearing and pitch — right-drag to tilt');
+          compass.setAttribute('aria-label', 'Reset bearing and pitch');
+        }
+      };
+      tagCompass();
 
       // AttributionControl
       const attribution = container.querySelector('.maplibre-ctrl-attrib');
@@ -284,6 +289,8 @@ export function MapLibreMap() {
 
     // Re-apply styles when map style changes (basemap switch)
     map.on('style.load', applyControlStyles);
+    map.on('rotate', applyControlStyles);
+    map.on('pitch', applyControlStyles);
     map.on('render', () => {
       // Re-apply on first few renders to catch dynamic control creation
     });
