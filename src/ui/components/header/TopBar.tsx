@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
 import { useSearchStore } from '../../../stores/searchStore';
+import { useRouteStore } from '../../../stores/routeStore';
+import { useUiPanelStore } from '../../../stores/uiPanelStore';
 import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
 import type { GeocodedPlace } from '../../../features/search/geocode';
 
@@ -13,11 +15,28 @@ function PlaceSearchBox() {
   const setZoom = useMapStore((s) => s.setZoom);
   const setMarker = useSearchStore((s) => s.setMarker);
   const clearMarker = useSearchStore((s) => s.clearMarker);
+  const setStart = useRouteStore((s) => s.setStart);
+  const setDestination = useRouteStore((s) => s.setDestination);
+  const reopenPanel = useUiPanelStore((s) => s.reopenPanel);
 
   const handleSelect = (place: GeocodedPlace) => {
     setCenter([place.lon, place.lat]);
     setZoom(12);
     setMarker({ lon: place.lon, lat: place.lat, label: place.displayName });
+  };
+
+  // Route acceptance: only here does parsing touch the Navigation panel,
+  // and only after the user explicitly accepts. The active mode is forced
+  // to explore first because Navigation is the explore-only context; this
+  // matches the same explore/monitor condition the EvacuationPanel uses.
+  const handleRouteResolved = (start: GeocodedPlace, destination: GeocodedPlace) => {
+    setStart({ lon: start.lon, lat: start.lat, label: start.displayName.split(',')[0] });
+    setDestination({ lon: destination.lon, lat: destination.lat, label: destination.displayName.split(',')[0] });
+    // Surface the Navigation panel in the active viewport. Reopen is
+    // idempotent: a panel that is already visible stays visible.
+    reopenPanel('evacuation');
+    setCenter([destination.lon, destination.lat]);
+    if (useMapStore.getState().zoom < 12) setZoom(12);
   };
 
   return (
@@ -31,6 +50,8 @@ function PlaceSearchBox() {
         setQuery(place.displayName.split(',')[0]);
         handleSelect(place);
       }}
+      enableRouteParsing
+      onRouteResolved={handleRouteResolved}
       placeholder="Search places"
       ariaLabel="Search places"
     />
