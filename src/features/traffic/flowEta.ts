@@ -1,14 +1,14 @@
 import axios from 'axios';
 
-// Traffic-aware ETA: deterministic arithmetic on real TomTom Flow Segment
-// Data — explicitly NOT AI/ML. For a computed route we sample current vs.
-// free-flow speed at evenly spaced points, average the slowdown, and scale
-// the Valhalla base duration. When Traffic data is unavailable (no key,
-// quota exhausted, fetch failed) callers fall back to the base duration —
-// routing is never blocked on Traffic availability.
+// Traffic-aware ETA and per-segment route coloring (Item 15 Part A).
+// Both the duration adjustment and the route outline coloring use the same
+// TomTom Flow Segment Data endpoint — one HTTP path, one cache, one
+// request per route, no double-counting. Each segment of the route is
+// resolved to real `currentSpeed` / `freeFlowSpeed` values; the route line
+// is then built as a single LineString whose color stops interpolate
+// between those real values along the line (see route.ts/routeLayer.ts).
 //
-// Endpoint (same TomTom Traffic product + key as the flow tiles/incidents,
-// no new vendor): flowSegmentData/absolute returns currentSpeed and
+// Endpoint: flowSegmentData/absolute/10/json returns currentSpeed and
 // freeFlowSpeed for the segment containing the given point.
 // Quota discipline: at most MAX_SAMPLES requests per route, responses
 // cached by rounded coordinate with a TTL, only called on explicit route

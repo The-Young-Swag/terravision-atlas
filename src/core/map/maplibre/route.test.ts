@@ -7,8 +7,9 @@ import {
   removeRouteLayers,
   setRouteVisible,
 } from './route';
-import { ROUTE_LINE_COLOR } from '../routeStyle';
+import { FALLBACK_LINE_COLOR_FOR_TEST } from './route';
 import type { EvacRoute } from '../../../stores/routeStore';
+import type { FlowSample } from '../../../features/traffic/flowEta';
 
 function fakeMap() {
   const sources = new Map<string, unknown>();
@@ -60,23 +61,33 @@ describe('setRouteVisible', () => {
     setRouteVisible(map as never, route);
     expect(map.addSource).toHaveBeenCalledOnce();
     const source = map.sources.get(ROUTE_SOURCE_ID) as {
-      data: { features: { geometry: { coordinates: number[][] } }[] };
+      data: { geometry: { coordinates: number[][] }; type: string };
     };
-    expect(source.data.features).toHaveLength(1);
-    expect(source.data.features[0].geometry.coordinates).toEqual([
+    expect(source.data.type).toBe('Feature');
+    expect(source.data.geometry.coordinates).toEqual([
       [120.58, 15.14],
       [120.6, 15.16],
     ]);
     const addedIds = (map.addLayer as ReturnType<typeof vi.fn>).mock.calls.map((call) => call[0].id);
     expect(addedIds).toEqual([ROUTE_CASING_LAYER_ID, ROUTE_LINE_LAYER_ID]);
     const linePaint = (map.addLayer as ReturnType<typeof vi.fn>).mock.calls[1][0].paint;
-    expect(linePaint['line-color']).toBe(ROUTE_LINE_COLOR);
+    expect(linePaint['line-color']).toBe(FALLBACK_LINE_COLOR_FOR_TEST);
   });
 
   it('uses the same blue line color regardless of the avoid verdict', () => {
     setRouteVisible(map as never, { ...route, avoidsArea: false });
     const linePaint = (map.addLayer as ReturnType<typeof vi.fn>).mock.calls[1][0].paint;
-    expect(linePaint['line-color']).toBe(ROUTE_LINE_COLOR);
+    expect(linePaint['line-color']).toBe(FALLBACK_LINE_COLOR_FOR_TEST);
+  });
+
+  it('drives the line color from per-sample speeds when flow data is available', () => {
+    const samples: FlowSample[] = [
+      { pathIndex: 0, currentSpeed: 60, freeFlowSpeed: 80 },
+      { pathIndex: 1, currentSpeed: 20, freeFlowSpeed: 80 },
+    ];
+    setRouteVisible(map as never, route, samples);
+    const linePaint = (map.addLayer as ReturnType<typeof vi.fn>).mock.calls[1][0].paint;
+    expect(linePaint['line-color']).toMatchObject(['interpolate', ['linear'], ['line-progress'], 0, '#FFFF37', 1, '#FF2323']);
   });
 
   it('adds a line-placed direction layer when a canvas chevron can be built', () => {

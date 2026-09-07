@@ -10,7 +10,6 @@ import { useDisasterStore } from '../../../stores/disasterStore';
 import { createMap, updateBasemap } from '../../../core/map/openlayers/createMap';
 import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';
 import { createRouteLayer } from '../../../core/map/openlayers/routeLayer';
-import { routeStatusSegments } from '../../../features/traffic/flowStatus';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import { createAvoidLayer } from '../../../core/map/openlayers/avoidLayer';
 import { circleToRing, previewCircle, MIN_AVOID_RADIUS_KM } from '../../../features/routing/avoidZone';
@@ -74,10 +73,7 @@ export function OpenLayersMap() {
   // Live flow samples recolor the route by traffic status (no extra
   // requests — the same samples behind the traffic-aware ETA).
   const routeTraffic = useRouteStore((s) => s.trafficAdjustment);
-  const routeTrafficSegments = useMemo(
-    () => (routeLine && routeTraffic ? routeStatusSegments(routeLine.path.length, routeTraffic.samples) : []),
-    [routeLine, routeTraffic],
-  );
+  const routeTrafficSamples = useMemo(() => routeTraffic?.samples ?? [], [routeTraffic]);
   const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
   const avoidLayerRef = useRef<ReturnType<typeof createAvoidLayer> | null>(null);
   const drawPreviewLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
@@ -574,7 +570,7 @@ export function OpenLayersMap() {
     }
 
     if (routeLine) {
-      const layer = createRouteLayer(routeLine, routeTrafficSegments);
+      const layer = createRouteLayer(routeLine, routeTrafficSamples);
       layer.setZIndex(10);
       map.addLayer(layer);
       routeLayerRef.current = layer;
@@ -585,7 +581,7 @@ export function OpenLayersMap() {
         candidate.setOpacity(routeLine ? TRAFFIC_FLOW_DIM_OPACITY : TRAFFIC_FLOW_FULL_OPACITY);
       }
     }
-  }, [routeLine, routeTrafficSegments]);
+  }, [routeLine, routeTrafficSamples]);
 
   // Standalone avoid-zone overlay — visible with or without a route.
   useEffect(() => {

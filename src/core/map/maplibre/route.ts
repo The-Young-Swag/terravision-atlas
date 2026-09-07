@@ -1,26 +1,52 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { EvacRoute } from '../../../stores/routeStore';
-import type { RouteStatusSegment } from '../../../features/traffic/flowStatus';
+import type { FlowSample } from '../../../features/traffic/flowEta';
 import {
   ROUTE_CASING_WIDTH,
-  ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
-  ROUTE_STATUS_CASING_COLOR,
 } from '../routeStyle';
+import { flowStatusColor } from '../../../features/traffic/flowStatus';
 
-// Evacuation route line for the Vector map: white casing with a unified
-// brand-blue line on top (a hue outside the TomTom traffic-speed palette),
-// mirroring the 2D overlay. With live flow samples, per-segment colors from
-// the shared flow-status bands replace the blue core (dark casing for
-// contrast) so the route communicates traffic conditions; verdict semantics
-// live in the panel chip, not the line color. Direction chevrons use a
-// canvas-drawn image (no glyph server is configured, so text symbols would
-// not render) placed along the line, rotating with it.
+// Evacuation route line for the Vector map (Item 15 Part A).
+//
+// The route is a SINGLE LineString (not multiple per-segment features) so
+// the casing and line layers render as one continuous stroke with smooth
+// color transitions along its length. Color is driven by a
+// 'line-progress' expression (0..1) mapped through 'interpolate' stops
+// derived from real per-sample Flow Segment Data — confirmed against
+// MapLibre's documented line-gradient support for the line-color paint.
+//
+// With no usable flow samples the line falls back to a single
+// brand-blue color and the casing to a single static color, exactly as
+// before. The traffic-aware ETA (which uses the same samples) stays
+// independent and keeps working — we only changed how the line is
+// drawn, not the data or the routing request.
 export const ROUTE_SOURCE_ID = 'evac-route';
 export const ROUTE_CASING_LAYER_ID = 'evac-route-casing';
 export const ROUTE_LINE_LAYER_ID = 'evac-route-line';
 export const ROUTE_DIRECTION_LAYER_ID = 'evac-route-direction';
 const ROUTE_CHEVRON_IMAGE_ID = 'evac-route-chevron';
+
+const FALLBACK_LINE_COLOR = '#209dd7';
+const FALLBACK_CASING_COLOR = '#0b3d55';
+
+/** Test-only export of the fallback line color so the test can assert the
+ * no-flows case without depending on the production routeStyle token. */
+export const FALLBACK_LINE_COLOR_FOR_TEST = FALLBACK_LINE_COLOR;
+
+/** Build the casing + line color stop arrays that drive the line-gradient
+ * expression along the route's normalized length (0..1). */
+function buildColorStops(samples: FlowSample[], pathLength: number, fallback: string): { value: number; color: string }[] {
+  if (samples.length === 0 || pathLength < 2) return [{ value: 0, color: fallback }];
+  const ordered = [...samples]
+    .filter((s) => Number.isInteger(s.pathIndex) && s.pathIndex >= 0 && s.pathIndex < pathLength)
+    .sort((a, b) => a.pathIndex - b.pathIndex);
+  if (ordered.length === 0) return [{ value: 0, color: fallback }];
+  return ordered.map((sample) => ({
+    value: sample.pathIndex / (pathLength - 1),
+    color: flowStatusColor(sample.currentSpeed),
+  }));
+}
 
 function ensureChevronImage(map: MapLibreMap): void {
   // Guarded for unit-test doubles, which only stub source/layer methods,
@@ -57,38 +83,35 @@ function ensureChevronImage(map: MapLibreMap): void {
 export function setRouteVisible(
   map: MapLibreMap,
   route: EvacRoute | null,
-  statusSegments: RouteStatusSegment[] = [],
+  samples: FlowSample[] = [],
 ): void {
   removeRouteLayers(map);
   if (!route || route.path.length === 0) return;
   const coordinates = route.path.map((point) => [point.lon, point.lat]);
-  const statusColors = statusSegments.length > 0;
   map.addSource(ROUTE_SOURCE_ID, {
     type: 'geojson',
-    data: {
-      type: 'FeatureCollection',
-      features: statusColors
-        ? statusSegments.flatMap((segment) => {
-            const from = Math.max(0, Math.min(segment.fromIndex, coordinates.length - 1));
-            const to = Math.max(from + 1, Math.min(segment.toIndex, coordinates.length - 1));
-            if (to - from < 1) return [];
-            return [
-              {
-                type: 'Feature',
-                geometry: { type: 'LineString', coordinates: coordinates.slice(from, to + 1) },
-                properties: { color: segment.color },
-              },
-            ];
-          })
-        : [{ type: 'Feature', geometry: { type: 'LineString', coordinates }, properties: {} }],
-    },
+    data: { type: 'Feature', geometry: { type: 'LineString', coordinates }, properties: {} },
   });
+
+  // One continuous casing layer under one continuous line layer; both use
+  // 'line-progress' interpolation so the color transitions are inherent
+  // to the geometry, not a series of adjacent segments.
+  const lineStops = buildColorStops(samples, route.path.length, FALLBACK_LINE_COLOR);
+  const casingStops = buildColorStops(samples, route.path.length, FALLBACK_CASING_COLOR);
+
   map.addLayer({
     id: ROUTE_CASING_LAYER_ID,
     type: 'line',
     source: ROUTE_SOURCE_ID,
     paint: {
-      'line-color': statusColors ? ROUTE_STATUS_CASING_COLOR : '#ffffff',
+      'line-color': samples.length > 0
+        ? [
+            'interpolate',
+            ['linear'],
+            ['line-progress'],
+            ...casingStops.flatMap((stop) => [stop.value, stop.color]),
+          ]
+        : FALLBACK_CASING_COLOR,
       'line-width': ROUTE_CASING_WIDTH,
     },
   });
@@ -97,7 +120,14 @@ export function setRouteVisible(
     type: 'line',
     source: ROUTE_SOURCE_ID,
     paint: {
-      'line-color': statusColors ? ['get', 'color'] : ROUTE_LINE_COLOR,
+      'line-color': samples.length > 0
+        ? [
+            'interpolate',
+            ['linear'],
+            ['line-progress'],
+            ...lineStops.flatMap((stop) => [stop.value, stop.color]),
+          ]
+        : FALLBACK_LINE_COLOR,
       'line-width': ROUTE_LINE_WIDTH,
     },
   });

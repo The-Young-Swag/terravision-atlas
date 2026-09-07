@@ -9,7 +9,6 @@ import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
 import { MEASURE_POINT_LAYER_ID, removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
 import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_DIRECTION_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
-import { routeStatusSegments } from '../../../features/traffic/flowStatus';
 import { setDisastersVisible, DISASTER_LAYER_ID } from '../../../core/map/maplibre/disasters';
 import { setWeatherVisible, WEATHER_LAYER_ID } from '../../../core/map/maplibre/weather';
 import { disasterPopupHtml } from '../../../features/disasters/popup';
@@ -385,10 +384,7 @@ export function MapLibreMap() {
   // Live flow samples recolor the route by traffic status (no extra
   // requests — the same samples behind the traffic-aware ETA).
   const routeTraffic = useRouteStore((s) => s.trafficAdjustment);
-  const routeTrafficSegments = useMemo(
-    () => (routeLine && routeTraffic ? routeStatusSegments(routeLine.path.length, routeTraffic.samples) : []),
-    [routeLine, routeTraffic],
-  );
+  const routeTrafficSamples = useMemo(() => routeTraffic?.samples ?? [], [routeTraffic]);
   const avoidCircle = useRouteStore((s) => s.avoidCircle);
   const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
   const drawCenterRef = useRef<{ lon: number; lat: number } | null>(null);
@@ -559,7 +555,7 @@ export function MapLibreMap() {
       setRouteVisible(
         liveMap,
         liveLine,
-        liveLine && liveTraffic ? routeStatusSegments(liveLine.path.length, liveTraffic.samples) : [],
+        liveLine && liveTraffic ? liveTraffic.samples : [],
       );
       setSearchMarkerVisible(liveMap, useSearchStore.getState().marker);
       setDisastersVisible(liveMap, useDisasterStore.getState().events, mapState.showHazards);
@@ -652,7 +648,7 @@ export function MapLibreMap() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
-    setRouteVisible(map, routeLine, routeTrafficSegments);
+    setRouteVisible(map, routeLine, routeTrafficSamples);
     // Incident markers stay clickable above the route line: move the route
     // stack to just below the incident layer.
     if (routeLine && map.getLayer(TRAFFIC_INCIDENT_LAYER_ID)) {
@@ -668,7 +664,7 @@ export function MapLibreMap() {
         map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_FULL_OPACITY_ML);
       }
     }
-  }, [routeLine, routeTrafficSegments]);
+  }, [routeLine, routeTrafficSamples]);
 
   // Sync center/zoom when store changes externally — only fly when meaningfully different
   useEffect(() => {
