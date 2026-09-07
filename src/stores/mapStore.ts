@@ -58,9 +58,9 @@ export const useMapStore = create<MapState>((set) => ({
   setMeasureActive: (measureActive) =>
     set((state) => ({ measureActive, measurePoints: measureActive ? state.measurePoints : [] })),
   pushMeasurePoint: (point) =>
-    set((state) => ({
-      measurePoints: state.measurePoints.length >= 2 ? [point] : [...state.measurePoints, point],
-    })),
+    // Unbounded: every click appends a segment and turf.length totals the
+    // full path. (The old two-point cap also truncated session restores.)
+    set((state) => ({ measurePoints: [...state.measurePoints, point] })),
   clearMeasure: () => set({ measurePoints: [] }),
   setShowDatumViz: (showDatumViz) => set({ showDatumViz }),
 }));

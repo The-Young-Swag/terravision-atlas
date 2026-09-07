@@ -6,15 +6,15 @@ import LineString from 'ol/geom/LineString';
 import { fromLonLat } from 'ol/proj';
 import { Style, Stroke, Fill, Circle, Text } from 'ol/style';
 
-// Geodesic measurement overlay: line between the picked points with endpoint
-// markers and a midpoint distance label. Distances come from turf (haversine)
-// computed by the caller so both map views report identical numbers.
+// Geodesic measurement overlay: path line through all picked points with
+// vertex markers and a running-total distance label. Distances come from
+// turf computed by the caller so both map views report identical numbers.
 export function createMeasureLayer(points: [number, number][], distanceText: string): VectorLayer<VectorSource> {
   const features: Feature[] = [];
 
-  if (points.length === 2) {
+  if (points.length >= 2) {
     const line = new Feature({
-      geometry: new LineString([fromLonLat(points[0]), fromLonLat(points[1])]),
+      geometry: new LineString(points.map(([lon, lat]) => fromLonLat([lon, lat]))),
     });
     line.setStyle(
       new Style({

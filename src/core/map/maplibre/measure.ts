@@ -1,9 +1,9 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 
-// Geodesic measurement overlay for the Vector map: line plus endpoint dots
-// for the picked points. Distances are computed with turf (shared with the
-// 2D view) and shown in the survey dock, not on the map — MapLibre has no
-// text halo styling as cheap as OpenLayers' midpoint label.
+// Geodesic measurement overlay for the Vector map: path line plus vertex
+// dots for the picked points. Distances are computed with turf (shared with
+// the 2D view) and shown in the survey dock, not on the map — MapLibre has
+// no text halo styling as cheap as OpenLayers' midpoint label.
 export const MEASURE_SOURCE_ID = 'survey-measure';
 export const MEASURE_LINE_LAYER_ID = 'survey-measure-line';
 export const MEASURE_POINT_LAYER_ID = 'survey-measure-points';
@@ -12,11 +12,14 @@ export function setMeasureVisible(map: MapLibreMap, points: [number, number][]):
   removeMeasureLayers(map);
   if (points.length === 0) return;
   const features: GeoJSON.Feature[] = [
-    ...(points.length === 2
+    ...(points.length >= 2
       ? [
           {
             type: 'Feature',
-            geometry: { type: 'LineString', coordinates: points },
+            geometry: {
+              type: 'LineString',
+              coordinates: points,
+            },
             properties: {},
           } as GeoJSON.Feature,
         ]
@@ -33,7 +36,7 @@ export function setMeasureVisible(map: MapLibreMap, points: [number, number][]):
     type: 'geojson',
     data: { type: 'FeatureCollection', features },
   });
-  if (points.length === 2) {
+  if (points.length >= 2) {
     map.addLayer({
       id: MEASURE_LINE_LAYER_ID,
       type: 'line',

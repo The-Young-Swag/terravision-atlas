@@ -307,7 +307,7 @@ export function OpenLayersMap() {
     };
     map.getViewport().addEventListener('contextmenu', handleContextMenu);
 
-    // Geodesic measure tool: picks points while armed (third click restarts).
+    // Geodesic measure tool: picks points while armed.
     map.on('click', (event: MapBrowserEvent) => {
       const state = useMapStore.getState();
       if (!state.measureActive) return;

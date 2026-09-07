@@ -148,7 +148,7 @@ export function MapLibreMap() {
       store.setZoom(z);
     });
 
-    // Geodesic measure tool: picks points while armed (third click restarts).
+    // Geodesic measure tool: picks points while armed.
     map.on('click', (event) => {
       const state = useMapStore.getState();
       if (!state.measureActive) return;
