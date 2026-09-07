@@ -47,6 +47,17 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.22);
 }
 
+/* Notch sidebar dock edge: .glass above is unlayered author CSS, so no
+   Tailwind border utility can remove the edge-facing hairline — these two
+   companions exist only for that single property. */
+.notch-dock-left {
+  border-left: none;
+}
+
+.notch-dock-right {
+  border-right: none;
+}
+
 /* Subtle glass scrollbar — minimal, low-contrast, integrated */
 .custom-scrollbar {
   scrollbar-width: thin;

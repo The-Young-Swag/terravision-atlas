@@ -21,7 +21,7 @@ export function PanelRestoreBar() {
 
   return (
     <div
-      className="glass-strong absolute right-4 top-20 z-20 flex flex-col gap-1 rounded-2xl p-1.5"
+      className="glass-strong absolute right-4 top-20 z-40 flex flex-col gap-1 rounded-2xl p-1.5"
       role="region"
       aria-label="Restore closed panels"
     >
