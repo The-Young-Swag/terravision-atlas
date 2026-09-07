@@ -5,6 +5,7 @@ import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
 import { downloadA0Png, exportA0Png } from '../../../features/export/print/a0Export';
 import { bearingDegrees, formatBearing, formatDistanceKilometers, geodesicKilometers } from '../../../core/geodetic/measurements/distance';
+import { formatAreaSqMeters, geodesicAreaSqMeters } from '../../../core/geodetic/measurements/area';
 import { useSurveyStore } from '../../../stores/surveyStore';
 
 type AppMode = 'explore' | 'monitor' | 'survey';
@@ -19,6 +20,10 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
   const setSnapToGrid = useMapStore((s) => s.setSnapToGrid);
   const measureActive = useMapStore((s) => s.measureActive);
   const measurePoints = useMapStore((s) => s.measurePoints);
+  const measureMode = useMapStore((s) => s.measureMode);
+  const setMeasureMode = useMapStore((s) => s.setMeasureMode);
+  const measureClosed = useMapStore((s) => s.measureClosed);
+  const setMeasureClosed = useMapStore((s) => s.setMeasureClosed);
   const setMeasureActive = useMapStore((s) => s.setMeasureActive);
   const clearMeasure = useMapStore((s) => s.clearMeasure);
   const showDatumViz = useMapStore((s) => s.showDatumViz);
@@ -105,11 +110,12 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     return () => window.removeEventListener('keydown', onKey);
   }, [measureActive, setMeasureActive, clearMeasure]);
 
-  const measuredKm = geodesicKilometers(measurePoints);
+  const measuredKm = measureMode === 'distance' ? geodesicKilometers(measurePoints) : null;
   const lastSegmentBearing =
-    measurePoints.length >= 2
+    measureMode === 'distance' && measurePoints.length >= 2
       ? formatBearing(bearingDegrees(measurePoints[measurePoints.length - 2], measurePoints[measurePoints.length - 1]))
       : null;
+  const measuredArea = measureMode === 'area' && measureClosed ? geodesicAreaSqMeters(measurePoints) : null;
 
   const handleShareClick = useCallback(() => {
     const url = encodeSessionToUrl(window.location.origin + window.location.pathname);
@@ -179,17 +185,52 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 }
               }}
               aria-pressed={measureActive}
-              title="Measure geodesic distance: keep clicking to add segments (Esc exits)"
+              title={
+                measureMode === 'area'
+                  ? 'Measure geodesic area: click vertices, then click the first point or Finish to close (Esc exits)'
+                  : 'Measure geodesic distance: keep clicking to add segments (Esc exits)'
+              }
               className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${measureActive ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
             >
               <Ruler className="h-3.5 w-3.5" />
               Measure geodesic
             </button>
-            {measurePoints.length > 0 && (
+            <div className="flex rounded-xl bg-white/[0.04] p-1 text-[11px]" role="group" aria-label="Measure mode">
+              {(['distance', 'area'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setMeasureMode(mode)}
+                  aria-pressed={measureMode === mode}
+                  title={mode === 'distance' ? 'Path distance across all segments' : 'Enclosed polygon area'}
+                  className={`rounded-lg px-2.5 py-1.5 capitalize transition ${measureMode === mode ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+            {measureMode === 'distance' && measurePoints.length > 0 && (
               <span className={`px-2 py-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                 {formatDistanceKilometers(measuredKm)}
                 {lastSegmentBearing ? ` · ${lastSegmentBearing}` : ''}
               </span>
+            )}
+            {measureMode === 'area' && measurePoints.length > 0 && (
+              <span className={`px-2 py-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
+                {measureClosed
+                  ? formatAreaSqMeters(measuredArea)
+                  : `${measurePoints.length} vertices — click the first point or Finish to close`}
+              </span>
+            )}
+            {measureMode === 'area' && measureActive && !measureClosed && measurePoints.length >= 3 && (
+              <button
+                type="button"
+                onClick={() => setMeasureClosed(true)}
+                title="Close the polygon and compute its area"
+                className={`rounded-xl px-3 py-2 text-[11px] font-medium transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+              >
+                Finish
+              </button>
             )}
             {measurePoints.length > 0 && (
               <button

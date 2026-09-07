@@ -5,7 +5,7 @@ import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { fromLonLat, toLonLat } from 'ol/proj';
-import { useMapStore } from '../../../stores/mapStore';
+import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../stores/mapStore';
 import { useDisasterStore } from '../../../stores/disasterStore';
 import { createMap, updateBasemap } from '../../../core/map/openlayers/createMap';
 import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';
@@ -26,6 +26,7 @@ import { reverseNominatim } from '../../../features/search/geocode';
 import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
 import { createMeasureLayer } from '../../../core/map/openlayers/measureLayer';
 import { geodesicKilometers, formatDistanceKilometers } from '../../../core/geodetic/measurements/distance';
+import { geodesicAreaSqMeters, formatAreaSqMeters } from '../../../core/geodetic/measurements/area';
 import { createTrafficFlowLayer, createTrafficIncidentLayer } from '../../../core/map/openlayers/trafficLayer';
 import { TRAFFIC_FLOW_DIM_OPACITY, TRAFFIC_FLOW_FULL_OPACITY } from '../../../core/map/routeStyle';
 import { useTrafficStore } from '../../../stores/trafficStore';
@@ -60,6 +61,8 @@ export function OpenLayersMap() {
   const { center, zoom, basemap, satelliteSource, showHazards, showTraffic, setCenter, setZoom } = useMapStore();
   const measureActive = useMapStore((s) => s.measureActive);
   const measurePoints = useMapStore((s) => s.measurePoints);
+  const measureMode = useMapStore((s) => s.measureMode);
+  const measureClosed = useMapStore((s) => s.measureClosed);
   const searchMarker = useSearchStore((s) => s.marker);
   const searchMarkerLayerRef = useRef<ReturnType<typeof createSearchMarkerLayer> | null>(null);
   const reversePopupRef = useRef<Overlay | null>(null);
@@ -307,11 +310,23 @@ export function OpenLayersMap() {
     };
     map.getViewport().addEventListener('contextmenu', handleContextMenu);
 
-    // Geodesic measure tool: picks points while armed.
+    // Geodesic measure tool: picks points while armed. In area mode with
+    // three or more vertices, clicking near the first vertex closes the
+    // polygon instead of appending.
     map.on('click', (event: MapBrowserEvent) => {
       const state = useMapStore.getState();
       if (!state.measureActive) return;
       const [lon, lat] = toLonLat(event.coordinate);
+      const first = state.measureMode === 'area' && !state.measureClosed ? state.measurePoints[0] : undefined;
+      if (first && state.measurePoints.length >= 3) {
+        const firstPx = map.getPixelFromCoordinate(fromLonLat(first));
+        const dx = event.pixel[0] - firstPx[0];
+        const dy = event.pixel[1] - firstPx[1];
+        if (Math.hypot(dx, dy) <= MEASURE_CLOSE_TOLERANCE_PX) {
+          state.setMeasureClosed(true);
+          return;
+        }
+      }
       state.pushMeasurePoint([lon, lat]);
     });
 
@@ -530,14 +545,15 @@ export function OpenLayersMap() {
     }
 
     if (measureActive && measurePoints.length > 0) {
-      const layer = createMeasureLayer(
-        measurePoints,
-        formatDistanceKilometers(geodesicKilometers(measurePoints)),
-      );
+      const closed = measureMode === 'area' && measureClosed;
+      const text = closed
+        ? formatAreaSqMeters(geodesicAreaSqMeters(measurePoints))
+        : formatDistanceKilometers(geodesicKilometers(measurePoints));
+      const layer = createMeasureLayer(measurePoints, text, closed);
       map.addLayer(layer);
       measureLayerRef.current = layer;
     }
-  }, [measureActive, measurePoints]);
+  }, [measureActive, measurePoints, measureMode, measureClosed]);
 
   // Crosshair cursor while the measure tool is armed.
   useEffect(() => {

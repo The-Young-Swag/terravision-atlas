@@ -3,7 +3,7 @@ import { Map as MapLibre, Marker, NavigationControl, AttributionControl, Popup, 
 import { useRouteStore } from '../../../stores/routeStore';
 import { reverseNominatim } from '../../../features/search/geocode';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
-import { useMapStore } from '../../../stores/mapStore';
+import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../stores/mapStore';
 import { maplibreStyleFor } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
@@ -148,10 +148,22 @@ export function MapLibreMap() {
       store.setZoom(z);
     });
 
-    // Geodesic measure tool: picks points while armed.
+    // Geodesic measure tool: picks points while armed. In area mode with
+    // three or more vertices, clicking near the first vertex closes the
+    // polygon instead of appending.
     map.on('click', (event) => {
       const state = useMapStore.getState();
       if (!state.measureActive) return;
+      const first = state.measureMode === 'area' && !state.measureClosed ? state.measurePoints[0] : undefined;
+      if (first && state.measurePoints.length >= 3) {
+        const firstPx = map.project([first[0], first[1]]);
+        const dx = event.point.x - firstPx.x;
+        const dy = event.point.y - firstPx.y;
+        if (Math.hypot(dx, dy) <= MEASURE_CLOSE_TOLERANCE_PX) {
+          state.setMeasureClosed(true);
+          return;
+        }
+      }
       state.pushMeasurePoint([event.lngLat.lng, event.lngLat.lat]);
     });
 
@@ -316,6 +328,8 @@ export function MapLibreMap() {
   // Crosshair cursor while the measure tool is armed.
   const measureActive = useMapStore((s) => s.measureActive);
   const measurePoints = useMapStore((s) => s.measurePoints);
+  const measureMode = useMapStore((s) => s.measureMode);
+  const measureClosed = useMapStore((s) => s.measureClosed);
   const evacStart = useRouteStore((s) => s.start);
   const evacDestination = useRouteStore((s) => s.destination);
   const evacRoute = useRouteStore((s) => s.route);
@@ -345,11 +359,11 @@ export function MapLibreMap() {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
     if (measureActive && measurePoints.length > 0) {
-      setMeasureVisible(map, measurePoints);
+      setMeasureVisible(map, measurePoints, measureMode === 'area' && measureClosed);
     } else {
       removeMeasureLayers(map);
     }
-  }, [measureActive, measurePoints]);
+  }, [measureActive, measurePoints, measureMode, measureClosed]);
 
   // Terrain contour overlay — generated client-side from AWS Terrarium tiles.
   // The map style is never replaced after creation, so dynamically added

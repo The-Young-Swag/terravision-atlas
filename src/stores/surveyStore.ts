@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { useMapStore } from './mapStore';
-import type { BasemapId, MapViewMode } from './mapStore';
+import type { BasemapId, MapViewMode, MeasureMode } from './mapStore';
 import type { SatelliteSourceId } from '../core/map/gibs';
 
 export type SurveyProjection = 'WGS84' | 'UTM' | 'PRS92' | 'NAD83' | 'ETRS89' | 'OSGB36';
@@ -38,6 +38,8 @@ export interface SurveySessionState {
 
   // Survey tools state
   measurePoints: [number, number][];
+  measureMode: MeasureMode;
+  measureClosed: boolean;
   snapToGrid: boolean;
   datumVizOpen: boolean;
   targetProjection: string;
@@ -80,6 +82,8 @@ export const useSurveyStore = create<SurveyState>((set, get) => ({
       satelliteSource: mapState.satelliteSource,
       viewMode: mapState.viewMode,
       measurePoints: mapState.measurePoints,
+      measureMode: mapState.measureMode,
+      measureClosed: mapState.measureClosed,
       snapToGrid: mapState.snapToGrid,
       datumVizOpen: state.datumVizOpen,
       targetProjection: 'EPSG:32651',
@@ -109,9 +113,11 @@ export const useSurveyStore = create<SurveyState>((set, get) => ({
     mapStore.setViewMode(sessionState.viewMode);
     mapStore.setMeasureActive(sessionState.measurePoints.length > 0);
     mapStore.clearMeasure();
+    mapStore.setMeasureMode(sessionState.measureMode ?? 'distance');
     for (const pt of sessionState.measurePoints) {
       mapStore.pushMeasurePoint(pt);
     }
+    if (sessionState.measureClosed) mapStore.setMeasureClosed(true);
     mapStore.setSnapToGrid(sessionState.snapToGrid);
     set({ datumVizOpen: sessionState.datumVizOpen });
   },
