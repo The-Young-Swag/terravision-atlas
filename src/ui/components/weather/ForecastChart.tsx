@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Chart, registerables } from 'chart.js';
+import { Chart, registerables, ScriptableContext } from 'chart.js';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import type { HourlyPoint } from '../../../features/weather/openMeteo';
 
@@ -61,7 +61,7 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
             type: 'bar',
             label: 'Precip (mm)',
             data: precipData,
-            backgroundColor: (ctx: any) => {
+            backgroundColor: (ctx: ScriptableContext<'bar'>) => {
               const value = ctx.raw as number | null;
               return value && value > 0 ? 'rgba(32,157,215,0.7)' : 'transparent';
             },
