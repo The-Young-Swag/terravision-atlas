@@ -3,7 +3,7 @@ import { Fuel } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { calculateFuel as calcFuel } from '../../../features/fuel/calculator/fuelMath';
 import type { EfficiencyUnit, UnitSystem } from '../../../features/fuel/calculator/fuelMath';
-import { FuelChart } from './FuelChart';
+import { BreakdownBar } from './BreakdownBar';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 
 interface FuelState {
@@ -13,6 +13,14 @@ interface FuelState {
   price: number;
   unitSystem: UnitSystem;
 }
+
+// Item 18 fixed ceilings: the breakdown bars are scaled against these
+// named constants, not against the other value and not auto-scaled to
+// the value itself. Tank capacity is a typical passenger-vehicle 60 L;
+// trip-cost ceiling is a plausible upper ₱5,000. Values are documented
+// in the panel so the user knows what a 100% bar means.
+const FUEL_CEILING_LITERS = 60;
+const TRIP_COST_CEILING_PHP = 5000;
 
 interface FuelPanelProps {
   open: boolean;
@@ -154,7 +162,24 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
 
           <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
             <p className={`mb-2 text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Breakdown</p>
-            <FuelChart fuelNeeded={fuelResult.fuelNeeded} totalCost={fuelResult.totalCost} fuelUnit={unitLabels.fuelSuffix as 'L' | 'gal'} />
+            <div className="space-y-3">
+              <BreakdownBar
+                label="Fuel needed"
+                valueText={`${fuelResult.fuelNeeded.toFixed(1)} ${unitLabels.fuelSuffix}`}
+                value={fuelResult.fuelNeeded}
+                ceiling={FUEL_CEILING_LITERS}
+                trackClass="bg-white/10"
+                fillClass="bg-[#5500a4]"
+              />
+              <BreakdownBar
+                label="Total cost"
+                valueText={`₱${fuelResult.totalCost.toFixed(2)}`}
+                value={fuelResult.totalCost}
+                ceiling={TRIP_COST_CEILING_PHP}
+                trackClass="bg-white/10"
+                fillClass="bg-[#00d890]"
+              />
+            </div>
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2">
