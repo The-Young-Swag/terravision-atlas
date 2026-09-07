@@ -95,3 +95,220 @@ body {
 .custom-scrollbar::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* Weather Visual Animations (Item 2) */
+@keyframes weather-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes weather-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+@keyframes weather-rotate-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes rain-fall {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(30px); opacity: 0; }
+}
+
+@keyframes snow-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(30px) rotate(180deg); opacity: 0; }
+}
+
+@keyframes lightning-flash {
+  0%, 90%, 100% { opacity: 0; }
+  92% { opacity: 1; }
+  94% { opacity: 0; }
+  96% { opacity: 1; }
+  98% { opacity: 0; }
+}
+
+@keyframes glare-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.1); }
+}
+
+@keyframes moon-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* Weather Visual Base */
+.weather-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+/* Unknown state */
+.weather-unknown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-conic-gradient(
+    #5500a4 0%,
+    #5500a4 10%,
+    #3d0073 10%,
+    #3d0073 20%
+  );
+  border-radius: 50%;
+  animation: weather-pulse 3s ease-in-out infinite;
+}
+
+/* Clear / Sunny */
+.weather-sun {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+}
+
+.sun-core {
+  fill: #FF9F1C;
+  filter: drop-shadow(0 0 8px #FF9F1C);
+  animation: weather-pulse 4s ease-in-out infinite;
+}
+
+.sun-rays {
+  stroke: #FF9F1C;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+.sun-ray {
+  animation: weather-rotate-slow 20s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+.sun-glare {
+  fill: none;
+  stroke: #FFD700;
+  stroke-width: 1.5;
+  opacity: 0.4;
+}
+
+.glow-ring {
+  animation: glare-pulse 3s ease-in-out infinite;
+}
+
+.weather-sky {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Cloudy */
+.weather-cloud {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+}
+
+.cloud-group {
+  animation: weather-float 4s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+
+.cloud-part {
+  fill: #94a3b8;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.rain-cloud .cloud-part,
+.storm-cloud .cloud-part,
+.snow-cloud .cloud-part {
+  fill: #64748b;
+}
+
+.moon-disk {
+  fill: #f8fafc;
+  filter: drop-shadow(0 0 12px #f8fafc);
+  animation: moon-glow 4s ease-in-out infinite;
+}
+
+.moon-crater {
+  fill: #cbd5e1;
+}
+
+/* Rain */
+.weather-rain {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.rain-drop {
+  stroke: #209dd7;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.8;
+  animation: rain-fall 1s linear infinite;
+}
+
+/* Snow */
+.weather-snow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.snow-flake {
+  fill: #f8fafc;
+  opacity: 0.9;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+  animation: snow-fall linear infinite;
+}
+
+/* Storm */
+.weather-lightning {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.lightning-bolt {
+  fill: none;
+  stroke: #FFD700;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px #FFD700);
+  opacity: 0;
+  animation: lightning-flash 3s ease-in-out infinite;
+}
+
+.lightning-bolt.secondary {
+  stroke-width: 2;
+  opacity: 0;
+  animation: lightning-flash 3s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
