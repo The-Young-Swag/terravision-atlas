@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Chart, registerables, ScriptableContext } from 'chart.js';
+import { Chart, Plugin, registerables, ScriptableContext } from 'chart.js';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import type { HourlyPoint } from '../../../features/weather/openMeteo';
 
@@ -9,6 +9,53 @@ interface ForecastChartProps {
   hourly: HourlyPoint[];
   label: string;
 }
+
+// Custom plugin: draw the y-axis title text centered against the full plot
+// area height, not the tick label area. Chart.js's default positioning
+// uses the midpoint between the first and last tick label, which is
+// visually off-center when the chart has layout padding or when the
+// tick area doesn't span the full plot height. We compute the vertical
+// center of the chart area ourselves and place the rotated text there.
+const centerYAxisTitlePlugin: Plugin<'bar'> = {
+  id: 'centerYAxisTitle',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const plotCenterY = (chartArea.top + chartArea.bottom) / 2;
+    for (const axisId of ['y-temp', 'y-precip'] as const) {
+      const scale = scales[axisId];
+      if (!scale) continue;
+      const scaleOptions = scale.options as {
+        position?: 'left' | 'right';
+        title?: {
+          display?: boolean;
+          text?: string | string[];
+          color?: string;
+          font?: { family?: string; size?: number; weight?: number };
+        };
+      };
+      const titleConfig = scaleOptions.title;
+      if (!titleConfig?.display || !titleConfig.text) continue;
+      const text = Array.isArray(titleConfig.text) ? titleConfig.text.join(' ') : titleConfig.text;
+      const fontSize = titleConfig.font?.size ?? 10;
+      const fontFamily = titleConfig.font?.family ?? 'sans-serif';
+      const fontWeight = titleConfig.font?.weight ?? 'normal';
+      const color = titleConfig.color ?? '#888';
+      const isLeft = scaleOptions.position === 'left';
+      // Offset 14px outside the chart area for clearance from tick labels.
+      const xPos = isLeft ? chartArea.left - 14 : chartArea.right + 14;
+      ctx.save();
+      ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.translate(xPos, plotCenterY);
+      ctx.rotate(isLeft ? -Math.PI / 2 : Math.PI / 2);
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }
+  },
+};
 
 // Temperature line + precipitation bars sharing one canvas (precipitation
 // on a hidden secondary axis so rain stays visible next to temperature).
@@ -32,10 +79,25 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
       chartRef.current = null;
     }
 
-    // Prepare labels and data, preserving nulls as gaps
+    // Prepare labels and data, preserving nulls as gaps.
+    // For a 7-day hourly forecast, the date+hour concatenation from
+    // toLocaleString (e.g. "Sep 7, 00") is ambiguous — "00" reads as
+    // a day or month, not an hour. Use an explicit, unambiguous format:
+    //   - Midnight (00:00) ticks show the day label "Sep 7" so each day
+    //     boundary is visually anchored.
+    //   - All other ticks show the 24h hour "06" / "12" / "18" so the
+    //     time is unambiguous.
+    // Using Date methods instead of toLocaleString also removes the
+    // locale-dependent rendering that produced inconsistent output.
     const labels = hourly.map((point) => {
       const date = new Date(point.time);
-      return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', hour12: false });
+      const hours = date.getHours();
+      if (hours === 0) {
+        // Day boundary — show the day label.
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      }
+      // 24h zero-padded hour for unambiguous time.
+      return `${hours.toString().padStart(2, '0')}`;
     });
     const tempData = hourly.map((point) => point.temperatureC);
     const precipData = hourly.map((point) => point.precipitationMm);
@@ -128,7 +190,7 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
             },
             border: { display: false },
             title: {
-              display: true,
+              display: false, // drawn by centerYAxisTitlePlugin
               text: 'Temperature (°C)',
               color: axisTitleColor,
               font: { family: 'IBM Plex Mono', size: 9, weight: 500 },
@@ -148,7 +210,7 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
             },
             border: { display: false },
             title: {
-              display: true,
+              display: false, // drawn by centerYAxisTitlePlugin
               text: 'Precipitation (mm)',
               color: axisTitleColor,
               font: { family: 'IBM Plex Mono', size: 9, weight: 500 },
@@ -157,10 +219,16 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
           },
         },
         layout: {
-          padding: { top: 8, right: 16, bottom: 8, left: 8 },
+          // Extra left/right padding (28px) to give the centered y-axis
+          // titles room to render without overlapping the tick labels.
+          padding: { top: 8, right: 28, bottom: 8, left: 28 },
         },
         animation: { duration: 400 },
       },
+      // Custom plugin: draws y-axis titles centered against the full
+      // plot area (Chart.js default centers against the tick label area,
+      // which is visually off-center when the chart has layout padding).
+      plugins: [centerYAxisTitlePlugin],
     });
 
     return () => {
