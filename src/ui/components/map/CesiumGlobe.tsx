@@ -326,33 +326,11 @@ export function CesiumGlobe() {
       )}
       {/* 3D Globe tilt control — on-screen affordance for camera pitch.
           The middle-click-drag gesture still works; this provides a discoverable
-          alternative with live feedback and a reset-to-top-down affordance. */}
+          alternative with live feedback and a reset-to-top-down affordance.
+          Cesium pitch convention: -90° is straight-down (top-down view),
+          0° is horizontal (horizon view). */}
       <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1.5">
         <div className="glass-strong flex flex-col gap-1 rounded-xl p-2">
-          <button
-            type="button"
-            onMouseDown={() => {
-              if (!viewerRef.current) return;
-              const pos = viewerRef.current.camera.positionCartographic;
-              viewerRef.current.camera.setView({
-                destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
-                orientation: {
-                  heading: viewerRef.current.camera.heading,
-                  pitch: Math.max(-Cesium.Math.PI_OVER_TWO, viewerRef.current.camera.pitch - Cesium.Math.toRadians(10)),
-                  roll: 0,
-                },
-              });
-            }}
-            onMouseUp={() => {}}
-            onMouseLeave={() => {}}
-            className="glass-strong flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/10 active:bg-white/20"
-            aria-label="Tilt down"
-            title="Tilt down"
-          >
-            <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
           <button
             type="button"
             onMouseDown={() => {
@@ -370,11 +348,38 @@ export function CesiumGlobe() {
             onMouseUp={() => {}}
             onMouseLeave={() => {}}
             className="glass-strong flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/10 active:bg-white/20"
-            aria-label="Tilt up"
-            title="Tilt up"
+            aria-label="Tilt toward horizon"
+            title="Tilt toward horizon"
           >
             <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onMouseDown={() => {
+              if (!viewerRef.current) return;
+              const pos = viewerRef.current.camera.positionCartographic;
+              viewerRef.current.camera.setView({
+                destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
+                orientation: {
+                  heading: viewerRef.current.camera.heading,
+                  pitch: Math.max(
+                    -Cesium.Math.PI_OVER_TWO,
+                    viewerRef.current.camera.pitch - Cesium.Math.toRadians(10),
+                  ),
+                  roll: 0,
+                },
+              });
+            }}
+            onMouseUp={() => {}}
+            onMouseLeave={() => {}}
+            className="glass-strong flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/10 active:bg-white/20"
+            aria-label="Tilt toward top-down"
+            title="Tilt toward top-down"
+          >
+            <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -387,7 +392,7 @@ export function CesiumGlobe() {
               destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
               orientation: {
                 heading: viewerRef.current.camera.heading,
-                pitch: 0,
+                pitch: -Cesium.Math.PI_OVER_TWO,
                 roll: 0,
               },
               duration: 1.5,
