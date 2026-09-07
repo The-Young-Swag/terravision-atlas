@@ -74,8 +74,6 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
   const [isCollapsed, setIsCollapsed] = useState(readCollapsed);
   const [isDragging, setIsDragging] = useState(false);
   const [snapIndicator, setSnapIndicator] = useState<DockSide | null>(null);
-  // Footer is bottom-4 with height ~52px; keep clear with a 20px gap
-  const FOOTER_OFFSET = 72;
   // Number of dockable buttons (toolbar content) for collapsed icon mapping
 
   const toggleCollapsed = useCallback(() => {
@@ -226,21 +224,22 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     URL.revokeObjectURL(url);
   }, [measurePoints, measureMode, measureClosed]);
 
-  // Dock-side positioning — edge-flush horizontal docking matching the notch
-  // sidebar's pattern. Expanded state sits at the bottom (clears the
-  // footer which is at bottom-4). Collapsed state is vertically centered,
-  // matching the notch sidebar's collapsed position. Both states use
-  // left-0 / right-0 for true edge flush (not a fixed offset that merely
-  // avoids the footer).
-  // Stacking: z-30 to match the notch sidebar's main element. The snap
-  // zones stay at z-40 (above the toolbar), and the TopBar at z-20 renders
-  // below — so the toolbar always sits above the top nav bar.
+  // Dock-side positioning — single vertical anchor matching the notch
+  // sidebar's pattern. Both expanded and collapsed states share the same
+  // vertical anchor (top: 50%, translateY: -50%) so the collapsed icon
+  // sits at the same dock position the expanded toolbar occupies. The
+  // horizontal buttons remain in their horizontal flex-wrap row (not
+  // redesigned as a vertical column). The expanded/collapsed difference
+  // is the container width (animated via CSS transition), matching the
+  // notch sidebar's width-collapse behavior.
+  // Stacking: z-30 to match the notch sidebar's exact value. Snap zones
+  // at z-40 (above the toolbar) so the toolbar always sits above the
+  // top nav bar (z-20).
   const dockStyle: React.CSSProperties = {
     left: dockSide === 'left' ? 0 : 'auto',
     right: dockSide === 'right' ? 0 : 'auto',
-    transform: isCollapsed ? 'translateY(-50%)' : 'none',
-    top: isCollapsed ? '50%' : 'auto',
-    bottom: isCollapsed ? 'auto' : FOOTER_OFFSET,
+    top: '50%',
+    transform: 'translateY(-50%)',
   };
 
   return (
@@ -271,11 +270,11 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
       <AnimatePresence>
         {activeMode === 'survey' && (
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, x: dockSide === 'left' ? -12 : 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: dockSide === 'left' ? -12 : 12 }}
             style={dockStyle}
-            className={`glass-strong z-30 flex ${isCollapsed ? 'flex-col items-center px-1.5 py-2' : 'max-w-[90vw] flex-wrap items-center justify-center gap-1 px-2 py-2'} rounded-2xl`}
+            className={`glass-strong z-30 flex items-center gap-1 rounded-2xl px-2 py-2 max-h-[70vh] ${isCollapsed ? 'flex-col w-12' : 'flex-row flex-wrap max-w-[90vw] justify-center'} ${dockSide === 'left' ? 'notch-dock-left' : 'notch-dock-right'} ${isDragging ? 'transition-none' : 'transition-[width] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)]'}`}
           >
             {/* Drag handle + collapse/expand button — always present, in
                 both collapsed and expanded states, consistent with the notch
