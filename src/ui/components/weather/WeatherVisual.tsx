@@ -24,17 +24,18 @@ interface WeatherVisualProps {
   size?: number;
 }
 
-const SIZE = 120;
-
-export function WeatherVisual({ current, size = SIZE }: WeatherVisualProps) {
+// CSS-based claymorphism weather visual. Single consistent light-source
+// direction (top-left) across every state. Each condition uses a CSS
+// gradient + box-shadow for the extruded 3D look; no SVG elements.
+export function WeatherVisual({ current, size = 96 }: WeatherVisualProps) {
   if (!current) {
     return (
       <div
-        className="flex items-center justify-center"
+        className="weather-visual weather-unknown"
         style={{ width: size, height: size }}
         aria-label="No weather data available"
       >
-        <div className="weather-unknown" style={{ width: size * 0.6, height: size * 0.6 }} />
+        <div className="weather-shape weather-shape-unknown" />
       </div>
     );
   }
@@ -50,144 +51,90 @@ export function WeatherVisual({ current, size = SIZE }: WeatherVisualProps) {
       aria-label={label}
       role="img"
     >
-      {category === 'clear' && (
-        <>
-          <svg viewBox="0 0 100 100" className="weather-sun" aria-hidden="true">
-            <circle className="sun-core" cx="50" cy="50" r="22" />
-            <g className="sun-rays">
-              {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
-                <line
-                  key={angle}
-                  x1="50"
-                  y1="50"
-                  x2={50 + 38 * Math.cos((angle * Math.PI) / 180)}
-                  y2={50 + 38 * Math.sin((angle * Math.PI) / 180)}
-                  className="sun-ray"
-                />
-              ))}
-            </g>
-          </svg>
-          {timeOfDay === 'day' && (
-            <svg viewBox="0 0 100 100" className="weather-sky" aria-hidden="true">
-              <g className="sun-glare">
-                <circle cx="50" cy="50" r="35" className="glare-ring" />
-                <circle cx="50" cy="50" r="28" className="glare-ring" />
-              </g>
-            </svg>
-          )}
-        </>
-      )}
-
-      {category === 'cloudy' && (
-        <>
-          <svg viewBox="0 0 100 100" className="weather-cloud" aria-hidden="true">
-            <g className="cloud-group">
-              <ellipse cx="35" cy="55" rx="22" ry="14" className="cloud-part" />
-              <ellipse cx="55" cy="45" rx="26" ry="18" className="cloud-part" />
-              <ellipse cx="75" cy="55" rx="22" ry="14" className="cloud-part" />
-            </g>
-          </svg>
-          {timeOfDay === 'night' && (
-            <svg viewBox="0 0 100 100" className="weather-moon" aria-hidden="true">
-              <circle cx="75" cy="25" r="14" className="moon-disk" />
-              <circle cx="72" cy="22" r="4" className="moon-crater" />
-              <circle cx="78" cy="28" r="2.5" className="moon-crater" />
-              <circle cx="68" cy="27" r="1.5" className="moon-crater" />
-            </svg>
-          )}
-        </>
-      )}
-
-      {category === 'rain' && (
-        <>
-          <svg viewBox="0 0 100 100" className="weather-cloud" aria-hidden="true">
-            <g className="cloud-group rain-cloud">
-              <ellipse cx="35" cy="55" rx="22" ry="14" className="cloud-part" />
-              <ellipse cx="55" cy="45" rx="26" ry="18" className="cloud-part" />
-              <ellipse cx="75" cy="55" rx="22" ry="14" className="cloud-part" />
-            </g>
-          </svg>
-          <svg viewBox="0 0 100 100" className="weather-rain" aria-hidden="true">
-            <g className="rain-drops">
-              {[15, 35, 55, 75, 85].map((x, i) => (
-                <line
-                  key={i}
-                  x1={x}
-                  y1={65}
-                  x2={x - 3}
-                  y2={95}
-                  className="rain-drop"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
-              ))}
-            </g>
-          </svg>
-        </>
-      )}
-
-      {category === 'snow' && (
-        <>
-          <svg viewBox="0 0 100 100" className="weather-cloud" aria-hidden="true">
-            <g className="cloud-group snow-cloud">
-              <ellipse cx="35" cy="55" rx="22" ry="14" className="cloud-part" />
-              <ellipse cx="55" cy="45" rx="26" ry="18" className="cloud-part" />
-              <ellipse cx="75" cy="55" rx="22" ry="14" className="cloud-part" />
-            </g>
-          </svg>
-          <svg viewBox="0 0 100 100" className="weather-snow" aria-hidden="true">
-            <g className="snow-flakes">
-              {[15, 35, 55, 75, 85, 25, 45, 65].map((x, i) => (
-                <circle
-                  key={i}
-                  cx={x}
-                  cy={65 + (i % 2) * 10}
-                  r={2.5}
-                  className="snow-flake"
-                  style={{ animationDelay: `${i * 0.2}s`, animationDuration: `${3 + (i % 3)}s` }}
-                />
-              ))}
-            </g>
-          </svg>
-        </>
-      )}
-
-      {category === 'storm' && (
-        <>
-          <svg viewBox="0 0 100 100" className="weather-cloud" aria-hidden="true">
-            <g className="cloud-group storm-cloud">
-              <ellipse cx="35" cy="55" rx="22" ry="14" className="cloud-part" />
-              <ellipse cx="55" cy="45" rx="26" ry="18" className="cloud-part" />
-              <ellipse cx="75" cy="55" rx="22" ry="14" className="cloud-part" />
-            </g>
-          </svg>
-          <svg viewBox="0 0 100 100" className="weather-lightning" aria-hidden="true">
-            <g className="lightning-group">
-              <path
-                className="lightning-bolt"
-                d="M50 45 L40 70 L55 70 L45 95"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                className="lightning-bolt secondary"
-                d="M35 55 L25 80 L40 80 L30 100"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                className="lightning-bolt secondary"
-                d="M65 55 L75 80 L60 80 L70 100"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </g>
-          </svg>
-        </>
-      )}
-
-      {category === 'unknown' && (
-        <div className="weather-unknown" style={{ width: size * 0.6, height: size * 0.6 }} />
-      )}
+      {category === 'clear' && <ClearVisual isDay={current.isDay} />}
+      {category === 'cloudy' && <CloudyVisual isDay={current.isDay} />}
+      {category === 'rain' && <RainVisual />}
+      {category === 'snow' && <SnowVisual />}
+      {category === 'storm' && <StormVisual />}
+      {category === 'unknown' && <UnknownVisual />}
     </div>
+  );
+}
+
+function ClearVisual({ isDay }: { isDay: boolean }) {
+  return (
+    <>
+      {isDay ? (
+        <div className="weather-shape weather-sun-core weather-clay" />
+      ) : (
+        // Night: show a moon (not the sun) — confirmed day/night fix.
+        <div className="weather-shape weather-moon-core weather-clay" />
+      )}
+    </>
+  );
+}
+
+function CloudyVisual({ isDay }: { isDay: boolean }) {
+  return (
+    <div className="weather-cloud-group">
+      {isDay ? (
+        <>
+          <div className="weather-shape weather-sun-core weather-clay weather-sun-behind-cloud" />
+        </>
+      ) : (
+        // Night: show a moon, not the sun.
+        <div className="weather-shape weather-moon-core weather-clay weather-moon-behind-cloud" />
+      )}
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-left" />
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-center" />
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-right" />
+    </div>
+  );
+}
+
+function RainVisual() {
+  return (
+    <div className="weather-cloud-group">
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-left weather-cloud-rain" />
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-center weather-cloud-rain" />
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-right weather-cloud-rain" />
+      <div className="weather-rain-drops">
+        <div className="weather-rain-drop weather-rain-drop-1" />
+        <div className="weather-rain-drop weather-rain-drop-2" />
+        <div className="weather-rain-drop weather-rain-drop-3" />
+      </div>
+    </div>
+  );
+}
+
+function SnowVisual() {
+  return (
+    <div className="weather-cloud-group">
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-left weather-cloud-snow" />
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-center weather-cloud-snow" />
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-right weather-cloud-snow" />
+      <div className="weather-snow-flakes">
+        <div className="weather-snow-flake weather-snow-flake-1" />
+        <div className="weather-snow-flake weather-snow-flake-2" />
+        <div className="weather-snow-flake weather-snow-flake-3" />
+      </div>
+    </div>
+  );
+}
+
+function StormVisual() {
+  return (
+    <div className="weather-cloud-group">
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-left weather-cloud-storm" />
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-center weather-cloud-storm" />
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-right weather-cloud-storm" />
+      <div className="weather-lightning-bolt" />
+    </div>
+  );
+}
+
+function UnknownVisual() {
+  return (
+    <div className="weather-shape weather-shape-unknown weather-clay" />
   );
 }

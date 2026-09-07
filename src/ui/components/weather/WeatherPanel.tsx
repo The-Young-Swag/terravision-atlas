@@ -69,9 +69,6 @@ export function WeatherPanel() {
         {current && (
           <div className="mb-3 rounded-xl border border-white/10 bg-white/[0.04] p-3">
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <WeatherVisual current={current} size={96} />
-              </div>
               <div className="flex-1 min-w-0 pt-2">
                 <p className={`text-[15px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>
                   {current.temperatureC.toFixed(1)}°C · {describeWeatherCode(current.weatherCode)}
@@ -79,6 +76,9 @@ export function WeatherPanel() {
                 <p className={`mt-1 ${valueClass}`}>
                   Wind {current.windSpeedKmh.toFixed(0)} km/h · {current.isDay ? 'Day' : 'Night'}
                 </p>
+              </div>
+              <div className="flex-shrink-0">
+                <WeatherVisual current={current} size={96} />
               </div>
             </div>
           </div>
