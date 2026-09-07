@@ -105,15 +105,6 @@ export function MapLibreMap() {
   // Adaptive contrast for in-map UI (controls, attribution)
   const { theme, textPrimary, attributionText } = useMapOverlayContrast();
 
-  // Control chrome styling lives in its own effect (not the map-creation
-  // effect) so it always targets the live control DOM: creation-time calls
-  // can miss when control rendering lags map construction.
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    applyMapControlStyles(container, theme, textPrimary, attributionText);
-  }, [theme, textPrimary, attributionText]);
-
   useEffect(() => {
     const container = containerRef.current;
     if (!container || mapRef.current) return;
@@ -313,6 +304,14 @@ export function MapLibreMap() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Control chrome styling runs after map creation (declaration order) so
+  // the control DOM exists, and re-runs when the contrast theme changes.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    applyMapControlStyles(container, theme, textPrimary, attributionText);
+  }, [theme, textPrimary, attributionText]);
 
   // Crosshair cursor while the measure tool is armed.
   const measureActive = useMapStore((s) => s.measureActive);
