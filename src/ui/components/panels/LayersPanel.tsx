@@ -6,6 +6,7 @@ import { useTrafficStore } from '../../../stores/trafficStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { GIBS_LAYERS, type SatelliteSourceId } from '../../../core/map/gibs';
 import { useTiltStore } from '../../../stores/tiltStore';
+import { BasemapIcon } from './BasemapIcon';
 import {
   TILT_MAX_DEGREES,
   cesiumTiltDegrees,
@@ -103,32 +104,27 @@ export function LayersPanel() {
                 label: 'Satellite',
                 desc: SATELLITE_SOURCES.find((s) => s.id === satelliteSource)?.label ?? 'Esri World Imagery',
                 icon: Satellite,
-                preview: 'linear-gradient(135deg,#1e3a2e 0%,#0f1f18 100%)',
               },
               {
                 id: 'streets' as const,
                 label: 'Streets',
                 desc: 'OpenStreetMap',
                 icon: MapIcon,
-                preview: 'linear-gradient(135deg,#3a3f4b 0%,#20232b 100%)',
               },
               {
                 id: 'terrain' as const,
                 label: 'Terrain',
                 desc: 'OpenTopoMap',
                 icon: Mountain,
-                preview: 'linear-gradient(135deg,#5a4a2f 0%,#2c2416 100%)',
               },
               {
                 id: 'dark' as const,
                 label: 'Dark',
                 desc: 'Grayscale · Wikimedia',
                 icon: Moon,
-                preview: 'linear-gradient(135deg,#111726 0%,#050810 100%)',
               },
             ] as const
           ).map((option) => {
-            const Icon = option.icon;
             const isActive = basemap === option.id;
             return (
               <button
@@ -138,12 +134,7 @@ export function LayersPanel() {
                 aria-pressed={isActive}
                 className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${isActive ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4]/10 text-slate-900' : 'border-[#5500a4] bg-[#5500a4]/10 text-white') : isBrightBasemap ? 'border-white/10 bg-white/[0.04] text-slate-800 hover:text-slate-900' : 'border-white/10 bg-white/[0.04] text-slate-300 hover:text-white'}`}
               >
-                <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[12px] transition ${isActive ? 'border-[#5500a4]/30 bg-[#5500a4] text-white' : 'border-white/10 bg-white/5 text-slate-400 group-hover:text-slate-200'}`}
-                  style={!isActive ? { background: option.preview } : undefined}
-                >
-                  <Icon className="h-4 w-4" />
-                </span>
+                <BasemapIcon basemap={option.id} isActive={isActive} isBrightBasemap={isBrightBasemap} size={32} />
                 <span className="flex-1">
                   <span className={`block text-[13px] font-medium leading-none ${isActive ? 'text-[#10B981]' : isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>{option.label}</span>
                   <span className={`block text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>{option.desc}</span>
