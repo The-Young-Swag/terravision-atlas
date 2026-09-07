@@ -19,7 +19,6 @@ import { StatusBar } from './ui/components/footer/StatusBar';
 import { StoryBuilder } from './features/storytelling/builder/StoryBuilder';
 import { MinecraftExport } from './features/export/minecraft/MinecraftExport';
 import { FloatingPanel } from './ui/components/common/FloatingPanel';
-import { PanelRestoreBar } from './ui/components/common/PanelRestoreBar';
 import { NotchSidebar } from './ui/components/common/NotchSidebar';
 
 const CesiumGlobe = lazy(() => import('./ui/components/map/CesiumGlobe').then((m) => ({ default: m.CesiumGlobe })));
@@ -88,7 +87,6 @@ export default function App() {
       <LiveAlertsPanel activeMode={activeMode} />
       <ModeDocks activeMode={activeMode} />
       <StatusBar activeMode={activeMode} />
-      <PanelRestoreBar />
       <NotchSidebar activeMode={activeMode} onModeChange={setActiveMode} />
 
       <FuelPanel open={fuelOpen} onClose={() => setFuelOpen(false)} />
