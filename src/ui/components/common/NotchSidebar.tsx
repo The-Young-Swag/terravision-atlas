@@ -26,12 +26,23 @@ interface NotchSidebarProps {
 }
 
 const PIN_STORAGE_KEY = 'terravision.notch.pinned';
+const DOCK_STORAGE_KEY = 'terravision.notch.dock';
+
+type DockSide = 'left' | 'right';
 
 function readPinned(): boolean {
   try {
     return localStorage.getItem(PIN_STORAGE_KEY) === 'true';
   } catch {
     return false;
+  }
+}
+
+function readDock(): DockSide {
+  try {
+    return localStorage.getItem(DOCK_STORAGE_KEY) === 'right' ? 'right' : 'left';
+  } catch {
+    return 'left';
   }
 }
 
@@ -68,6 +79,9 @@ const VIEW_MODE_LABEL: Record<string, string> = { '2d': '2D map', vector: 'Vecto
 export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(readPinned);
+  const [dockSide, setDockSide] = useState<DockSide>(readDock);
+  const [dragging, setDragging] = useState(false);
+  const [dragSide, setDragSide] = useState<DockSide | null>(null);
 
   const basemap = useMapStore((s) => s.basemap);
   const viewMode = useMapStore((s) => s.viewMode);
@@ -86,7 +100,8 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
   const shelters = useShelterStore((s) => s.shelters);
   const reopenPanel = useUiPanelStore((s) => s.reopenPanel);
 
-  const expanded = hovered || pinned;
+  const expanded = (hovered || pinned) && !dragging;
+  const left = dockSide === 'left';
 
   const highSeverity = disasterEvents.filter((e) => e.severity === 'high').length;
   const routePreview = route
@@ -183,6 +198,15 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
     reopenPanel(row.panelId);
   };
 
+  const commitDock = (side: DockSide) => {
+    setDockSide(side);
+    try {
+      localStorage.setItem(DOCK_STORAGE_KEY, side);
+    } catch {
+      // persistence is a nicety — the dock still moves for the session
+    }
+  };
+
   const togglePin = () => {
     setPinned((next) => {
       const value = !next;
@@ -196,14 +220,57 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
   };
 
   return (
+    <>
+      {/* Snap-zone indicators while dragging. Left/right only — top and
+          bottom docking are never offered, so no zones exist for them. */}
+      <div
+        aria-hidden
+        className={`pointer-events-none fixed bottom-0 left-0 top-0 z-40 w-16 transition-opacity duration-150 ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'left' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
+      />
+      <div
+        aria-hidden
+        className={`pointer-events-none fixed bottom-0 right-0 top-0 z-40 w-16 transition-opacity duration-150 ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'right' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
+      />
     <nav
       aria-label="Panel access"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`glass fixed left-3 top-1/2 z-30 hidden max-h-[70vh] -translate-y-1/2 flex-col overflow-hidden md:flex ${
+      className={`glass fixed top-1/2 z-30 hidden max-h-[70vh] -translate-y-1/2 flex-col overflow-hidden md:flex ${
         expanded ? 'w-[296px]' : 'w-[52px]'
-      } notch-dock-left rounded-l-none ${expanded ? 'rounded-r-[20px]' : 'rounded-r-[22px]'} transition-[width,border-radius] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)]`}
+      } ${left ? 'notch-dock-left left-3 rounded-l-none' : 'notch-dock-right right-3 rounded-r-none'} ${
+        expanded ? (left ? 'rounded-r-[20px]' : 'rounded-l-[20px]') : left ? 'rounded-r-[22px]' : 'rounded-l-[22px]'
+      } ${dragging ? 'transition-none' : 'transition-[width,border-radius] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)]'}`}
     >
+      {/* Drag handle on the edge-facing flat side: pointer capture keeps
+          the gesture unambiguous with hover-to-expand. */}
+      <div
+        role="separator"
+        aria-label={`Drag to dock ${left ? 'right' : 'left'}`}
+        title="Drag to dock left or right"
+        className={`absolute top-1/2 z-10 flex h-11 w-[14px] -translate-y-1/2 cursor-grab touch-none items-center justify-center active:cursor-grabbing ${left ? 'left-[-2px]' : 'right-[-2px]'}`}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.currentTarget.setPointerCapture(e.pointerId);
+          setDragging(true);
+          setDragSide(null);
+        }}
+        onPointerMove={(e) => {
+          if (!dragging) return;
+          setDragSide(e.clientX < window.innerWidth / 2 ? 'left' : 'right');
+        }}
+        onPointerUp={(e) => {
+          if (!dragging) return;
+          setDragging(false);
+          setDragSide(null);
+          commitDock(e.clientX < window.innerWidth / 2 ? 'left' : 'right');
+        }}
+        onPointerCancel={() => {
+          setDragging(false);
+          setDragSide(null);
+        }}
+      >
+        <span className="h-6 w-[3px] rounded-full bg-white/25 shadow-[6px_0_0_rgba(255,255,255,0.25)]" aria-hidden />
+      </div>
       <div className="custom-scrollbar flex flex-col gap-0.5 overflow-y-auto py-2">
         <AnimatePresence initial={false}>
           {visibleRows.map((row) => {
@@ -261,5 +328,6 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
         </button>
       )}
     </nav>
+    </>
   );
 }
