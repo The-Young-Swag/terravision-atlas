@@ -37,10 +37,10 @@ export function setMeasureVisible(map: MapLibreMap, points: [number, number][], 
         ]
       : []),
     ...points.map(
-      ([lon, lat]): GeoJSON.Feature => ({
+      ([lon, lat], index): GeoJSON.Feature => ({
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [lon, lat] },
-        properties: {},
+        properties: { vertexIndex: index },
       }),
     ),
   ];

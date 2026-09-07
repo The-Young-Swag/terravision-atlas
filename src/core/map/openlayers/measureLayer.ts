@@ -56,8 +56,9 @@ export function createMeasureLayer(
     features.push(line);
   }
 
-  for (const [lon, lat] of points) {
+  for (const [index, [lon, lat]] of points.entries()) {
     const marker = new Feature({ geometry: new Point(fromLonLat([lon, lat])) });
+    marker.set('vertexIndex', index);
     marker.setStyle(
       new Style({
         image: new Circle({

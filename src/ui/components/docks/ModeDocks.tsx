@@ -143,6 +143,25 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     setMeasureActive(false);
   }, [generateSessionId, clearMeasure, setMeasureActive]);
 
+  const handleMeasureCsvExport = useCallback(() => {
+    const rows = measurePoints.map(([lon, lat], i) => {
+      const cumulativeKm = geodesicKilometers(measurePoints.slice(0, i + 1)) ?? 0;
+      return `${i},${lon.toFixed(6)},${lat.toFixed(6)},${cumulativeKm.toFixed(3)}`;
+    });
+    const areaLine =
+      measureMode === 'area' && measureClosed
+        ? `# area_m2,${(geodesicAreaSqMeters(measurePoints) ?? 0).toFixed(1)}\n`
+        : '';
+    const csv = `index,lon,lat,cumulative_km\n${rows.join('\n')}\n${areaLine}`;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'terravision-measurement.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [measurePoints, measureMode, measureClosed]);
+
   return (
     <>
       <AnimatePresence>
@@ -243,6 +262,16 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 className={`flex h-7 w-7 items-center justify-center rounded-lg transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
               >
                 <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {measurePoints.length > 0 && (
+              <button
+                type="button"
+                onClick={handleMeasureCsvExport}
+                title="Download measurement points and totals as CSV"
+                className={`rounded-xl px-3 py-2 font-mono text-[11px] transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+              >
+                CSV
               </button>
             )}
             <button

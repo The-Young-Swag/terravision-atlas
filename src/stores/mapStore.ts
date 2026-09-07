@@ -37,6 +37,7 @@ interface MapState {
   measureClosed: boolean;
   setMeasureClosed: (closed: boolean) => void;
   pushMeasurePoint: (point: [number, number]) => void;
+  setMeasurePoint: (index: number, point: [number, number]) => void;
   clearMeasure: () => void;
   setShowDatumViz: (show: boolean) => void;
 }
@@ -78,6 +79,15 @@ export const useMapStore = create<MapState>((set) => ({
       measurePoints: state.measureClosed ? [point] : [...state.measurePoints, point],
       measureClosed: false,
     })),
+  setMeasurePoint: (index, point) =>
+    // Vertex drag repositioning; out-of-range indices are a no-op so a
+    // stale drag gesture can never corrupt the path.
+    set((state) => {
+      if (index < 0 || index >= state.measurePoints.length) return state;
+      const measurePoints = [...state.measurePoints];
+      measurePoints[index] = point;
+      return { measurePoints };
+    }),
   clearMeasure: () => set({ measurePoints: [], measureClosed: false }),
   setShowDatumViz: (showDatumViz) => set({ showDatumViz }),
 }));

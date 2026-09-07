@@ -7,7 +7,7 @@ import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../stores/mapStor
 import { maplibreStyleFor } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
-import { removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
+import { MEASURE_POINT_LAYER_ID, removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
 import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_DIRECTION_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
 import { routeStatusSegments } from '../../../features/traffic/flowStatus';
 import { setDisastersVisible, DISASTER_LAYER_ID } from '../../../core/map/maplibre/disasters';
@@ -151,6 +151,10 @@ export function MapLibreMap() {
     // Geodesic measure tool: picks points while armed. With snap-to-grid
     // armed, vertices land on the same UTM grid as the reported center.
     map.on('click', (event) => {
+      if (measureDragSuppressRef.current) {
+        measureDragSuppressRef.current = false;
+        return;
+      }
       const state = useMapStore.getState();
       if (!state.measureActive) return;
       const z = map.getZoom();
@@ -170,6 +174,44 @@ export function MapLibreMap() {
         }
       }
       state.pushMeasurePoint([snapped.lon, snapped.lat]);
+    });
+
+    // Measure vertex dragging: press-drag-release on a vertex repositions it
+    // with live recalculation in the dock; a plain click still appends.
+    // Panning is suspended mid-drag so the gesture moves the vertex instead.
+    map.on('mousedown', (event) => {
+      const state = useMapStore.getState();
+      if (!state.measureActive || event.originalEvent.button !== 0) return;
+      const hits = map.queryRenderedFeatures(event.point, { layers: [MEASURE_POINT_LAYER_ID] });
+      const index = (hits[0]?.properties as { vertexIndex?: unknown } | undefined)?.vertexIndex;
+      if (typeof index !== 'number') return;
+      measureDragRef.current = { index, startPoint: { x: event.point.x, y: event.point.y } };
+      map.dragPan.disable();
+    });
+    map.on('mousemove', (event) => {
+      const drag = measureDragRef.current;
+      if (!drag) return;
+      const state = useMapStore.getState();
+      const z = map.getZoom();
+      const center = map.getCenter();
+      const resolution = (156543.03392804097 * Math.cos((center.lat * Math.PI) / 180)) / 2 ** z;
+      const snapped = state.snapToGrid
+        ? snapToUtmGrid(event.lngLat.lng, event.lngLat.lat, niceMeterStep(resolution))
+        : { lon: event.lngLat.lng, lat: event.lngLat.lat };
+      state.setMeasurePoint(drag.index, [snapped.lon, snapped.lat]);
+    });
+    const endMeasureDrag = (dragged: boolean) => {
+      if (!measureDragRef.current) return;
+      measureDragRef.current = null;
+      if (dragged) measureDragSuppressRef.current = true;
+      map.dragPan.enable();
+    };
+    map.on('mouseup', (event) => {
+      const drag = measureDragRef.current;
+      if (!drag) return;
+      const dx = event.point.x - drag.startPoint.x;
+      const dy = event.point.y - drag.startPoint.y;
+      endMeasureDrag(Math.hypot(dx, dy) > 4);
     });
 
     // Evacuation pin placement while a Start/Destination pick is armed.
@@ -350,6 +392,8 @@ export function MapLibreMap() {
   const avoidCircle = useRouteStore((s) => s.avoidCircle);
   const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
   const drawCenterRef = useRef<{ lon: number; lat: number } | null>(null);
+  const measureDragRef = useRef<{ index: number; startPoint: { x: number; y: number } } | null>(null);
+  const measureDragSuppressRef = useRef(false);
   const startMarkerRef = useRef<Marker | null>(null);
   const destinationMarkerRef = useRef<Marker | null>(null);
   const searchMarker = useSearchStore((s) => s.marker);
