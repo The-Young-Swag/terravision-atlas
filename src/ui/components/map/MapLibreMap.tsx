@@ -56,7 +56,7 @@ function applyMapControlStyles(
   textPrimary: string,
   attributionText: string,
 ): void {
-  const navButtons = container.querySelectorAll('.maplibre-ctrl-zoom-in, .maplibre-ctrl-zoom-out');
+  const navButtons = container.querySelectorAll('.maplibregl-ctrl-zoom-in, .maplibregl-ctrl-zoom-out');
   navButtons.forEach((btn) => {
     const button = btn as HTMLElement;
     button.style.backgroundColor = theme === 'light' ? '#ffffff' : '#1e293b';
@@ -73,14 +73,14 @@ function applyMapControlStyles(
     compass.setAttribute('aria-label', 'Reset bearing and pitch');
   }
 
-  const attribution = container.querySelector('.maplibre-ctrl-attrib');
+  const attribution = container.querySelector('.maplibregl-ctrl-attrib');
   if (attribution) {
     const attr = attribution as HTMLElement;
     attr.style.color = attributionText;
     attr.style.backgroundColor = theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)';
   }
 
-  const attribToggle = container.querySelector('.maplibre-ctrl-attrib-toggle');
+  const attribToggle = container.querySelector('.maplibregl-ctrl-attrib-button');
   if (attribToggle) {
     const toggle = attribToggle as HTMLElement;
     toggle.style.color = textPrimary;
