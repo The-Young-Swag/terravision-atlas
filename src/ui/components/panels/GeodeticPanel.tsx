@@ -57,7 +57,12 @@ export function GeodeticPanel() {
           )}
         </div>
 
-        <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-500'}`}>Powered by Proj4js · 7 EPSG bundled (WGS84/UTM/NAD83/ETRS89/OSGB36) · NTv2</p>
+        <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-500'}`}>Powered by Proj4js · 9 EPSG bundled (WGS84/UTM/NAD83/ETRS89/OSGB36/PRS92) · NTv2</p>
+
+        <p className={`mt-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-center text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+          Elevation profile and cut/fill volume need DEM sampling along the measured path — not built yet.
+          Bearing, distance, area, datum shift, grid snap, CSV export, and session share above are the working set.
+        </p>
       </div>
     </FloatingPanel>
   );
