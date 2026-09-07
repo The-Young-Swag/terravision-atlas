@@ -333,20 +333,20 @@ export function CesiumGlobe() {
         <div className="glass-strong flex flex-col gap-1 rounded-xl p-2">
           <button
             type="button"
-            onMouseDown={() => {
+            onClick={() => {
               if (!viewerRef.current) return;
-              const pos = viewerRef.current.camera.positionCartographic;
-              viewerRef.current.camera.setView({
+              const camera = viewerRef.current.camera;
+              const pos = camera.positionCartographic;
+              camera.flyTo({
                 destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
                 orientation: {
-                  heading: viewerRef.current.camera.heading,
-                  pitch: Math.min(0, viewerRef.current.camera.pitch + Cesium.Math.toRadians(10)),
+                  heading: camera.heading,
+                  pitch: Math.min(0, camera.pitch + Cesium.Math.toRadians(10)),
                   roll: 0,
                 },
+                duration: 0.4,
               });
             }}
-            onMouseUp={() => {}}
-            onMouseLeave={() => {}}
             className="glass-strong flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/10 active:bg-white/20"
             aria-label="Tilt toward horizon"
             title="Tilt toward horizon"
@@ -357,23 +357,20 @@ export function CesiumGlobe() {
           </button>
           <button
             type="button"
-            onMouseDown={() => {
+            onClick={() => {
               if (!viewerRef.current) return;
-              const pos = viewerRef.current.camera.positionCartographic;
-              viewerRef.current.camera.setView({
+              const camera = viewerRef.current.camera;
+              const pos = camera.positionCartographic;
+              camera.flyTo({
                 destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
                 orientation: {
-                  heading: viewerRef.current.camera.heading,
-                  pitch: Math.max(
-                    -Cesium.Math.PI_OVER_TWO,
-                    viewerRef.current.camera.pitch - Cesium.Math.toRadians(10),
-                  ),
+                  heading: camera.heading,
+                  pitch: Math.max(-Cesium.Math.PI_OVER_TWO, camera.pitch - Cesium.Math.toRadians(10)),
                   roll: 0,
                 },
+                duration: 0.4,
               });
             }}
-            onMouseUp={() => {}}
-            onMouseLeave={() => {}}
             className="glass-strong flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/10 active:bg-white/20"
             aria-label="Tilt toward top-down"
             title="Tilt toward top-down"
