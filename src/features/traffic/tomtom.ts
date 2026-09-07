@@ -81,10 +81,21 @@ export function tomtomApiKey(): string | null {
   return key && key.length > 0 ? key : null;
 }
 
-/** Raster flow-tile URL template for OpenLayers XYZ and MapLibre raster. */
-export function flowTileUrl(key: string): string {
-  return `https://api.tomtom.com/traffic/map/4/tile/flow/absolute/{z}/{x}/{y}.png?key=${key}`;
+/** Raster flow-tile URL template for OpenLayers XYZ and MapLibre raster.
+ * The `thickness` parameter is the canonical TomTom thickness control
+ * (1..20, default 10). Set to 5 for a thinner, less-cluttered overlay at
+ * normal zoom — the visual density change is documented in Item 15 Part B.
+ * Confirmed against TomTom's Raster Flow Tiles docs: thickness is accepted
+ * for `absolute`, `relative`, `relative-delay`, and `reduced-sensitivity`
+ * styles (the four styles the app uses). */
+export function flowTileUrl(key: string, thickness = FLOW_TILE_THICKNESS): string {
+  const safeThickness = Math.max(1, Math.min(20, Math.round(thickness)));
+  return `https://api.tomtom.com/traffic/map/4/tile/flow/absolute/{z}/{x}/{y}.png?key=${key}&thickness=${safeThickness}`;
 }
+
+/** Default thickness passed to flowTileUrl — lower than TomTom's 10 to
+ * reduce clutter at normal zoom without giving up legibility. */
+export const FLOW_TILE_THICKNESS = 5;
 
 const INCIDENTS_URL = 'https://api.tomtom.com/traffic/services/5/incidentDetails';
 const INCIDENTS_TTL_MS = 120000;
