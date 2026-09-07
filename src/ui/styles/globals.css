@@ -58,6 +58,15 @@ body {
   border-right: none;
 }
 
+/* Search bar width token (Item 16): the global "Search places" bar
+   uses the same max-w-md + flex-1 sizing Tailwind already has, and the
+   footer reuses this single class so both elements reflow together at
+   every breakpoint. No magic number in the footer markup. */
+.search-bar-shell {
+  width: 100%;
+  max-width: 28rem; /* max-w-md */
+}
+
 /* Subtle glass scrollbar — minimal, low-contrast, integrated */
 .custom-scrollbar {
   scrollbar-width: thin;
