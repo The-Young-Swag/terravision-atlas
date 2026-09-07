@@ -23,7 +23,7 @@ import { useShelterStore } from '../../../stores/shelterStore';
 import { createSearchMarkerLayer } from '../../../core/map/openlayers/searchLayer';
 import { useSearchStore } from '../../../stores/searchStore';
 import { reverseNominatim } from '../../../features/search/geocode';
-import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
+import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
 import { createMeasureLayer } from '../../../core/map/openlayers/measureLayer';
 import { geodesicKilometers, formatDistanceKilometers } from '../../../core/geodetic/measurements/distance';
 import { geodesicAreaSqMeters, formatAreaSqMeters } from '../../../core/geodetic/measurements/area';
@@ -150,12 +150,13 @@ export function OpenLayersMap() {
 
       if (viewCenter) {
         const [rawLon, rawLat] = toLonLat(viewCenter);
-        // Snap-to-grid survey tool: round to a resolution-adaptive graticule
-        // step so reported coordinates land exactly on grid lines.
+        // Snap-to-grid survey tool: UTM 51N meter grid at a
+        // resolution-adaptive step so reported coordinates land exactly on
+        // grid lines.
         const resolution = view.getResolution();
         const snapped =
           useMapStore.getState().snapToGrid && resolution !== undefined
-            ? snapLonLat(rawLon, rawLat, niceGridStepDegrees(resolution, rawLat))
+            ? snapToUtmGrid(rawLon, rawLat, niceMeterStep(resolution))
             : { lon: rawLon, lat: rawLat };
         // Only update if meaningfully different (avoid micro-jitter)
         const [storeLon, storeLat] = center;
@@ -310,13 +311,17 @@ export function OpenLayersMap() {
     };
     map.getViewport().addEventListener('contextmenu', handleContextMenu);
 
-    // Geodesic measure tool: picks points while armed. In area mode with
-    // three or more vertices, clicking near the first vertex closes the
-    // polygon instead of appending.
+    // Geodesic measure tool: picks points while armed. With snap-to-grid
+    // armed, vertices land on the same UTM grid as the reported center.
     map.on('click', (event: MapBrowserEvent) => {
       const state = useMapStore.getState();
       if (!state.measureActive) return;
       const [lon, lat] = toLonLat(event.coordinate);
+      const resolution = map.getView().getResolution() ?? 0;
+      const snapped =
+        state.snapToGrid && resolution > 0
+          ? snapToUtmGrid(lon, lat, niceMeterStep(resolution))
+          : { lon, lat };
       const first = state.measureMode === 'area' && !state.measureClosed ? state.measurePoints[0] : undefined;
       if (first && state.measurePoints.length >= 3) {
         const firstPx = map.getPixelFromCoordinate(fromLonLat(first));
@@ -327,7 +332,7 @@ export function OpenLayersMap() {
           return;
         }
       }
-      state.pushMeasurePoint([lon, lat]);
+      state.pushMeasurePoint([snapped.lon, snapped.lat]);
     });
 
     // Evacuation pin placement: only while a Start/Destination pick is

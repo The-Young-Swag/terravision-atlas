@@ -6,7 +6,7 @@ import type { MapLayerMouseEvent } from 'maplibre-gl';
 import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../stores/mapStore';
 import { maplibreStyleFor } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
-import { niceGridStepDegrees, snapLonLat } from '../../../core/geodetic/grid/snap';
+import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
 import { removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
 import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_DIRECTION_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
 import { routeStatusSegments } from '../../../features/traffic/flowStatus';
@@ -140,7 +140,7 @@ export function MapLibreMap() {
       const store = useMapStore.getState();
       if (store.snapToGrid) {
         const resolution = (156543.03392804097 * Math.cos((c.lat * Math.PI) / 180)) / 2 ** z;
-        const snapped = snapLonLat(c.lng, c.lat, niceGridStepDegrees(resolution, c.lat));
+        const snapped = snapToUtmGrid(c.lng, c.lat, niceMeterStep(resolution));
         store.setCenter([snapped.lon, snapped.lat]);
       } else {
         store.setCenter([c.lng, c.lat]);
@@ -148,12 +148,17 @@ export function MapLibreMap() {
       store.setZoom(z);
     });
 
-    // Geodesic measure tool: picks points while armed. In area mode with
-    // three or more vertices, clicking near the first vertex closes the
-    // polygon instead of appending.
+    // Geodesic measure tool: picks points while armed. With snap-to-grid
+    // armed, vertices land on the same UTM grid as the reported center.
     map.on('click', (event) => {
       const state = useMapStore.getState();
       if (!state.measureActive) return;
+      const z = map.getZoom();
+      const center = map.getCenter();
+      const resolution = (156543.03392804097 * Math.cos((center.lat * Math.PI) / 180)) / 2 ** z;
+      const snapped = state.snapToGrid
+        ? snapToUtmGrid(event.lngLat.lng, event.lngLat.lat, niceMeterStep(resolution))
+        : { lon: event.lngLat.lng, lat: event.lngLat.lat };
       const first = state.measureMode === 'area' && !state.measureClosed ? state.measurePoints[0] : undefined;
       if (first && state.measurePoints.length >= 3) {
         const firstPx = map.project([first[0], first[1]]);
@@ -164,7 +169,7 @@ export function MapLibreMap() {
           return;
         }
       }
-      state.pushMeasurePoint([event.lngLat.lng, event.lngLat.lat]);
+      state.pushMeasurePoint([snapped.lon, snapped.lat]);
     });
 
     // Evacuation pin placement while a Start/Destination pick is armed.

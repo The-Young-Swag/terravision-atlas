@@ -169,7 +169,7 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
             <button
               onClick={() => setSnapToGrid(!snapToGrid)}
               aria-pressed={snapToGrid}
-              title="Snap map center to grid lines (2D and Vector maps)"
+              title="Snap to the UTM 51N meter grid — map center and measure points (2D and Vector maps)"
               className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${snapToGrid ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
             >
               <Grid2x2 className="h-3.5 w-3.5" />
