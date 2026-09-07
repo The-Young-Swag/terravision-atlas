@@ -261,6 +261,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
       icon={<Navigation className="h-3.5 w-3.5" />}
       initialPosition={{ x: 350, y: 96 }}
       bubbleLabel={isEvacuation ? 'Evacuation routing' : 'Navigation'}
+      wide
     >
       <div>
         <ol className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px]">

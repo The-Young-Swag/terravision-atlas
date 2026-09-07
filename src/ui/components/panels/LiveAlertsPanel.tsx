@@ -156,6 +156,7 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
       icon={<AlertTriangle className="h-3.5 w-3.5" />}
       initialPosition={{ x: 900, y: 96 }}
       bubbleLabel={activeMode === 'monitor' ? 'Incident center' : 'Live alerts'}
+      wide
     >
       <div>
         <div className="mb-3 flex items-center justify-between">
