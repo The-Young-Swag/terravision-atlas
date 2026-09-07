@@ -189,6 +189,24 @@ export function applyNTv2Shift(
   return null;
 }
 
+// Mean meters per degree of latitude (WGS84 meridional average).
+export const METERS_PER_DEGREE_LAT = 111320;
+
+/** Grid shift at a point expressed in meters north/east. Null outside coverage. */
+export function ntv2ShiftMeters(
+  grid: NTv2Grid,
+  latitude: number,
+  longitude: number,
+): { dNorthM: number; dEastM: number } | null {
+  const shifted = applyNTv2Shift(grid, latitude, longitude);
+  if (!shifted) return null;
+  return {
+    dNorthM: (shifted.latitude - latitude) * METERS_PER_DEGREE_LAT,
+    dEastM:
+      (shifted.longitude - longitude) * METERS_PER_DEGREE_LAT * Math.cos((latitude * Math.PI) / 180),
+  };
+}
+
 // Utility to fetch and parse a grid file from public/grids
 export async function loadNTv2Grid(url: string): Promise<NTv2Grid> {
   const response = await fetch(url);

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMapStore } from '../../../stores/mapStore';
 import { transformCoordinate, getEpsgList } from '../../../core/geodetic/projections/epsg';
+import { ntv2ShiftMeters, parseNTv2, type NTv2Grid } from '../../../core/geodetic/ntv2/NTv2Grid';
 import { Upload, SlidersHorizontal } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
@@ -10,7 +11,34 @@ export function CoordinatePanel() {
   const [targetEpsg, setTargetEpsg] = useState('EPSG:32651');
   const [datumBlend, setDatumBlend] = useState(0); // 0 = WGS84, 100 = shifted
   const [gridFile, setGridFile] = useState<string | null>(null);
+  const [grid, setGrid] = useState<NTv2Grid | null>(null);
+  const [gridError, setGridError] = useState<string | null>(null);
   const isBrightBasemap = useBrightBasemap();
+
+  // Real shift at the map center from the loaded NTv2 grid (null when no
+  // grid is loaded or the center falls outside its coverage).
+  const gridShift = useMemo(
+    () => (grid ? ntv2ShiftMeters(grid, center[1], center[0]) : null),
+    [grid, center],
+  );
+
+  const loadGridFile = (file: File) => {
+    setGridFile(file.name);
+    setGridError(null);
+    setGrid(null);
+    file
+      .arrayBuffer()
+      .then((buffer) => {
+        try {
+          setGrid(parseNTv2(buffer));
+        } catch (err) {
+          setGridError(err instanceof Error ? `Could not parse ${file.name}: ${err.message}` : `Could not parse ${file.name}`);
+        }
+      })
+      .catch(() => {
+        setGridError(`Could not read ${file.name}`);
+      });
+  };
 
   const transformed = useMemo(() => {
     try {
@@ -87,7 +115,14 @@ export function CoordinatePanel() {
           <span>Shifted</span>
         </div>
         <p className={`mt-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
-          ΔN: {(datumBlend * 0.12).toFixed(2)} m · ΔE: {(datumBlend * 0.08).toFixed(2)} m
+          {gridShift ? (
+            <>
+              ΔN: {((gridShift.dNorthM * datumBlend) / 100).toFixed(2)} m · ΔE:{' '}
+              {((gridShift.dEastM * datumBlend) / 100).toFixed(2)} m
+            </>
+          ) : (
+            'Load an NTv2 grid below for real shifts at this location'
+          )}
         </p>
       </div>
 
@@ -101,10 +136,17 @@ export function CoordinatePanel() {
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) setGridFile(file.name);
+              if (file) loadGridFile(file);
+              e.target.value = '';
             }}
           />
         </label>
+        {gridError && <p className="mt-1 font-mono text-[10px] text-[#E63946]">{gridError}</p>}
+        {!gridError && grid && !gridShift && (
+          <p className={`mt-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+            Map center is outside this grid&apos;s coverage
+          </p>
+        )}
         <p className={`mt-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
           Supports NTv2 grids for sub-centimeter shifts
         </p>
