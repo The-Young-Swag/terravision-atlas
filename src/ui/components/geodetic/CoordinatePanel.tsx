@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMapStore } from '../../../stores/mapStore';
-import { transformCoordinate, getEpsgList } from '../../../core/geodetic/projections/epsg';
+import { datumShiftMeters, transformCoordinate, getEpsgList } from '../../../core/geodetic/projections/epsg';
 import { ntv2ShiftMeters, parseNTv2, type NTv2Grid } from '../../../core/geodetic/ntv2/NTv2Grid';
 import { Upload, SlidersHorizontal } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
@@ -9,6 +9,7 @@ import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 export function CoordinatePanel() {
   const { center } = useMapStore();
   const [targetEpsg, setTargetEpsg] = useState('EPSG:32651');
+  const [datumTarget, setDatumTarget] = useState('EPSG:4682');
   const [datumBlend, setDatumBlend] = useState(0); // 0 = WGS84, 100 = shifted
   const [gridFile, setGridFile] = useState<string | null>(null);
   const [grid, setGrid] = useState<NTv2Grid | null>(null);
@@ -51,6 +52,17 @@ export function CoordinatePanel() {
 
   const wgs84Label = `${center[1].toFixed(5)}°N, ${center[0].toFixed(5)}°E`;
 
+  // Datum-pair offset at the map center via the EPSG-published towgs84 path
+  // (no grid file needed). An EPSG approximation (~1 m in Luzon) — the NTv2
+  // section below stays the precise local option.
+  const datumShift = useMemo(() => {
+    try {
+      return { ...datumShiftMeters('EPSG:4326', datumTarget, center), error: null as string | null };
+    } catch (err) {
+      return { shifted: center, dNorthM: 0, dEastM: 0, error: err instanceof Error ? err.message : 'Datum shift failed' };
+    }
+  }, [center, datumTarget]);
+
   return (
     <FloatingPanel
       id="datum-viz"
@@ -92,6 +104,38 @@ export function CoordinatePanel() {
             N: {transformed.y.toFixed(2)} <span className={isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}>m</span>
           </p>
         )}
+      </div>
+
+      <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+        <div className="mb-2 flex items-center gap-2">
+          <SlidersHorizontal className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`} />
+          <p className={`text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+            Datum pair (WGS84 → target)
+          </p>
+        </div>
+        <select
+          value={datumTarget}
+          onChange={(e) => setDatumTarget(e.target.value)}
+          aria-label="Target datum"
+          className={`glass w-full rounded-xl px-3 py-2 font-mono text-[12px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}
+        >
+          <option value="EPSG:4682" className="bg-[#0D1B2A] text-slate-200">PRS92 — Philippines (geographic)</option>
+          <option value="EPSG:3123" className="bg-[#0D1B2A] text-slate-200">PRS92 / Philippines Zone III — Luzon</option>
+        </select>
+        {datumShift.error ? (
+          <p className="mt-2 font-mono text-[11px] text-[#E63946]">{datumShift.error}</p>
+        ) : (
+          <p className={`mt-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+            ΔN: {datumShift.dNorthM.toFixed(2)} m · ΔE: {datumShift.dEastM.toFixed(2)} m
+            <br />
+            {datumTarget === 'EPSG:4682'
+              ? `${datumShift.shifted[1].toFixed(6)}°, ${datumShift.shifted[0].toFixed(6)}°`
+              : `E: ${datumShift.shifted[0].toFixed(2)} · N: ${datumShift.shifted[1].toFixed(2)} m`}
+          </p>
+        )}
+        <p className={`mt-1 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+          EPSG 7-parameter approximation (~1 m) — load an NTv2 grid below for precise local shifts
+        </p>
       </div>
 
       <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
@@ -153,7 +197,7 @@ export function CoordinatePanel() {
       </div>
 
       <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
-        Powered by Proj4js · 7 EPSG bundled · NTv2 precise (full 5k+ requires proj4-epsg fetch)
+        Powered by Proj4js · 9 EPSG bundled · NTv2 precise (full 5k+ requires proj4-epsg fetch)
       </p>
       </div>
     </FloatingPanel>

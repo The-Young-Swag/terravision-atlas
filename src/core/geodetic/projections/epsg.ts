@@ -11,6 +11,16 @@ export const EPSG_DEFINITIONS: Record<string, string> = {
   'EPSG:26915': '+proj=utm +zone=15 +datum=NAD83 +units=m +no_defs',
   'EPSG:25832': '+proj=utm +zone=32 +datum=ETRS89 +units=m +no_defs',
   'EPSG:27700': '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +datum=OSGB36 +units=m +no_defs',
+  // PRS92 (Philippine Reference System 1992) on the Clarke 1866 ellipsoid.
+  // towgs84 7-parameter values are the EPSG-registry entry for PRS92, so the
+  // WGS84<->PRS92 offset below is an EPSG-published approximation (good to
+  // ~1 m), not a substitute for a local NTv2 grid where sub-decimeter work
+  // needs one. Geographic (4682) isolates the pure datum offset; projected
+  // (3123, Zone III) is the working grid for Luzon incl. the Camiling area.
+  'EPSG:4682':
+    '+proj=longlat +ellps=clrk66 +towgs84=-127.62,-67.24,-47.04,3.068,4.903,-1.109,-0.06 +no_defs',
+  'EPSG:3123':
+    '+proj=tmerc +lat_0=0 +lon_0=121 +k=0.99995 +x_0=500000 +y_0=0 +ellps=clrk66 +towgs84=-127.62,-67.24,-47.04,3.068,4.903,-1.109,-0.06 +units=m +no_defs',
 };
 
 // Register with proj4
@@ -38,5 +48,39 @@ export function getEpsgList(): Array<{ code: string; name: string }> {
     { code: 'EPSG:26915', name: 'NAD83 / UTM 15N' },
     { code: 'EPSG:25832', name: 'ETRS89 / UTM 32N' },
     { code: 'EPSG:27700', name: 'OSGB36 / British National Grid' },
+    { code: 'EPSG:4682', name: 'PRS92 — Philippines (geographic)' },
+    { code: 'EPSG:3123', name: 'PRS92 / Philippines Zone III — Luzon' },
   ];
+}
+
+// Mean meters per degree of latitude (WGS84 meridional average) — shared
+// with the NTv2 meter conversion so both shift readouts use one constant.
+export const METERS_PER_DEGREE_LAT = 111320;
+
+export interface DatumShiftMeters {
+  /** Shifted position in the target datum (lon/lat degrees). */
+  shifted: [number, number];
+  /** North / east components of the offset in meters. */
+  dNorthM: number;
+  dEastM: number;
+}
+
+/**
+ * Datum offset between two geographic datums at a point, via proj4's
+ * towgs84 path (no grid file needed). Returns the target-datum position
+ * plus north/east components in meters. Throws when either code is unknown
+ * to proj4 — callers surface that instead of a fabricated zero shift.
+ */
+export function datumShiftMeters(
+  fromDatum: string,
+  toDatum: string,
+  coordinate: [number, number],
+): DatumShiftMeters {
+  const [lon, lat] = coordinate;
+  const shifted = transformCoordinate(fromDatum, toDatum, [lon, lat]);
+  return {
+    shifted,
+    dNorthM: (shifted[1] - lat) * METERS_PER_DEGREE_LAT,
+    dEastM: (shifted[0] - lon) * METERS_PER_DEGREE_LAT * Math.cos((lat * Math.PI) / 180),
+  };
 }
