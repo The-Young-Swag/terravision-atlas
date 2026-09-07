@@ -76,8 +76,10 @@ export function MapLibreMap() {
       attributionControl: false,
     });
 
-    // Custom NavigationControl with adaptive colors
-    const navControl = new NavigationControl({ showCompass: false });
+    // NavigationControl with compass: the compass visualizes pitch and
+    // click resets bearing + pitch (MapLibre resetNorthPitch). Right-drag
+    // tilts/rotates via MapLibre's default drag-rotate gesture.
+    const navControl = new NavigationControl({ showCompass: true, visualizePitch: true });
     map.addControl(navControl, 'bottom-right');
 
     // Custom AttributionControl with adaptive colors
@@ -97,10 +99,12 @@ export function MapLibreMap() {
         button.style.border = theme === 'light' ? '1px solid #cbd5e1' : '1px solid #475569';
       });
 
-      // Compass (if shown)
+      // Compass (pitch indicator + reset affordance)
       const compass = container.querySelector('.maplibre-ctrl-compass');
       if (compass) {
         (compass as HTMLElement).style.filter = theme === 'light' ? 'invert(0)' : 'invert(1)';
+        compass.setAttribute('title', 'Reset bearing and pitch — right-drag to tilt');
+        compass.setAttribute('aria-label', 'Reset bearing and pitch');
       }
 
       // AttributionControl
