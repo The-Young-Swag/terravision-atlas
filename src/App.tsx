@@ -89,7 +89,7 @@ export default function App() {
       <ModeDocks activeMode={activeMode} />
       <StatusBar activeMode={activeMode} />
       <PanelRestoreBar />
-      <NotchSidebar activeMode={activeMode} />
+      <NotchSidebar activeMode={activeMode} onModeChange={setActiveMode} />
 
       <FuelPanel open={fuelOpen} onClose={() => setFuelOpen(false)} />
 

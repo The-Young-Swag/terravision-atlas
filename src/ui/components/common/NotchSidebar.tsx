@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
   CloudSun,
@@ -21,6 +22,7 @@ type AppMode = 'explore' | 'monitor' | 'survey';
 
 interface NotchSidebarProps {
   activeMode: AppMode;
+  onModeChange: (mode: AppMode) => void;
 }
 
 const PIN_STORAGE_KEY = 'terravision.notch.pinned';
@@ -47,6 +49,8 @@ interface NotchRow {
   label: string;
   icon: typeof Layers;
   accent: string;
+  /** 'all' = core set, always present; otherwise removed outside these modes. */
+  modes: AppMode[] | 'all';
   preview: string;
   count: number | null;
   dot: boolean;
@@ -61,7 +65,7 @@ const VIEW_MODE_LABEL: Record<string, string> = { '2d': '2D map', vector: 'Vecto
  * panel state. Clicking a row opens that panel via the existing
  * close/restore store — the notch never contains panel content itself.
  */
-export function NotchSidebar({ activeMode }: NotchSidebarProps) {
+export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(readPinned);
 
@@ -92,13 +96,13 @@ export function NotchSidebar({ activeMode }: NotchSidebarProps) {
       : routeStart || routeDestination
         ? 'Picking points…'
         : 'No route set';
-
   const rows: NotchRow[] = [
     {
       panelId: 'layers',
       label: 'Layers',
       icon: Layers,
       accent: '#8b7bff',
+      modes: 'all',
       preview: `${basemap[0].toUpperCase()}${basemap.slice(1)} · ${VIEW_MODE_LABEL[viewMode] ?? viewMode}`,
       count: null,
       dot: false,
@@ -108,6 +112,7 @@ export function NotchSidebar({ activeMode }: NotchSidebarProps) {
       label: 'Live Alerts',
       icon: AlertTriangle,
       accent: '#ff6b6b',
+      modes: 'all',
       preview: disasterEvents.length > 0 ? `${disasterEvents.length} active` : 'No active events',
       count: disasterEvents.length > 0 ? disasterEvents.length : null,
       dot: highSeverity > 0,
@@ -117,6 +122,7 @@ export function NotchSidebar({ activeMode }: NotchSidebarProps) {
       label: 'Weather',
       icon: CloudSun,
       accent: '#38bdf8',
+      modes: ['explore', 'monitor'],
       preview: weatherCurrent
         ? `${weatherCurrent.temperatureC.toFixed(0)}°C · ${describeWeatherCode(weatherCurrent.weatherCode)}`
         : weatherLoading
@@ -132,6 +138,7 @@ export function NotchSidebar({ activeMode }: NotchSidebarProps) {
       label: activeMode === 'monitor' ? 'Evacuation Routing' : 'Navigation',
       icon: Navigation,
       accent: '#00d890',
+      modes: ['explore', 'monitor'],
       preview: routePreview,
       count: null,
       dot: false,
@@ -141,6 +148,7 @@ export function NotchSidebar({ activeMode }: NotchSidebarProps) {
       label: 'Survey Tools',
       icon: Ruler,
       accent: '#f59e0b',
+      modes: ['survey'],
       preview: measureActive
         ? `${measureMode === 'distance' ? 'Distance' : 'Area'} · ${measurePoints.length} pts`
         : snapToGrid
@@ -154,13 +162,24 @@ export function NotchSidebar({ activeMode }: NotchSidebarProps) {
       label: 'Shelter Locator',
       icon: HousePlus,
       accent: '#a78bfa',
+      modes: ['monitor'],
       preview: shelters.length > 0 ? `${shelters.length} nearby` : 'Find near map center',
       count: shelters.length > 0 ? shelters.length : null,
       dot: false,
     },
   ];
+  // Mode-exclusive rows are removed (not hidden) outside their mode, driven
+  // off the same activeMode prop as the panels themselves — no parallel
+  // mode tracking. Core rows never leave.
+  const visibleRows = rows.filter((row) => row.modes === 'all' || row.modes.includes(activeMode));
 
   const openRow = (row: NotchRow) => {
+    // A core row's panel only mounts in certain modes (weather/evacuation
+    // in explore+monitor). Switching via the existing mode action first
+    // keeps the click's promise ("opens that panel") true in every mode.
+    if (row.modes !== 'all' && !row.modes.includes(activeMode)) {
+      onModeChange(row.modes[0]);
+    }
     reopenPanel(row.panelId);
   };
 
@@ -186,40 +205,47 @@ export function NotchSidebar({ activeMode }: NotchSidebarProps) {
       } notch-dock-left rounded-l-none ${expanded ? 'rounded-r-[20px]' : 'rounded-r-[22px]'} transition-[width,border-radius] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)]`}
     >
       <div className="custom-scrollbar flex flex-col gap-0.5 overflow-y-auto py-2">
-        {rows.map((row) => {
-          const Icon = row.icon;
-          return (
-            <button
-              key={row.panelId}
-              type="button"
-              onClick={() => openRow(row)}
-              title={`Open ${row.label}`}
-              aria-label={`Open ${row.label}`}
-              className="flex h-12 w-full shrink-0 items-center overflow-hidden px-2 text-left transition-colors hover:bg-white/5"
-            >
-              <span
-                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]"
-                style={{ color: row.accent, backgroundColor: `${row.accent}29` }}
+        <AnimatePresence initial={false}>
+          {visibleRows.map((row) => {
+            const Icon = row.icon;
+            return (
+              <motion.button
+                key={row.panelId}
+                type="button"
+                layout
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 48 }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.26, ease: [0.32, 0.72, 0, 1] }}
+                onClick={() => openRow(row)}
+                title={`Open ${row.label}`}
+                aria-label={`Open ${row.label}`}
+                className="flex h-12 w-full shrink-0 items-center overflow-hidden px-2 text-left transition-colors hover:bg-white/5"
               >
-                <Icon className="h-[18px] w-[18px]" aria-hidden />
-                {row.dot && (
-                  <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-[#0D1B2A] bg-[#ff4d4d]" aria-hidden />
+                <span
+                  className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]"
+                  style={{ color: row.accent, backgroundColor: `${row.accent}29` }}
+                >
+                  <Icon className="h-[18px] w-[18px]" aria-hidden />
+                  {row.dot && (
+                    <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-[#0D1B2A] bg-[#ff4d4d]" aria-hidden />
+                  )}
+                </span>
+                {expanded && (
+                  <span className="ml-3 flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
+                    <span className="truncate text-[13px] font-medium leading-tight text-slate-100">{row.label}</span>
+                    <span className="truncate text-[11.5px] leading-tight text-slate-400">{row.preview}</span>
+                  </span>
                 )}
-              </span>
-              {expanded && (
-                <span className="ml-3 flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-                  <span className="truncate text-[13px] font-medium leading-tight text-slate-100">{row.label}</span>
-                  <span className="truncate text-[11.5px] leading-tight text-slate-400">{row.preview}</span>
-                </span>
-              )}
-              {expanded && row.count !== null && (
-                <span className="ml-2 shrink-0 rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-slate-300">
-                  {row.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+                {expanded && row.count !== null && (
+                  <span className="ml-2 shrink-0 rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-slate-300">
+                    {row.count}
+                  </span>
+                )}
+              </motion.button>
+            );
+          })}
+        </AnimatePresence>
       </div>
 
       {expanded && (
