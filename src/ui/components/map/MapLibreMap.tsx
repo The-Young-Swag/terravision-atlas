@@ -47,6 +47,47 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 // prebuild) and served as static siblings, which works in both dev and build.
 setWorkerUrl(`${import.meta.env.BASE_URL}maplibre/maplibre-gl-worker.mjs`);
 
+/** Style the MapLibre control chrome (zoom, compass, attribution) to match
+ * the app's adaptive glass UI. Runs as its own effect so it always targets
+ * the live control DOM rather than whatever exists mid-construction. */
+function applyMapControlStyles(
+  container: HTMLElement,
+  theme: string,
+  textPrimary: string,
+  attributionText: string,
+): void {
+  const navButtons = container.querySelectorAll('.maplibre-ctrl-zoom-in, .maplibre-ctrl-zoom-out');
+  navButtons.forEach((btn) => {
+    const button = btn as HTMLElement;
+    button.style.backgroundColor = theme === 'light' ? '#ffffff' : '#1e293b';
+    button.style.color = theme === 'light' ? '#1e293b' : '#f8fafc';
+    button.style.border = theme === 'light' ? '1px solid #cbd5e1' : '1px solid #475569';
+  });
+
+  // Compass doubles as the pitch indicator (visualizePitch) and reset
+  // affordance; tag it so its purpose is discoverable via hover tooltip.
+  const compass = container.querySelector('.maplibregl-ctrl-compass');
+  if (compass) {
+    (compass as HTMLElement).style.filter = theme === 'light' ? 'invert(0)' : 'invert(1)';
+    compass.setAttribute('title', 'Reset bearing and pitch — right-drag to tilt');
+    compass.setAttribute('aria-label', 'Reset bearing and pitch');
+  }
+
+  const attribution = container.querySelector('.maplibre-ctrl-attrib');
+  if (attribution) {
+    const attr = attribution as HTMLElement;
+    attr.style.color = attributionText;
+    attr.style.backgroundColor = theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)';
+  }
+
+  const attribToggle = container.querySelector('.maplibre-ctrl-attrib-toggle');
+  if (attribToggle) {
+    const toggle = attribToggle as HTMLElement;
+    toggle.style.color = textPrimary;
+    toggle.style.backgroundColor = theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)';
+  }
+}
+
 export function MapLibreMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibre | null>(null);
@@ -63,6 +104,15 @@ export function MapLibreMap() {
 
   // Adaptive contrast for in-map UI (controls, attribution)
   const { theme, textPrimary, attributionText } = useMapOverlayContrast();
+
+  // Control chrome styling lives in its own effect (not the map-creation
+  // effect) so it always targets the live control DOM: creation-time calls
+  // can miss when control rendering lags map construction.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    applyMapControlStyles(container, theme, textPrimary, attributionText);
+  }, [theme, textPrimary, attributionText]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -85,52 +135,6 @@ export function MapLibreMap() {
     // Custom AttributionControl with adaptive colors
     const attributionControl = new AttributionControl({ compact: true });
     map.addControl(attributionControl, 'bottom-right');
-
-    // Apply adaptive styles to maplibre controls after they're rendered
-    const applyControlStyles = () => {
-      if (!container) return;
-
-      // NavigationControl buttons (zoom in/out)
-      const navButtons = container.querySelectorAll('.maplibre-ctrl-zoom-in, .maplibre-ctrl-zoom-out');
-      navButtons.forEach((btn) => {
-        const button = btn as HTMLElement;
-        button.style.backgroundColor = theme === 'light' ? '#ffffff' : '#1e293b';
-        button.style.color = theme === 'light' ? '#1e293b' : '#f8fafc';
-        button.style.border = theme === 'light' ? '1px solid #cbd5e1' : '1px solid #475569';
-      });
-
-      // Compass (pitch indicator + reset affordance). MapLibre manages the
-      // button's own title on camera moves, so (re)tag it here and on every
-      // rotate/pitch below to keep the tilt hint visible.
-      const tagCompass = () => {
-        const compass = container.querySelector('.maplibre-ctrl-compass');
-        if (compass) {
-          (compass as HTMLElement).style.filter = theme === 'light' ? 'invert(0)' : 'invert(1)';
-          compass.setAttribute('title', 'Reset bearing and pitch — right-drag to tilt');
-          compass.setAttribute('aria-label', 'Reset bearing and pitch');
-        }
-      };
-      tagCompass();
-
-      // AttributionControl
-      const attribution = container.querySelector('.maplibre-ctrl-attrib');
-      if (attribution) {
-        const attr = attribution as HTMLElement;
-        attr.style.color = attributionText;
-        attr.style.backgroundColor = theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)';
-      }
-
-      // Attribution toggle button
-      const attribToggle = container.querySelector('.maplibre-ctrl-attrib-toggle');
-      if (attribToggle) {
-        const toggle = attribToggle as HTMLElement;
-        toggle.style.color = textPrimary;
-        toggle.style.backgroundColor = theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)';
-      }
-    };
-
-    // Apply initially and on style/basemap changes
-    setTimeout(applyControlStyles, 100);
 
     // Sync view changes back to store on moveend
     let isProgrammatic = false;
@@ -286,11 +290,6 @@ export function MapLibreMap() {
       useRouteStore.getState().setDrawAvoidArmed(false);
     };
     window.addEventListener('keydown', onDrawKey);
-
-    // Re-apply styles when map style changes (basemap switch)
-    map.on('style.load', applyControlStyles);
-    map.on('rotate', applyControlStyles);
-    map.on('pitch', applyControlStyles);
     map.on('render', () => {
       // Re-apply on first few renders to catch dynamic control creation
     });
