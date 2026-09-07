@@ -237,7 +237,7 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
       onMouseLeave={() => setHovered(false)}
       className={`glass fixed top-1/2 z-30 hidden max-h-[70vh] -translate-y-1/2 flex-col overflow-hidden md:flex ${
         expanded ? 'w-[296px]' : 'w-[52px]'
-      } ${left ? 'notch-dock-left left-3 rounded-l-none' : 'notch-dock-right right-3 rounded-r-none'} ${
+      } ${left ? 'notch-dock-left left-0 rounded-l-none' : 'notch-dock-right right-0 rounded-r-none'} ${
         expanded ? (left ? 'rounded-r-[20px]' : 'rounded-l-[20px]') : left ? 'rounded-r-[22px]' : 'rounded-l-[22px]'
       } ${dragging ? 'transition-none' : 'transition-[width,border-radius] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)]'}`}
     >
