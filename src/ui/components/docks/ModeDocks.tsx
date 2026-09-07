@@ -226,14 +226,19 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     URL.revokeObjectURL(url);
   }, [measurePoints, measureMode, measureClosed]);
 
-  // Dock-side positioning — keep clear of the footer (which sits at bottom-4
-  // on the left) by anchoring to a known left/right inset and never crossing
-  // the vertical center when collapsed. The handle's pointer position alone
-  // decides left vs right; the rest of the toolbar follows the same edge.
+  // Dock-side positioning — edge-flush horizontal docking matching the notch
+  // sidebar's pattern. Expanded state sits at the bottom (clears the
+  // footer which is at bottom-4). Collapsed state is vertically centered,
+  // matching the notch sidebar's collapsed position. Both states use
+  // left-0 / right-0 for true edge flush (not a fixed offset that merely
+  // avoids the footer).
+  // Stacking: z-30 to match the notch sidebar's main element. The snap
+  // zones stay at z-40 (above the toolbar), and the TopBar at z-20 renders
+  // below — so the toolbar always sits above the top nav bar.
   const dockStyle: React.CSSProperties = {
-    left: dockSide === 'left' ? 16 : 'auto',
-    right: dockSide === 'right' ? 16 : 'auto',
-    transform: isCollapsed ? 'translateY(-50%)' : 'translateX(-50%)',
+    left: dockSide === 'left' ? 0 : 'auto',
+    right: dockSide === 'right' ? 0 : 'auto',
+    transform: isCollapsed ? 'translateY(-50%)' : 'none',
     top: isCollapsed ? '50%' : 'auto',
     bottom: isCollapsed ? 'auto' : FOOTER_OFFSET,
   };
@@ -269,8 +274,8 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
-            style={{ ...dockStyle, left: isCollapsed ? dockStyle.left : '50%', right: isCollapsed ? dockStyle.right : 'auto' }}
-            className={`glass-strong z-10 flex ${isCollapsed ? 'flex-col items-center px-1.5 py-2' : 'max-w-[90vw] -translate-x-1/2 flex-wrap items-center justify-center gap-1 px-2 py-2'} rounded-2xl`}
+            style={dockStyle}
+            className={`glass-strong z-30 flex ${isCollapsed ? 'flex-col items-center px-1.5 py-2' : 'max-w-[90vw] flex-wrap items-center justify-center gap-1 px-2 py-2'} rounded-2xl`}
           >
             {/* Drag handle + collapse/expand button — always present, in
                 both collapsed and expanded states, consistent with the notch
