@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Fuel } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
+import { GlassNumberInput } from '../common/GlassNumberInput';
 import { calculateFuel as calcFuel } from '../../../features/fuel/calculator/fuelMath';
 import type { EfficiencyUnit, UnitSystem } from '../../../features/fuel/calculator/fuelMath';
 import { BreakdownBar } from './BreakdownBar';
@@ -83,24 +84,29 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
         <div className="space-y-3">
           <div>
             <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{unitLabels.distance}</label>
-            <input
-              type="number"
+            <GlassNumberInput
               value={fuelState.distance}
-              onChange={(e) => setFuelState((s) => ({ ...s, distance: Number(e.target.value) || 0 }))}
-              className={`w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 font-mono text-[14px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}
+              onChange={(v) => setFuelState((s) => ({ ...s, distance: v }))}
+              step={1}
+              min={0}
+              label={unitLabels.distance}
+              isBrightBasemap={isBrightBasemap}
             />
           </div>
 
           <div>
             <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Fuel efficiency</label>
             <div className="flex gap-2">
-              <input
-                type="number"
-                step="0.1"
-                value={fuelState.efficiency}
-                onChange={(e) => setFuelState((s) => ({ ...s, efficiency: Number(e.target.value) || 0 }))}
-                className={`flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 font-mono text-[14px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}
-              />
+                <div className="flex-1">
+                <GlassNumberInput
+                  value={fuelState.efficiency}
+                  onChange={(v) => setFuelState((s) => ({ ...s, efficiency: v }))}
+                  step={0.1}
+                  min={0}
+                  label="Fuel efficiency"
+                  isBrightBasemap={isBrightBasemap}
+                />
+              </div>
               <select
                 value={fuelState.efficiencyUnit}
                 onChange={(e) => setFuelState((s) => ({ ...s, efficiencyUnit: e.target.value as EfficiencyUnit }))}
@@ -121,12 +127,13 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
 
           <div>
             <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{unitLabels.price}</label>
-            <input
-              type="number"
-              step="0.01"
+            <GlassNumberInput
               value={fuelState.price}
-              onChange={(e) => setFuelState((s) => ({ ...s, price: Number(e.target.value) || 0 }))}
-              className={`w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 font-mono text-[14px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}
+              onChange={(v) => setFuelState((s) => ({ ...s, price: v }))}
+              step={0.01}
+              min={0}
+              label={unitLabels.price}
+              isBrightBasemap={isBrightBasemap}
             />
           </div>
         </div>
