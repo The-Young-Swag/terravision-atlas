@@ -1,10 +1,20 @@
-import { Layers, Satellite, Map as MapIcon, Mountain, Moon, Check } from 'lucide-react';
+import { Layers, Satellite, Map as MapIcon, Mountain, Moon, Check, RotateCcw } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { TrafficLegend } from './TrafficLegend';
 import { useMapStore } from '../../../stores/mapStore';
 import { useTrafficStore } from '../../../stores/trafficStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { GIBS_LAYERS, type SatelliteSourceId } from '../../../core/map/gibs';
+import { useTiltStore } from '../../../stores/tiltStore';
+import {
+  TILT_MAX_DEGREES,
+  cesiumTiltDegrees,
+  maplibreTiltDegrees,
+  resetCesiumTiltToTopDown,
+  resetMapLibreTiltToTopDown,
+  setCesiumTiltDegrees,
+  setMapLibreTiltDegrees,
+} from '../../../core/map/tilt';
 import { useMemo } from 'react';
 
 const SATELLITE_SOURCES: { id: SatelliteSourceId; label: string; desc: string }[] = [
@@ -32,6 +42,29 @@ export function LayersPanel() {
   const trafficStatus = useTrafficStore((s) => s.status);
 
   const isBrightBasemap = useBrightBasemap();
+
+  // Camera tilt slider (Item 17): the slider position is the live camera
+  // pitch — using it directly (no local state) keeps the slider and the
+  // middle-click-drag gesture in lockstep without an effect-sync loop.
+  // Writes go through the same flyTo / easeTo path the gesture already
+  // exercises.
+  const cesiumViewer = useTiltStore((s) => s.cesium) as Parameters<typeof cesiumTiltDegrees>[0] | null;
+  const maplibreMap = useTiltStore((s) => s.maplibre) as Parameters<typeof maplibreTiltDegrees>[0] | null;
+  const showTiltSlider = viewMode === '3d' || viewMode === 'vector';
+  const tilt =
+    viewMode === '3d'
+      ? cesiumTiltDegrees(cesiumViewer)
+      : viewMode === 'vector'
+        ? maplibreTiltDegrees(maplibreMap)
+        : 0;
+  const applyTilt = (degrees: number) => {
+    if (viewMode === '3d') setCesiumTiltDegrees(cesiumViewer, degrees);
+    else if (viewMode === 'vector') setMapLibreTiltDegrees(maplibreMap, degrees);
+  };
+  const resetTilt = () => {
+    if (viewMode === '3d') resetCesiumTiltToTopDown(cesiumViewer);
+    else if (viewMode === 'vector') resetMapLibreTiltToTopDown(maplibreMap);
+  };
 
   const centerLabel = useMemo(() => {
     const [lon, lat] = center;
@@ -222,6 +255,41 @@ export function LayersPanel() {
               3D Globe
             </button>
           </div>
+          {showTiltSlider && (
+            <div className="mt-3">
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className={`text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+                  Camera tilt
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
+                    {Math.round(tilt)}°
+                  </span>
+                  <button
+                    type="button"
+                    onClick={resetTilt}
+                    title="Reset to top-down view"
+                    aria-label="Reset tilt to top-down"
+                    className={`flex h-5 w-5 items-center justify-center rounded transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+                  >
+                    <RotateCcw className="h-3 w-3" aria-hidden />
+                  </button>
+                </div>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={TILT_MAX_DEGREES}
+                step={1}
+                value={Math.round(tilt)}
+                onChange={(e) => applyTilt(Number(e.target.value))}
+                onInput={(e) => applyTilt(Number((e.target as HTMLInputElement).value))}
+                aria-label="Camera tilt"
+                title={`${viewMode === '3d' ? '3D globe' : 'Vector map'} camera tilt (0° = top-down, ${TILT_MAX_DEGREES}° = near-horizon)`}
+                className="h-1 w-full appearance-none rounded-full bg-white/10 accent-[#5500a4]"
+              />
+            </div>
+          )}
           <p className={`mt-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-500'}`}>
             {centerLabel} · Zoom {zoom.toFixed(1)} · {viewMode === '2d' ? 'OpenLayers' : viewMode === 'vector' ? 'MapLibre' : 'Cesium'}
           </p>

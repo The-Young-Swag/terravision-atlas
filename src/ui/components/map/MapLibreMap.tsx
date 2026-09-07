@@ -6,6 +6,7 @@ import type { MapLayerMouseEvent } from 'maplibre-gl';
 import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../stores/mapStore';
 import { maplibreStyleFor } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
+import { useTiltStore } from '../../../stores/tiltStore';
 import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
 import { MEASURE_POINT_LAYER_ID, removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
 import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_DIRECTION_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
@@ -349,6 +350,7 @@ export function MapLibreMap() {
       isProgrammatic = true;
     };
 
+    useTiltStore.getState().setMapLibre(map);
     mapRef.current = map;
 
     return () => {
@@ -359,6 +361,7 @@ export function MapLibreMap() {
       drawTooltip.remove();
       map.remove();
       mapRef.current = null;
+      if (useTiltStore.getState().maplibre === map) useTiltStore.getState().setMapLibre(null);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

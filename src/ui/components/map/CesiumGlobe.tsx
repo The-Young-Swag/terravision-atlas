@@ -3,6 +3,7 @@ import * as Cesium from 'cesium';
 import { useMapStore } from '../../../stores/mapStore';
 import { useRouteStore } from '../../../stores/routeStore';
 import { useDisasterStore } from '../../../stores/disasterStore';
+import { useTiltStore } from '../../../stores/tiltStore';
 import type { DisasterSeverity } from '../../../types';
 import { DISASTER_SEVERITY_COLORS } from '../../../core/map/disasterStyle';
 import { ROUTE_LINE_COLOR, ROUTE_STATUS_CASING_COLOR } from '../../../core/map/routeStyle';
@@ -26,6 +27,16 @@ export function CesiumGlobe() {
   const { center, zoom } = useMapStore();
   const basemap = useMapStore((s) => s.basemap);
   const satelliteSource = useMapStore((s) => s.satelliteSource);
+  const setCesiumTiltInstance = useTiltStore((s) => s.setCesium);
+
+  // Publish the live Cesium viewer to the tilt store so the Layers panel
+  // slider (Item 17) can read/write the same camera. Cleared on dispose.
+  useEffect(() => {
+    if (viewerRef.current && !viewerRef.current.isDestroyed()) {
+      setCesiumTiltInstance(viewerRef.current);
+    }
+    return () => setCesiumTiltInstance(null);
+  });
 
   const { theme } = useMapOverlayContrast();
 
@@ -324,87 +335,6 @@ export function CesiumGlobe() {
           </p>
         </div>
       )}
-      {/* 3D Globe tilt control — on-screen affordance for camera pitch.
-          The middle-click-drag gesture still works; this provides a discoverable
-          alternative with live feedback and a reset-to-top-down affordance.
-          Cesium pitch convention: -90° is straight-down (top-down view),
-          0° is horizontal (horizon view). */}
-      <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1.5">
-        <div className="glass-strong flex flex-col gap-1 rounded-xl p-2">
-          <button
-            type="button"
-            onClick={() => {
-              if (!viewerRef.current) return;
-              const camera = viewerRef.current.camera;
-              const pos = camera.positionCartographic;
-              camera.flyTo({
-                destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
-                orientation: {
-                  heading: camera.heading,
-                  pitch: Math.min(0, camera.pitch + Cesium.Math.toRadians(10)),
-                  roll: 0,
-                },
-                duration: 0.4,
-              });
-            }}
-            className="glass-strong flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/10 active:bg-white/20"
-            aria-label="Tilt toward horizon"
-            title="Tilt toward horizon"
-          >
-            <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (!viewerRef.current) return;
-              const camera = viewerRef.current.camera;
-              const pos = camera.positionCartographic;
-              camera.flyTo({
-                destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
-                orientation: {
-                  heading: camera.heading,
-                  pitch: Math.max(-Cesium.Math.PI_OVER_TWO, camera.pitch - Cesium.Math.toRadians(10)),
-                  roll: 0,
-                },
-                duration: 0.4,
-              });
-            }}
-            className="glass-strong flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/10 active:bg-white/20"
-            aria-label="Tilt toward top-down"
-            title="Tilt toward top-down"
-          >
-            <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            if (!viewerRef.current) return;
-            const pos = viewerRef.current.camera.positionCartographic;
-            viewerRef.current.camera.flyTo({
-              destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
-              orientation: {
-                heading: viewerRef.current.camera.heading,
-                pitch: -Cesium.Math.PI_OVER_TWO,
-                roll: 0,
-              },
-              duration: 1.5,
-            });
-          }}
-          className="glass-strong flex h-8 w-8 items-center justify-center rounded-xl transition hover:bg-white/10"
-          aria-label="Reset to top-down view"
-          title="Reset to top-down view"
-        >
-          <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-          </svg>
-        </button>
-      </div>
     </div>
   );
 }
