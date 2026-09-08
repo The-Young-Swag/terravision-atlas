@@ -267,6 +267,19 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
 
   const toolbarContent = (
     <>
+            {/* Collapse toward the docked edge — chevron points at the edge,
+                centered on its own row at the top, opposite the bottom. */}
+            <div className="flex w-full justify-center">
+              <button
+                type="button"
+                onClick={toggleCollapsed}
+                title="Collapse toolbar"
+                aria-label="Collapse toolbar"
+                className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+              >
+                {left ? <ChevronsLeft className="h-3.5 w-3.5" aria-hidden /> : <ChevronsRight className="h-3.5 w-3.5" aria-hidden />}
+              </button>
+            </div>
 <button
               onClick={() => setSnapToGrid(!snapToGrid)}
               aria-pressed={snapToGrid}
@@ -417,19 +430,6 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 {shareUrl.slice(0, 50)}…
               </span>
             )}
-            {/* Collapse toward the docked edge — chevron points at the edge,
-                centered on its own row like a conventional toolbar. */}
-            <div className="flex w-full justify-center">
-              <button
-                type="button"
-                onClick={toggleCollapsed}
-                title="Collapse toolbar"
-                aria-label="Collapse toolbar"
-                className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-              >
-                {left ? <ChevronsLeft className="h-3.5 w-3.5" aria-hidden /> : <ChevronsRight className="h-3.5 w-3.5" aria-hidden />}
-              </button>
-            </div>
     </>
   );
 
