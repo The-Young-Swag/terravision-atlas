@@ -311,13 +311,13 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               ))}
             </div>
             {measureMode === 'distance' && measurePoints.length > 0 && (
-              <span className={`px-2 py-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
+              <span className={`col-span-full px-2 py-1 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                 {formatDistanceKilometers(measuredKm)}
                 {lastSegmentBearing ? ` · ${lastSegmentBearing}` : ''}
               </span>
             )}
             {measureMode === 'area' && measurePoints.length > 0 && (
-              <span className={`px-2 py-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
+              <span className={`col-span-full px-2 py-1 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                 {measureClosed
                   ? formatAreaSqMeters(measuredArea)
                   : `${measurePoints.length} vertices — click the first point or Finish to close`}
@@ -410,10 +410,10 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               {isExporting ? (exportNote ?? 'Exporting…') : 'A0 export'}
             </button>
             {exportNote && !isExporting && (
-              <span className={`px-3 py-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{exportNote}</span>
+              <span className={`col-span-full px-3 py-1 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{exportNote}</span>
             )}
             {shareUrl && !shareCopied && (
-              <span className={`px-2 py-1 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`} title={shareUrl}>
+              <span className={`col-span-full truncate px-2 py-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`} title={shareUrl}>
                 {shareUrl.slice(0, 50)}…
               </span>
             )}
@@ -528,13 +528,13 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 ref={rowRef}
                 aria-hidden="true"
                 inert
-                className={`invisible pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-nowrap items-center gap-1 overflow-hidden px-2 ${left ? 'pe-10' : 'ps-10'}`}
+                className={`invisible pointer-events-none absolute inset-x-0 top-1/2 grid w-max -translate-y-1/2 grid-cols-4 items-center gap-1 overflow-hidden px-2 ${left ? 'pe-10' : 'ps-10'}`}
               >
 
             {toolbarContent}
               </div>
               {rowVisible ? (
-                <div className={`flex max-w-[85vw] flex-wrap items-center justify-center gap-1 overflow-y-auto px-2 py-1 ${left ? 'pe-10' : 'ps-10'}`}>
+                <div className={`grid max-w-[85vw] grid-cols-4 items-center gap-1 overflow-y-auto px-2 py-1 ${left ? 'pe-10' : 'ps-10'} [&>button]:justify-center`}>
 
             {toolbarContent}
                 </div>
