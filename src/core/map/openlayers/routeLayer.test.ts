@@ -4,7 +4,7 @@ import Point from 'ol/geom/Point';
 import { Stroke } from 'ol/style';
 import { createRouteLayer } from './routeLayer';
 import { createAvoidLayer } from './avoidLayer';
-import { ROUTE_LINE_COLOR } from '../routeStyle';
+import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR } from '../routeStyle';
 
 const route = {
   path: [
@@ -18,24 +18,68 @@ const route = {
 };
 
 describe('createRouteLayer', () => {
-  it('builds casing, line, chevrons, and endpoint markers from the path', () => {
+  it('builds core line (always blue), casing (white when no traffic), and endpoint markers from the path', () => {
     const layer = createRouteLayer(route);
     const features = layer.getSource()?.getFeatures() ?? [];
-    // casing + line + 4 direction chevrons + 2 endpoint markers
-    expect(features).toHaveLength(8);
+    // core line + 1 casing + 2 endpoint markers = 4 features
+    expect(features).toHaveLength(4);
     const lines = features.filter((f) => f.getGeometry() instanceof LineString);
+    // 1 core line + 1 casing = 2 LineString features
     expect(lines).toHaveLength(2);
-    expect((lines[0].getGeometry() as LineString).getCoordinates()).toHaveLength(3);
     const points = features.filter((f) => f.getGeometry() instanceof Point);
-    expect(points).toHaveLength(6);
+    // 2 endpoint markers = 2 Point features
+    expect(points).toHaveLength(2);
+    // Core line is always brand blue
+    const coreLine = lines.find((f) => {
+      const style = f.getStyle() as { getStroke(): Stroke };
+      const color = style.getStroke().getColor();
+      return color === ROUTE_LINE_COLOR;
+    });
+    expect(coreLine).toBeTruthy();
+    // Casing is white when no traffic
+    const casing = lines.find((f) => {
+      const style = f.getStyle() as { getStroke(): Stroke };
+      const color = style.getStroke().getColor();
+      return color === ROUTE_CASING_COLOR;
+    });
+    expect(casing).toBeTruthy();
+  });
+
+  it('colors the casing by traffic status when flow samples provided', () => {
+    const samples = [
+      { pathIndex: 0, currentSpeed: 20, freeFlowSpeed: 80 },
+      { pathIndex: 2, currentSpeed: 60, freeFlowSpeed: 80 },
+    ];
+    const layer = createRouteLayer(route, samples);
+    const features = layer.getSource()?.getFeatures() ?? [];
+    const lines = features.filter((f) => f.getGeometry() instanceof LineString);
+    // Core line + potentially multiple casing segments = at least 2
+    expect(lines.length).toBeGreaterThanOrEqual(2);
+    // Core line is always brand blue
+    const coreLine = lines.find((f) => {
+      const style = f.getStyle() as { getStroke(): Stroke };
+      const color = style.getStroke().getColor();
+      return color === ROUTE_LINE_COLOR;
+    });
+    expect(coreLine).toBeTruthy();
+    // At least one casing segment should be traffic-colored (not white)
+    const trafficCasing = lines.find((f) => {
+      const style = f.getStyle() as { getStroke(): Stroke };
+      const color = style.getStroke().getColor();
+      return color !== ROUTE_LINE_COLOR && color !== ROUTE_CASING_COLOR;
+    });
+    expect(trafficCasing).toBeTruthy();
   });
 
   it('uses the unified blue line color regardless of the avoid verdict', () => {
     for (const avoidsArea of [true, false]) {
       const layer = createRouteLayer({ ...route, avoidsArea });
       const lines = (layer.getSource()?.getFeatures() ?? []).filter((f) => f.getGeometry() instanceof LineString);
-      const strokes = lines.map((f) => (f.getStyle() as { getStroke(): Stroke }).getStroke().getColor());
-      expect(strokes).toContain(ROUTE_LINE_COLOR);
+      const coreLine = lines.find((f) => {
+        const style = f.getStyle() as { getStroke(): Stroke };
+        return style.getStroke().getColor() === ROUTE_LINE_COLOR;
+      });
+      expect(coreLine).toBeTruthy();
     }
   });
 });

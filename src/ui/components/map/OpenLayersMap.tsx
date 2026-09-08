@@ -27,7 +27,7 @@ import { createMeasureLayer } from '../../../core/map/openlayers/measureLayer';
 import { geodesicKilometers, formatDistanceKilometers } from '../../../core/geodetic/measurements/distance';
 import { geodesicAreaSqMeters, formatAreaSqMeters } from '../../../core/geodetic/measurements/area';
 import { createTrafficFlowLayer, createTrafficIncidentLayer } from '../../../core/map/openlayers/trafficLayer';
-import { TRAFFIC_FLOW_DIM_OPACITY, TRAFFIC_FLOW_FULL_OPACITY } from '../../../core/map/routeStyle';
+import { TRAFFIC_FLOW_OPACITY } from '../../../core/map/routeStyle';
 import { useTrafficStore } from '../../../stores/trafficStore';
 import { tomtomApiKey } from '../../../features/traffic/tomtom';
 import { refreshTraffic } from '../../../features/traffic/refresh';
@@ -558,8 +558,8 @@ export function OpenLayersMap() {
 
   // Evacuation route overlay — rebuilt whenever the route or avoid area changes.
   // The route renders above the traffic flow layer (explicit z-index, not
-  // add-order) and dims flow underneath so the route reads as dominant
-  // while traffic stays visible for context.
+  // add-order). Traffic flow stays at FULL OPACITY; the route's traffic-
+  // colored outline is the visual signal.
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -576,9 +576,10 @@ export function OpenLayersMap() {
       routeLayerRef.current = layer;
     }
 
+    // Traffic flow stays at full opacity; no dimming.
     for (const candidate of map.getLayers().getArray()) {
       if (candidate.get('layerId') === 'traffic-flow') {
-        candidate.setOpacity(routeLine ? TRAFFIC_FLOW_DIM_OPACITY : TRAFFIC_FLOW_FULL_OPACITY);
+        candidate.setOpacity(TRAFFIC_FLOW_OPACITY);
       }
     }
   }, [routeLine, routeTrafficSamples]);
@@ -760,11 +761,7 @@ export function OpenLayersMap() {
       const key = tomtomApiKey();
       if (key) {
         const flowLayer = createTrafficFlowLayer(key);
-        // A displayed route dims flow (see the route effect); a flow layer
-        // created while a route is already up must start dimmed too.
-        if (useRouteStore.getState().route ?? useRouteStore.getState().jogLoop) {
-          flowLayer.setOpacity(TRAFFIC_FLOW_DIM_OPACITY);
-        }
+        // Traffic flow stays at full opacity; no dimming when route is displayed.
         map.addLayer(flowLayer);
         trafficFlowLayerRef.current = flowLayer;
       }

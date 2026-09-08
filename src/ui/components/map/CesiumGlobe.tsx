@@ -6,7 +6,7 @@ import { useDisasterStore } from '../../../stores/disasterStore';
 import { useTiltStore } from '../../../stores/tiltStore';
 import type { DisasterSeverity } from '../../../types';
 import { DISASTER_SEVERITY_COLORS } from '../../../core/map/disasterStyle';
-import { ROUTE_LINE_COLOR, ROUTE_STATUS_CASING_COLOR } from '../../../core/map/routeStyle';
+import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR, ROUTE_CASING_WIDTH, ROUTE_LINE_WIDTH } from '../../../core/map/routeStyle';
 import { routeStatusSegments } from '../../../features/traffic/flowStatus';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import {
@@ -173,17 +173,18 @@ export function CesiumGlobe() {
         },
       });
     };
+    // Core line (single continuous, always brand blue).
+    addLine(positions, ROUTE_LINE_WIDTH, Cesium.Color.fromCssColorString(ROUTE_LINE_COLOR), 1);
+    // Casing/outline: white when no traffic; traffic-status bands when samples exist.
     if (navStatusSegments.length === 0) {
-      addLine(positions, 7, Cesium.Color.WHITE, 0);
-      addLine(positions, 4, Cesium.Color.fromCssColorString(ROUTE_LINE_COLOR), 1);
+      addLine(positions, ROUTE_CASING_WIDTH, Cesium.Color.fromCssColorString(ROUTE_CASING_COLOR), 0);
     } else {
       for (const segment of navStatusSegments) {
         const from = Math.max(0, Math.min(segment.fromIndex, positions.length - 1));
         const to = Math.max(from + 1, Math.min(segment.toIndex, positions.length - 1));
         const part = positions.slice(from, to + 1);
         if (part.length < 2) continue;
-        addLine(part, 7, Cesium.Color.fromCssColorString(ROUTE_STATUS_CASING_COLOR), 0);
-        addLine(part, 4, Cesium.Color.fromCssColorString(segment.color), 1);
+        addLine(part, ROUTE_CASING_WIDTH, Cesium.Color.fromCssColorString(segment.color), 0);
       }
     }
     const addPin = (lon: number, lat: number, color: Cesium.Color) => {

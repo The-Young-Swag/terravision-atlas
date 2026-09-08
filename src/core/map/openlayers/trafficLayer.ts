@@ -8,7 +8,7 @@ import { fromLonLat } from 'ol/proj';
 import { Style, Circle, Fill, Stroke } from 'ol/style';
 import { flowTileUrl } from '../../../features/traffic/tomtom';
 import type { TrafficIncident } from '../../../features/traffic/tomtom';
-import { TRAFFIC_FLOW_FULL_OPACITY } from '../routeStyle';
+import { TRAFFIC_FLOW_OPACITY } from '../routeStyle';
 
 // TomTom traffic flow raster overlay (2D map). Tile requests are cached by
 // OpenLayers' tile cache and the browser HTTP cache — the same area is not
@@ -22,7 +22,7 @@ export function createTrafficFlowLayer(apiKey: string): TileLayer<XYZ> {
     }),
     properties: { layerId: 'traffic-flow' },
   });
-  layer.setOpacity(TRAFFIC_FLOW_FULL_OPACITY);
+  layer.setOpacity(TRAFFIC_FLOW_OPACITY);
   return layer;
 }
 

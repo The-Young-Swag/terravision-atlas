@@ -9,7 +9,7 @@ import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { useTiltStore } from '../../../stores/tiltStore';
 import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
 import { MEASURE_POINT_LAYER_ID, removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
-import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_DIRECTION_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
+import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
 import { setDisastersVisible, DISASTER_LAYER_ID } from '../../../core/map/maplibre/disasters';
 import { setWeatherVisible, WEATHER_LAYER_ID } from '../../../core/map/maplibre/weather';
 import { disasterPopupHtml } from '../../../features/disasters/popup';
@@ -19,7 +19,7 @@ import { useDisasterStore } from '../../../stores/disasterStore';
 import { useWeatherStore } from '../../../stores/weatherStore';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import { TRAFFIC_LAYER_ID } from '../../../core/map/maplibre/traffic';
-import { TRAFFIC_FLOW_DIM_OPACITY, TRAFFIC_FLOW_FULL_OPACITY_ML } from '../../../core/map/routeStyle';
+import { TRAFFIC_FLOW_OPACITY_ML } from '../../../core/map/routeStyle';
 import { setSearchMarkerVisible } from '../../../core/map/maplibre/search';
 import { useSearchStore } from '../../../stores/searchStore';
 import {
@@ -459,15 +459,9 @@ export function MapLibreMap() {
       removeIncidentLayers(map);
       return undefined;
     }
-    // A displayed route dims flow (and sits above it); re-apply both when
-    // traffic is (re)added while a route is already up.
-    if (
-      (useRouteStore.getState().route ?? useRouteStore.getState().jogLoop) &&
-      map.getLayer(TRAFFIC_LAYER_ID) &&
-      map.getLayer(ROUTE_CASING_LAYER_ID)
-    ) {
-      map.moveLayer(TRAFFIC_LAYER_ID, ROUTE_CASING_LAYER_ID);
-      map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_DIM_OPACITY);
+    // Traffic flow stays at full opacity; no dimming when route is displayed.
+    if (map.getLayer(TRAFFIC_LAYER_ID)) {
+      map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_OPACITY_ML);
     }
     addIncidentLayers(map, trafficIncidents);
     const handleIncidentClick = (event: MapLayerMouseEvent) => {
@@ -644,10 +638,9 @@ export function MapLibreMap() {
     return undefined;
   }, [drawAvoidArmed]);
 
-  // Evacuation route line — added after the avoid hatch so it draws above.
-  // The route is moved above the traffic flow layer (topmost line layer)
-  // and flow dims underneath so the route reads as dominant while
-  // traffic stays visible for context and the traffic-aware ETA.
+  // Evacuation route line — solid brand-blue core with traffic-colored casing.
+  // Traffic flow raster stays at FULL OPACITY underneath; the route's
+  // traffic-colored outline is the visual signal, not a dimmed backdrop.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
@@ -655,17 +648,13 @@ export function MapLibreMap() {
     // Incident markers stay clickable above the route line: move the route
     // stack to just below the incident layer.
     if (routeLine && map.getLayer(TRAFFIC_INCIDENT_LAYER_ID)) {
-      for (const routeId of [ROUTE_CASING_LAYER_ID, ROUTE_LINE_LAYER_ID, ROUTE_DIRECTION_LAYER_ID]) {
+      for (const routeId of [ROUTE_CASING_LAYER_ID, ROUTE_LINE_LAYER_ID]) {
         if (map.getLayer(routeId)) map.moveLayer(routeId, TRAFFIC_INCIDENT_LAYER_ID);
       }
     }
+    // Traffic flow stays at full opacity; no dimming.
     if (map.getLayer(TRAFFIC_LAYER_ID)) {
-      if (routeLine) {
-        map.moveLayer(TRAFFIC_LAYER_ID, ROUTE_CASING_LAYER_ID);
-        map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_DIM_OPACITY);
-      } else {
-        map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_FULL_OPACITY_ML);
-      }
+      map.setPaintProperty(TRAFFIC_LAYER_ID, 'raster-opacity', TRAFFIC_FLOW_OPACITY_ML);
     }
   }, [routeLine, routeTrafficSamples]);
 
