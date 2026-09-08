@@ -93,18 +93,20 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
       if (hours === 0) hours = 12;
       return `${hours} ${suffix}`;
     };
-    const labels = hourly.map((point, index) => {
+    const labels: (string | string[])[] = hourly.map((point, index) => {
       const date = new Date(point.time);
       if (!multiDay) return formatHour(date);
       const isDayBoundary = date.getHours() === 0 && (index === 0 || dayKeys[index] !== dayKeys[index - 1]);
-      return isDayBoundary
-        ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-        : '';
+      if (!isDayBoundary) return '';
+      const month = date.toLocaleDateString(undefined, { month: 'short' });
+      const day = String(date.getDate());
+      return [month, day];
     });
     // Day-boundary slot indices drive the separator gridlines below.
     const dayBoundarySlots = new Set<number>();
     labels.forEach((text, index) => {
-      if (text !== '') dayBoundarySlots.add(index);
+      const isLabeled = Array.isArray(text) ? text.length > 0 : text !== '';
+      if (isLabeled) dayBoundarySlots.add(index);
     });
     const tempData = hourly.map((point) => point.temperatureC);
     const precipData = hourly.map((point) => point.precipitationMm);
@@ -253,7 +255,7 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
           },
         },
         layout: {
-          padding: { top: 8, right: 12, bottom: 4, left: 12 },
+          padding: { top: 4, right: 4, bottom: 4, left: 4 },
         },
         animation: { duration: 400 },
       },
