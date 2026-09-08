@@ -271,7 +271,7 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.26, ease: [0.32, 0.72, 0, 1] }}
               style={{ top: `calc(50% + ${yOffset}px)` }}
-              className={`glass-strong fixed z-30 flex max-h-[70vh] -translate-y-1/2 flex-col items-center justify-center overflow-hidden px-1.5 py-2 ${left ? 'left-0 rounded-l-none' : 'right-0 rounded-r-none'} ${collapsed ? (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : left ? 'rounded-r-[20px]' : 'rounded-l-[20px]'}`}
+              className={`glass-strong fixed z-30 flex max-h-[70vh] -translate-y-1/2 flex-col items-center justify-center overflow-hidden py-2 ${left ? 'left-0 rounded-l-none pl-3 pr-1.5' : 'right-0 rounded-r-none pl-1.5 pr-3'} ${collapsed ? (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : left ? 'rounded-r-[20px]' : 'rounded-l-[20px]'}`}
             >
               {/* Drag handle: horizontal position snaps to the nearest
                   edge on release (shared hook); vertical position slides
@@ -281,7 +281,7 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 role="separator"
                 aria-label={`Drag to dock ${left ? 'right' : 'left'} or slide vertically`}
                 title="Drag to dock left/right or slide up/down"
-                className={`absolute top-1/2 z-10 flex h-11 w-[14px] -translate-y-1/2 cursor-grab touch-none items-center justify-center active:cursor-grabbing ${left ? 'left-[-2px]' : 'right-[-2px]'}`}
+                className={`absolute top-1/2 z-10 flex h-11 w-[10px] -translate-y-1/2 cursor-grab touch-none items-center justify-center active:cursor-grabbing ${left ? 'left-0' : 'right-0'}`}
                 {...dragHandleProps}
                 onPointerDown={(e) => {
                   dragHandleProps.onPointerDown(e);
@@ -306,7 +306,7 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                   slideStartRef.current = null;
                 }}
               >
-                <span className="h-6 w-[3px] rounded-full bg-white/25 shadow-[6px_0_0_rgba(255,255,255,0.25)]" aria-hidden />
+                <span className="h-6 w-[2px] rounded-full bg-white/25" aria-hidden />
               </div>
               {collapsed ? (
                 <button

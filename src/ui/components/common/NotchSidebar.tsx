@@ -223,18 +223,19 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
         expanded ? (left ? 'rounded-r-[20px]' : 'rounded-l-[20px]') : left ? 'rounded-r-[22px]' : 'rounded-l-[22px]'
       } ${dragging ? 'transition-none' : 'transition-[width,border-radius] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)]'}`}
     >
-      {/* Drag handle on the edge-facing flat side: pointer capture keeps
-          the gesture unambiguous with hover-to-expand. */}
+      {/* Drag handle lives in its own reserved gutter on the
+          edge-facing side (rows container pads clear of it), so it
+          never overlaps the icon column in either docked side. */}
       <div
         role="separator"
         aria-label={`Drag to dock ${left ? 'right' : 'left'}`}
         title="Drag to dock left or right"
-        className={`absolute top-1/2 z-10 flex h-11 w-[14px] -translate-y-1/2 cursor-grab touch-none items-center justify-center active:cursor-grabbing ${left ? 'left-[-2px]' : 'right-[-2px]'}`}
+        className={`absolute top-1/2 z-10 flex h-11 w-[10px] -translate-y-1/2 cursor-grab touch-none items-center justify-center active:cursor-grabbing ${left ? 'left-0' : 'right-0'}`}
         {...dragHandleProps}
       >
-        <span className="h-6 w-[3px] rounded-full bg-white/25 shadow-[6px_0_0_rgba(255,255,255,0.25)]" aria-hidden />
+        <span className="h-6 w-[2px] rounded-full bg-white/25" aria-hidden />
       </div>
-      <div className="custom-scrollbar flex flex-col gap-0.5 overflow-y-auto py-2">
+      <div className={`custom-scrollbar flex flex-col gap-0.5 overflow-y-auto py-2 ${left ? 'pl-2.5' : 'pr-2.5'}`}>
         <AnimatePresence initial={false}>
           {visibleRows.map((row) => {
             const Icon = row.icon;
