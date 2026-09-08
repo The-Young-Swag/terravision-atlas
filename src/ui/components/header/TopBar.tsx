@@ -99,9 +99,9 @@ export function TopBar({
           <img
             src="/assets/icons/terravision-atlas.png"
             alt="TerraVision Atlas"
-            className="h-5 w-5 shrink-0 object-contain md:h-6 md:w-6"
-            width={24}
-            height={24}
+            className="h-7 w-7 shrink-0 object-contain md:h-9 md:w-9"
+            width={32}
+            height={32}
           />
           <span className={`shrink-0 text-[13px] font-semibold tracking-tight md:text-[15px] ${isBrightBasemap ? 'text-slate-900' : 'text-slate-100'}`}>TerraVision</span>
           <span className={`hidden shrink-0 text-[10px] font-medium tracking-widest sm:inline md:text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-400'}`}>ATLAS</span>

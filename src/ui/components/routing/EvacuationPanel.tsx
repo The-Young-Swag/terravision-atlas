@@ -487,7 +487,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
 
         {!isEvacuation && (
           <>
-            <div className="mb-3">
+            <div className="mb-3 mt-4">
               <button
                 type="button"
                 onClick={() => setJogOpen(!jogOpen)}

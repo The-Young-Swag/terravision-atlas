@@ -14,18 +14,17 @@ export const TILT_MIN_DEGREES = 0;
 export function cesiumTiltDegrees(viewer: Cesium.Viewer | null): number {
   if (!viewer || viewer.isDestroyed()) return 0;
   const radians = viewer.camera.pitch;
-  return Math.max(0, Math.min(TILT_MAX_DEGREES, -Cesium.Math.toDegrees(radians) - 10));
+  // pitch -90° (nadir) → 0° tilt, pitch -10° (horizon) → 80° tilt
+  return Math.max(0, Math.min(TILT_MAX_DEGREES, 90 + Cesium.Math.toDegrees(radians)));
 }
 
 export function setCesiumTiltDegrees(viewer: Cesium.Viewer | null, degrees: number): void {
   if (!viewer || viewer.isDestroyed()) return;
   const clamped = Math.max(0, Math.min(TILT_MAX_DEGREES, degrees));
-  const radians = Cesium.Math.toRadians(-(clamped + 10));
-  const pos = viewer.camera.positionCartographic;
-  viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height),
+  const radians = Cesium.Math.toRadians(clamped - 90);
+  // Immediate, no flyTo queue — keeps slider drag buttery smooth
+  viewer.camera.setView({
     orientation: { heading: viewer.camera.heading, pitch: radians, roll: 0 },
-    duration: 0.3,
   });
 }
 
@@ -48,7 +47,12 @@ export function maplibreTiltDegrees(map: MapLibreMap | null): number {
 export function setMapLibreTiltDegrees(map: MapLibreMap | null, degrees: number): void {
   if (!map) return;
   const clamped = Math.max(0, Math.min(TILT_MAX_DEGREES, degrees));
-  map.easeTo({ pitch: clamped, duration: 250 });
+  // Immediate — no ease queue, slider stays 1:1 with thumb
+  if (typeof (map as unknown as { setPitch?: (p: number) => void }).setPitch === 'function') {
+    (map as unknown as { setPitch: (p: number) => void }).setPitch(clamped);
+  } else {
+    map.jumpTo({ pitch: clamped });
+  }
 }
 
 export function resetMapLibreTiltToTopDown(map: MapLibreMap | null): void {

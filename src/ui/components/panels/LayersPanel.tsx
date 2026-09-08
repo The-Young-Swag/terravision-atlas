@@ -1,4 +1,4 @@
-import { Layers, Satellite, Map as MapIcon, Mountain, Moon, Check, RotateCcw } from 'lucide-react';
+import { Layers, Satellite, Map as MapIcon, Mountain, Moon, Check, RotateCcw, Info, X } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { TrafficLegend } from './TrafficLegend';
 import { useMapStore } from '../../../stores/mapStore';
@@ -16,7 +16,7 @@ import {
   setCesiumTiltDegrees,
   setMapLibreTiltDegrees,
 } from '../../../core/map/tilt';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const SATELLITE_SOURCES: { id: SatelliteSourceId; label: string; desc: string }[] = [
   { id: 'esri', label: 'Esri World Imagery', desc: 'High-res mosaic · default' },
@@ -44,11 +44,9 @@ export function LayersPanel() {
 
   const isBrightBasemap = useBrightBasemap();
 
-  // Camera tilt slider (Item 17): the slider position is the live camera
-  // pitch — using it directly (no local state) keeps the slider and the
-  // middle-click-drag gesture in lockstep without an effect-sync loop.
-  // Writes go through the same flyTo / easeTo path the gesture already
-  // exercises.
+  // Camera tilt slider: live pitch kept in sync, but while dragging we
+  // drive from a local draft so the thumb doesn't fight the live readback.
+  // 3D help popup shows once when entering 3D and can be reopened via (i).
   const cesiumViewer = useTiltStore((s) => s.cesium) as Parameters<typeof cesiumTiltDegrees>[0] | null;
   const maplibreMap = useTiltStore((s) => s.maplibre) as Parameters<typeof maplibreTiltDegrees>[0] | null;
   const showTiltSlider = viewMode === '3d' || viewMode === 'vector';
@@ -58,6 +56,9 @@ export function LayersPanel() {
       : viewMode === 'vector'
         ? maplibreTiltDegrees(maplibreMap)
         : 0;
+  const [isDraggingTilt, setIsDraggingTilt] = useState(false);
+  const [tiltDraft, setTiltDraft] = useState<number | null>(null);
+  const displayTilt = isDraggingTilt && tiltDraft !== null ? tiltDraft : Math.round(tilt);
   const applyTilt = (degrees: number) => {
     if (viewMode === '3d') setCesiumTiltDegrees(cesiumViewer, degrees);
     else if (viewMode === 'vector') setMapLibreTiltDegrees(maplibreMap, degrees);
@@ -65,6 +66,30 @@ export function LayersPanel() {
   const resetTilt = () => {
     if (viewMode === '3d') resetCesiumTiltToTopDown(cesiumViewer);
     else if (viewMode === 'vector') resetMapLibreTiltToTopDown(maplibreMap);
+  };
+  const TILT_HELP_KEY = 'terravision.tiltHelpSeen';
+  const [showTiltHelp, setShowTiltHelp] = useState(false);
+  useEffect(() => {
+    if (viewMode === '3d') {
+      try {
+        if (!localStorage.getItem(TILT_HELP_KEY)) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time help on entering 3D
+          setShowTiltHelp(true);
+        }
+      } catch {
+        setShowTiltHelp(true);
+      }
+    } else {
+      setShowTiltHelp(false);
+    }
+  }, [viewMode]);
+  const dismissTiltHelp = () => {
+    setShowTiltHelp(false);
+    try {
+      localStorage.setItem(TILT_HELP_KEY, '1');
+    } catch {
+      // ignore storage errors
+    }
   };
 
   const centerLabel = useMemo(() => {
@@ -249,12 +274,21 @@ export function LayersPanel() {
           {showTiltSlider && (
             <div className="mt-3">
               <div className="mb-1.5 flex items-center justify-between">
-                <span className={`text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+                <span className={`flex items-center gap-1.5 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
                   Camera tilt
+                  <button
+                    type="button"
+                    onClick={() => setShowTiltHelp((v) => !v)}
+                    title="How to tilt"
+                    aria-label="Show tilt help"
+                    className={`flex h-4 w-4 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[10px] leading-none transition hover:bg-white/20 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
+                  >
+                    <Info className="h-3 w-3" aria-hidden />
+                  </button>
                 </span>
                 <div className="flex items-center gap-2">
                   <span className={`font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
-                    {Math.round(tilt)}°
+                    {displayTilt}°
                   </span>
                   <button
                     type="button"
@@ -267,17 +301,52 @@ export function LayersPanel() {
                   </button>
                 </div>
               </div>
+              {showTiltHelp && viewMode === '3d' && (
+                <div className="mb-2 flex items-start justify-between gap-2 rounded-xl border border-[#209dd7]/30 bg-[#209dd7]/10 px-3 py-2 text-[11px] leading-relaxed">
+                  <p className={`${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
+                    <span className="font-semibold">Middle-click + drag</span> to tilt,{' '}
+                    <span className="font-semibold">scroll</span> to zoom,{' '}
+                    <span className="font-semibold">right-drag</span> to rotate. You can also use the slider.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={dismissTiltHelp}
+                    aria-label="Dismiss tilt help"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white"
+                  >
+                    <X className="h-3 w-3" aria-hidden />
+                  </button>
+                </div>
+              )}
               <input
                 type="range"
                 min={0}
                 max={TILT_MAX_DEGREES}
                 step={1}
-                value={Math.round(tilt)}
-                onChange={(e) => applyTilt(Number(e.target.value))}
-                onInput={(e) => applyTilt(Number((e.target as HTMLInputElement).value))}
+                value={displayTilt}
+                onPointerDown={() => setIsDraggingTilt(true)}
+                onPointerUp={() => {
+                  setIsDraggingTilt(false);
+                  setTiltDraft(null);
+                }}
+                onPointerCancel={() => {
+                  setIsDraggingTilt(false);
+                  setTiltDraft(null);
+                }}
+                onInput={(e) => {
+                  const v = Number((e.target as HTMLInputElement).value);
+                  setTiltDraft(v);
+                  setIsDraggingTilt(true);
+                  applyTilt(v);
+                }}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setTiltDraft(v);
+                  applyTilt(v);
+                }}
                 aria-label="Camera tilt"
                 title={`${viewMode === '3d' ? '3D globe' : 'Vector map'} camera tilt (0° = top-down, ${TILT_MAX_DEGREES}° = near-horizon)`}
-                className="h-1 w-full appearance-none rounded-full bg-white/10 accent-[#5500a4]"
+                className="h-2 w-full cursor-grab touch-none appearance-none rounded-full bg-white/10 accent-[#5500a4] active:cursor-grabbing"
               />
             </div>
           )}

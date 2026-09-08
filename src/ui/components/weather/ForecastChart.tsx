@@ -203,14 +203,15 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
             ticks: {
               color: tickColor,
               font: { family: 'IBM Plex Mono', size: 10 },
-              // Multi-day: exactly 7 day labels exist, so show them all
-              // (auto-skip could silently drop a whole day). Single-day
-              // hourly: cap + pad the density so labels never collide.
               maxTicksLimit: multiDay ? 7 : 6,
               autoSkip: !multiDay,
               autoSkipPadding: 16,
               maxRotation: 0,
               padding: 10,
+              // Push date labels slightly right so they sit centred over
+              // their day's data, not hugging the gridline. Y-axis labels
+              // keep their own padding (12) and are not moved.
+              labelOffset: 4,
             },
             border: { display: false },
           },
@@ -255,7 +256,10 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
           },
         },
         layout: {
-          padding: { top: 4, right: 4, bottom: 4, left: 4 },
+          // Chart pushed slightly left (less left padding, more right) so
+          // plot uses the reclaimed space; y-axis ticks keep 12px padding
+          // so their labels don't move, only the x-axis area and dates shift.
+          padding: { top: 4, right: 12, bottom: 4, left: 0 },
         },
         animation: { duration: 400 },
       },
