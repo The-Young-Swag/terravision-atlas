@@ -34,16 +34,13 @@ export function StatusBar({ activeMode }: StatusBarProps) {
           {activeMode === 'monitor' && <span className="text-[#FF9F1C]">{disasterCount} active incidents nearby</span>}
           <span className="hidden sm:inline">Zoom {zoom.toFixed(1)}</span>
         </div>
-        <div className={`flex items-center gap-1.5 font-sans ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>
-          <span className="h-1.5 w-1.5 rounded-full bg-[#00d890]" />
+        <div className={`flex items-center gap-1.5 whitespace-nowrap font-sans ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#00d890]" />
           Live · updated 12s ago
         </div>
-        <div className="hidden items-center gap-2 sm:flex flex-wrap">
-          <span className="flex items-center gap-1.5">
-            <span>1 : 150,000</span>
-            <span className="text-slate-400">|</span>
-            <span>50 km</span>
-          </span>
+        <div className="hidden flex-col items-end leading-tight sm:flex">
+          <span>1 : 150,000</span>
+          <span>50 km</span>
         </div>
       </footer>
 
