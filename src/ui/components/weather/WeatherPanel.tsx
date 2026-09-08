@@ -85,8 +85,8 @@ export function WeatherPanel() {
                     Wind {current.windSpeedKmh.toFixed(0)} km/h · {current.isDay ? 'Day' : 'Night'}
                   </p>
                 </div>
-                <div className="flex-shrink-0">
-                  <WeatherVisual current={current} size={96} />
+                <div className="flex shrink-0 items-center self-center">
+                  <WeatherVisual current={current} size={64} />
                 </div>
               </div>
             </div>
