@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CloudSun, RefreshCw } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { useWeather } from '../../../hooks/useWeather';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { describeWeatherCode } from '../../../features/weather/openMeteo';
+import { describeWeatherCode, selectNext24Hours } from '../../../features/weather/openMeteo';
 import { ForecastChart } from './ForecastChart';
+import { HourlyStrip } from './HourlyStrip';
 import { WeatherVisual } from './WeatherVisual';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -34,9 +35,14 @@ export function WeatherPanel() {
   const isBrightBasemap = useBrightBasemap();
   const [historyDate, setHistoryDate] = useState('');
 
-  const labelClass = `mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`;
+  const labelClass = `mb-2 block text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`;
   const valueClass = `font-mono text-[12px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`;
   const metaClass = `font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`;
+
+  const next24Hours = useMemo(
+    () => (forecast ? selectNext24Hours(forecast.hourly) : []),
+    [forecast],
+  );
 
   const requestHistorical = () => {
     if (!historyDate) return;
@@ -54,8 +60,8 @@ export function WeatherPanel() {
       bubbleLabel="Weather"
       wide
     >
-      <div>
-        <div className="mb-3 flex items-center justify-between">
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
           <span className={metaClass}>{location ? `Map center · ${location.label}` : 'Locating…'}</span>
           {stale && <span className={metaClass}>cached</span>}
         </div>
@@ -67,31 +73,41 @@ export function WeatherPanel() {
         )}
 
         {current && (
-          <div className="mb-3 rounded-xl border border-white/10 bg-white/[0.04] p-3">
-            <div className="flex items-center gap-4">
-              <div className="flex-1 min-w-0">
-                <p className={`text-[15px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>
-                  {current.temperatureC.toFixed(1)}°C · {describeWeatherCode(current.weatherCode)}
-                </p>
-                <p className={`mt-1 ${valueClass}`}>
-                  Wind {current.windSpeedKmh.toFixed(0)} km/h · {current.isDay ? 'Day' : 'Night'}
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <WeatherVisual current={current} size={96} />
+          <section aria-label="Current conditions">
+            <p className={labelClass}>Now</p>
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[15px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>
+                    {current.temperatureC.toFixed(1)}°C · {describeWeatherCode(current.weatherCode)}
+                  </p>
+                  <p className={`mt-1 ${valueClass}`}>
+                    Wind {current.windSpeedKmh.toFixed(0)} km/h · {current.isDay ? 'Day' : 'Night'}
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                  <WeatherVisual current={current} size={96} />
+                </div>
               </div>
             </div>
-          </div>
+          </section>
         )}
 
         {forecast && forecast.hourly.length > 0 && (
-          <div className="mb-3">
-            <p className={labelClass}>7-day forecast</p>
-            <ForecastChart hourly={forecast.hourly} label="7-day temperature and precipitation forecast" />
-          </div>
+          <section aria-label="Next 24 hours">
+            <p className={labelClass}>Next 24 hours</p>
+            <HourlyStrip hourly={next24Hours} />
+          </section>
         )}
 
-        <div className="mb-3">
+        {forecast && forecast.hourly.length > 0 && (
+          <section aria-label="7-day outlook">
+            <p className={labelClass}>7-day outlook</p>
+            <ForecastChart hourly={forecast.hourly} label="7-day temperature and precipitation forecast" />
+          </section>
+        )}
+
+        <section aria-label="Past weather">
           <p className={labelClass}>Past weather</p>
           <div className="flex gap-2">
             <input
@@ -112,31 +128,33 @@ export function WeatherPanel() {
             </button>
           </div>
           {historical && historicalDate && historical.hourly.length > 0 && (
-            <div className="mt-2">
+            <div className="mt-3">
               <ForecastChart hourly={historical.hourly} label={`Weather on ${historicalDate}`} />
             </div>
           )}
           {historical && historicalDate && historical.hourly.length === 0 && (
             <p className={`mt-2 ${metaClass}`}>No archive data for {historicalDate} at this location yet.</p>
           )}
-        </div>
+        </section>
 
-        <button
-          type="button"
-          onClick={() => void refresh()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#5500a4] py-2 text-[12.5px] font-medium text-white transition hover:brightness-110"
-        >
-          <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-          {loading ? 'Refreshing…' : 'Refresh weather'}
-        </button>
-        {error && (
-          <p className="mt-2 rounded-lg border border-[#E63946]/30 bg-[#E63946]/10 px-3 py-2 text-[11px] text-[#ff8a8a]">
-            {error}
-          </p>
-        )}
-        {lastUpdated && (
-          <p className={`mt-2 text-center ${metaClass}`}>Updated {dayjs(lastUpdated).fromNow()}</p>
-        )}
+        <div>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#5500a4] py-2 text-[12.5px] font-medium text-white transition hover:brightness-110"
+          >
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+            {loading ? 'Refreshing…' : 'Refresh weather'}
+          </button>
+          {error && (
+            <p className="mt-2 rounded-lg border border-[#E63946]/30 bg-[#E63946]/10 px-3 py-2 text-[11px] text-[#ff8a8a]">
+              {error}
+            </p>
+          )}
+          {lastUpdated && (
+            <p className={`mt-2 text-center ${metaClass}`}>Updated {dayjs(lastUpdated).fromNow()}</p>
+          )}
+        </div>
       </div>
     </FloatingPanel>
   );

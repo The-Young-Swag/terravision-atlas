@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeWeatherCode, parseCurrentConditions, parseHourlyForecast } from './openMeteo';
+import { describeWeatherCode, formatHourLabel, parseCurrentConditions, parseHourlyForecast, selectNext24Hours, type HourlyPoint } from './openMeteo';
 
 describe('parseCurrentConditions', () => {
   it('extracts conditions from a valid response', () => {
@@ -64,5 +64,46 @@ describe('describeWeatherCode', () => {
     expect(describeWeatherCode(3)).toBe('Overcast');
     expect(describeWeatherCode(45)).toBe('Fog');
     expect(describeWeatherCode(48)).toBe('Fog');
+  });
+});
+
+function hourlyFixture(startHour: number, count: number): HourlyPoint[] {
+  const points: HourlyPoint[] = [];
+  const base = new Date(2026, 8, 7, 0, 0, 0);
+  for (let i = 0; i < count; i++) {
+    const time = new Date(base.getTime() + (startHour + i) * 3600 * 1000);
+    points.push({ time: time.toISOString(), temperatureC: 20 + i * 0.1, precipitationMm: 0 });
+  }
+  return points;
+}
+
+describe('formatHourLabel', () => {
+  it('labels midnight, noon, and afternoon hours unambiguously', () => {
+    expect(formatHourLabel(new Date(2026, 8, 7, 0))).toBe('12 AM');
+    expect(formatHourLabel(new Date(2026, 8, 7, 6))).toBe('6 AM');
+    expect(formatHourLabel(new Date(2026, 8, 7, 12))).toBe('12 PM');
+    expect(formatHourLabel(new Date(2026, 8, 7, 18))).toBe('6 PM');
+  });
+});
+
+describe('selectNext24Hours', () => {
+  it('starts at the first point at or after now and takes 24', () => {
+    const hourly = hourlyFixture(0, 48);
+    const now = new Date(2026, 8, 7, 5, 30, 0);
+    const result = selectNext24Hours(hourly, now);
+    expect(result).toHaveLength(24);
+    expect(new Date(result[0].time).getHours()).toBe(6);
+  });
+
+  it('returns what exists when fewer than 24 points remain', () => {
+    const hourly = hourlyFixture(0, 10);
+    const now = new Date(2026, 8, 7, 5, 0, 0);
+    expect(selectNext24Hours(hourly, now)).toHaveLength(5);
+  });
+
+  it('returns an empty array when everything is in the past', () => {
+    const hourly = hourlyFixture(0, 5);
+    const now = new Date(2026, 8, 8, 0, 0, 0);
+    expect(selectNext24Hours(hourly, now)).toEqual([]);
   });
 });

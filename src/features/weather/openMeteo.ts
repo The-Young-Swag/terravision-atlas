@@ -94,6 +94,30 @@ export function parseCurrentConditions(data: CurrentResponse): CurrentConditions
   };
 }
 
+/** "6 AM" style time-of-day label — same format the forecast chart
+ * uses for hourly ticks, so the two never disagree. */
+export function formatHourLabel(date: Date): string {
+  let hours = date.getHours();
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  return `${hours} ${suffix}`;
+}
+
+/** Number of hours shown in the "next 24 hours" strip. */
+export const NEXT_24_HOURS_COUNT = 24;
+
+/**
+ * Next-24-hours slice of hourly forecast points starting at `now`.
+ * Pure — returns whatever points exist (possibly fewer than 24);
+ * callers render an honest empty state when there is nothing.
+ */
+export function selectNext24Hours(hourly: HourlyPoint[], now: Date = new Date()): HourlyPoint[] {
+  const startIndex = hourly.findIndex((point) => new Date(point.time) >= now);
+  if (startIndex === -1) return [];
+  return hourly.slice(startIndex, startIndex + NEXT_24_HOURS_COUNT);
+}
+
 /** Pure response transform, exported for unit tests. */
 export function parseHourlyForecast(data: HourlyResponse): HourlyPoint[] {
   const hourly = data.hourly;
