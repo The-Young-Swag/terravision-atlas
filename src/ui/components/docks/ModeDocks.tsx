@@ -83,17 +83,27 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     defaultSide: 'right',
   });
   const [collapsed, setCollapsed] = useState(readToolbarCollapsed);
+  // Row visibility is phased separately from the width animation so the
+  // height never spikes mid-transition: on expand the icon stays put
+  // while the width animates, and the row only appears once the width
+  // is final (no wrapping/unwrapping while the width is in flight). On
+  // collapse the row hides immediately. Either way only width animates.
+  const [rowVisible, setRowVisible] = useState(() => !readToolbarCollapsed());
+  const expandPendingRef = useRef(false);
   const toggleCollapsed = useCallback(() => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(SURVEY_COLLAPSED_KEY, String(next));
-      } catch {
-        // persistence is a nicety — the toggle still works for the session
-      }
-      return next;
-    });
-  }, []);
+    const next = !collapsed;
+    try {
+      localStorage.setItem(SURVEY_COLLAPSED_KEY, String(next));
+    } catch {
+      // persistence is a nicety — the toggle still works for the session
+    }
+    if (next) {
+      setRowVisible(false);
+    } else {
+      expandPendingRef.current = true;
+    }
+    setCollapsed(next);
+  }, [collapsed]);
 
   // Vertical slide-along-edge: pixel offset from the vertical center,
   // applied via `top: calc(50% + offset)` so the shared -translate-y-1/2
@@ -255,110 +265,9 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     URL.revokeObjectURL(url);
   }, [measurePoints, measureMode, measureClosed]);
 
-  return (
+  const toolbarContent = (
     <>
-      <AnimatePresence>
-        {activeMode === 'monitor' && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            className="glass-strong absolute bottom-20 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-2xl px-2 py-2"
-          >
-            <span className={`px-3 py-2 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>Evacuation tools ready — shelter data is community-sourced, coverage varies</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {activeMode === 'survey' && (
-          <>
-            {/* Snap-zone indicators while dragging — same zones, same
-                z-index (z-40) as the notch sidebar. Left/right only. */}
-            <div
-              aria-hidden
-              className={`pointer-events-none fixed bottom-0 left-0 top-0 z-40 w-16 transition-opacity duration-150 ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'left' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
-            />
-            <div
-              aria-hidden
-              className={`pointer-events-none fixed bottom-0 right-0 top-0 z-40 w-16 transition-opacity duration-150 ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'right' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
-            />
-            {/* Edge-docked toolbar: single vertical anchor (top-1/2) shared
-                by expanded and collapsed states, flush to the docked side
-                edge (left-0/right-0), z-30 — the exact notch sidebar
-                values. Vertically centered + max-h keeps it clear of the
-                footer in every state. Collapse animates width sideways
-                toward the docked edge (framer, same 260ms bezier). */}
-            <motion.div
-              ref={containerRef}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, width: collapsed ? 52 : expandedWidth }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.26, ease: [0.32, 0.72, 0, 1] }}
-              style={{ top: `calc(50% + ${yOffset}px)` }}
-              className={`glass-strong fixed z-30 flex h-16 -translate-y-1/2 flex-col items-center justify-center overflow-hidden ${left ? 'left-0 rounded-l-none pl-2 pr-1.5' : 'right-0 rounded-r-none pl-1.5 pr-2'} ${collapsed ? (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : left ? 'rounded-r-[20px]' : 'rounded-l-[20px]'}`}
-            >
-              {/* Drag handle: slim full-height strip on the edge-facing
-                  side with a reserved gutter, matching the notch
-                  sidebar — never overlaps content in either state. */}
-              <div
-                role="separator"
-                aria-label={`Drag to dock ${left ? 'right' : 'left'} or slide vertically`}
-                title="Drag to dock left/right or slide up/down"
-                className={`absolute inset-y-0 z-10 flex w-[8px] cursor-grab touch-none items-center justify-center bg-white/[0.04] transition-colors hover:bg-white/10 active:cursor-grabbing ${left ? 'left-0' : 'right-0'}`}
-                {...dragHandleProps}
-                onPointerDown={(e) => {
-                  dragHandleProps.onPointerDown(e);
-                  slideStartRef.current = { pointerY: e.clientY, offset: yOffset };
-                }}
-                onPointerMove={(e) => {
-                  dragHandleProps.onPointerMove(e);
-                  const start = slideStartRef.current;
-                  if (start) setYOffset(clampYOffset(start.offset + (e.clientY - start.pointerY)));
-                }}
-                onPointerUp={(e) => {
-                  dragHandleProps.onPointerUp(e);
-                  slideStartRef.current = null;
-                  setYOffset((prev) => {
-                    const clamped = clampYOffset(prev);
-                    persistYOffset(clamped);
-                    return clamped;
-                  });
-                }}
-                onPointerCancel={() => {
-                  dragHandleProps.onPointerCancel();
-                  slideStartRef.current = null;
-                }}
-              >
-                <span className="flex flex-col items-center gap-1" aria-hidden>
-                  <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
-                  <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
-                  <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
-                </span>
-              </div>
-              {collapsed ? (
-                <button
-                  type="button"
-                  onClick={toggleCollapsed}
-                  title="Expand survey toolbar"
-                  aria-label="Expand survey toolbar"
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-                >
-                  {/* Telescope: closest surveying-instrument glyph in the
-                      project's lucide set (no theodolite/total-station
-                      icon exists there) — no new dependency. */}
-                  <Telescope className="h-5 w-5" aria-hidden />
-                </button>
-              ) : null}
-              {/* The row stays mounted in both states (invisible + out of
-                  flow when collapsed) so the expanded width is always
-                  measurable and the height never reflows mid-animation. */}
-              <div
-                ref={rowRef}
-                className={`flex-nowrap items-center gap-1 px-2 ${collapsed ? 'invisible pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 overflow-hidden' : 'flex overflow-x-auto'}`}
-                aria-hidden={collapsed || undefined}
-              >
-            <button
+<button
               onClick={() => setSnapToGrid(!snapToGrid)}
               aria-pressed={snapToGrid}
               title="Snap to the UTM 51N meter grid — map center and measure points (2D and Vector maps)"
@@ -514,12 +423,133 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               onClick={toggleCollapsed}
               title="Collapse toolbar to a single icon"
               aria-label="Collapse toolbar"
-              tabIndex={collapsed ? -1 : undefined}
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
             >
               {left ? <ChevronsLeft className="h-3.5 w-3.5" aria-hidden /> : <ChevronsRight className="h-3.5 w-3.5" aria-hidden />}
             </button>
+    </>
+  );
+
+  return (
+    <>
+      <AnimatePresence>
+        {activeMode === 'monitor' && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            className="glass-strong absolute bottom-20 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-2xl px-2 py-2"
+          >
+            <span className={`px-3 py-2 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>Evacuation tools ready — shelter data is community-sourced, coverage varies</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {activeMode === 'survey' && (
+          <>
+            {/* Snap-zone indicators while dragging — same zones, same
+                z-index (z-40) as the notch sidebar. Left/right only. */}
+            <div
+              aria-hidden
+              className={`pointer-events-none fixed bottom-0 left-0 top-0 z-40 w-16 transition-opacity duration-150 ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'left' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
+            />
+            <div
+              aria-hidden
+              className={`pointer-events-none fixed bottom-0 right-0 top-0 z-40 w-16 transition-opacity duration-150 ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'right' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
+            />
+            {/* Edge-docked toolbar: single vertical anchor (top-1/2) shared
+                by expanded and collapsed states, flush to the docked side
+                edge (left-0/right-0), z-30 — the exact notch sidebar
+                values. Vertically centered + max-h keeps it clear of the
+                footer in every state. Collapse animates width sideways
+                toward the docked edge (framer, same 260ms bezier). */}
+            <motion.div
+              ref={containerRef}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, width: collapsed ? 52 : expandedWidth }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.26, ease: [0.32, 0.72, 0, 1] }}
+              onAnimationComplete={() => {
+                if (expandPendingRef.current) {
+                  expandPendingRef.current = false;
+                  setRowVisible(true);
+                }
+              }}
+              style={{ top: `calc(50% + ${yOffset}px)` }}
+              className={`glass-strong fixed z-30 flex max-h-[70vh] -translate-y-1/2 flex-col items-center justify-center overflow-hidden py-2 ${left ? 'left-0 rounded-l-none pl-2 pr-1.5' : 'right-0 rounded-r-none pl-1.5 pr-2'} ${collapsed ? (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : left ? 'rounded-r-[20px]' : 'rounded-l-[20px]'}`}
+            >
+              {/* Drag handle: slim full-height strip on the edge-facing
+                  side with a reserved gutter, matching the notch
+                  sidebar — never overlaps content in either state. */}
+              <div
+                role="separator"
+                aria-label={`Drag to dock ${left ? 'right' : 'left'} or slide vertically`}
+                title="Drag to dock left/right or slide up/down"
+                className={`absolute inset-y-0 z-10 flex w-[8px] cursor-grab touch-none items-center justify-center bg-white/[0.04] transition-colors hover:bg-white/10 active:cursor-grabbing ${left ? 'left-0' : 'right-0'}`}
+                {...dragHandleProps}
+                onPointerDown={(e) => {
+                  dragHandleProps.onPointerDown(e);
+                  slideStartRef.current = { pointerY: e.clientY, offset: yOffset };
+                }}
+                onPointerMove={(e) => {
+                  dragHandleProps.onPointerMove(e);
+                  const start = slideStartRef.current;
+                  if (start) setYOffset(clampYOffset(start.offset + (e.clientY - start.pointerY)));
+                }}
+                onPointerUp={(e) => {
+                  dragHandleProps.onPointerUp(e);
+                  slideStartRef.current = null;
+                  setYOffset((prev) => {
+                    const clamped = clampYOffset(prev);
+                    persistYOffset(clamped);
+                    return clamped;
+                  });
+                }}
+                onPointerCancel={() => {
+                  dragHandleProps.onPointerCancel();
+                  slideStartRef.current = null;
+                }}
+              >
+                <span className="flex flex-col items-center gap-1" aria-hidden>
+                  <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
+                  <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
+                  <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
+                </span>
               </div>
+              {!rowVisible ? (
+                <button
+                  type="button"
+                  onClick={toggleCollapsed}
+                  title="Expand survey toolbar"
+                  aria-label="Expand survey toolbar"
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+                >
+                  {/* Telescope: closest surveying-instrument glyph in the
+                      project's lucide set (no theodolite/total-station
+                      icon exists there) — no new dependency. */}
+                  <Telescope className="h-5 w-5" aria-hidden />
+                </button>
+              ) : null}
+              {/* Probe (always measurable, never interactive) + visible
+                  row (original wrapping layout). Visibility is phased
+                  around the width animation so height never spikes. */}
+              <div
+                ref={rowRef}
+                aria-hidden="true"
+                inert
+                className="invisible pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-nowrap items-center gap-1 overflow-hidden px-2"
+              >
+
+            {toolbarContent}
+              </div>
+              {rowVisible ? (
+                <div className="flex max-w-[85vw] flex-wrap items-center justify-center gap-1 overflow-y-auto px-2 py-1">
+
+            {toolbarContent}
+                </div>
+              ) : null}
+
           </motion.div>
           </>
         )}
