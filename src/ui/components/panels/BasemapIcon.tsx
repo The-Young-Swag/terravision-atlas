@@ -4,7 +4,6 @@ import { Satellite, Map as MapIcon, Mountain, Moon } from 'lucide-react';
 interface BasemapIconProps {
   basemap: BasemapId;
   isActive: boolean;
-  isBrightBasemap: boolean;
   size?: number;
 }
 
@@ -27,14 +26,28 @@ const ICON_BG: Record<BasemapId, string> = {
   dark: 'rgba(167, 139, 250, 0.12)',
 };
 
-export function BasemapIcon({ basemap, isActive, isBrightBasemap, size = 32 }: BasemapIconProps) {
+// Clay container surface per option: muted low-contrast solids in the
+// option's own color family (not frosted translucency). Only the
+// container changed — glyph, tint chip, and selection behavior below
+// are exactly as before.
+const CONTAINER_BG: Record<BasemapId, string> = {
+  satellite: '#22352c',
+  streets: '#2b303c',
+  terrain: '#3a3122',
+  dark: '#171b28',
+};
+
+const CLAY_SHADOW =
+  'shadow-[inset_2px_2px_4px_rgba(255,255,255,0.16),inset_-2px_-2px_5px_rgba(0,0,0,0.4),3px_3px_7px_rgba(0,0,0,0.45)]';
+
+export function BasemapIcon({ basemap, isActive, size = 32 }: BasemapIconProps) {
   const Icon = ICON_MAP[basemap];
   const color = ICON_COLOR[basemap];
   const bg = ICON_BG[basemap];
   return (
     <div
-      className={`flex items-center justify-center rounded-lg border transition ${isActive ? 'border-[#5500a4]/50' : 'border-white/10'} ${isBrightBasemap ? 'bg-white/5' : 'bg-white/5'}`}
-      style={{ width: size, height: size }}
+      className={`flex items-center justify-center rounded-xl border transition ${isActive ? 'border-[#5500a4]/50' : 'border-white/5'} ${CLAY_SHADOW}`}
+      style={{ width: size, height: size, backgroundColor: CONTAINER_BG[basemap] }}
       aria-hidden="true"
     >
       <div
