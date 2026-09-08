@@ -251,8 +251,10 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
 
   const labelClass = `mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`;
   const inputClass = `w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-mono text-[12px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-400'}`;
-  const pickButtonClass = (active: boolean) =>
-    `flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${active ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`;
+  const pickStartClass = (active: boolean) =>
+    `flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${active ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 md:border-[#209dd7]/30 md:bg-[#209dd7]/15 md:text-[#209dd7] md:hover:bg-[#209dd7]/20 md:hover:text-[#209dd7]'}`;
+  const pickDestClass = (active: boolean) =>
+    `flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${active ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 md:border-[#00d890]/30 md:bg-[#00d890]/15 md:text-[#00d890] md:hover:bg-[#00d890]/20 md:hover:text-[#00d890]'}`;
 
   return (
     <FloatingPanel
@@ -324,7 +326,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
             aria-pressed={pickMode === 'start'}
             title="Pick start on the map"
             aria-label="Pick start on the map"
-            className={pickButtonClass(pickMode === 'start')}
+            className={pickStartClass(pickMode === 'start')}
           >
             <MapPin className="h-4 w-4" />
           </button>
@@ -361,7 +363,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
             aria-pressed={pickMode === 'destination'}
             title="Pick destination on the map"
             aria-label="Pick destination on the map"
-            className={pickButtonClass(pickMode === 'destination')}
+            className={pickDestClass(pickMode === 'destination')}
           >
             <MapPin className="h-4 w-4" />
           </button>
