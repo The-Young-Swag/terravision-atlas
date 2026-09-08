@@ -58,7 +58,7 @@ export function WeatherPanel() {
       icon={<CloudSun className="h-3.5 w-3.5" />}
       initialPosition={{ x: 620, y: 96 }}
       bubbleLabel="Weather"
-      wide
+      xlWide
     >
       <div className="space-y-5">
         <div className="flex items-center justify-between">

@@ -21,6 +21,12 @@ interface FloatingPanelProps {
    * stay at the default w-72. Mobile is unaffected (bottom sheet).
    */
   wide?: boolean;
+  /**
+   * Extra-wide variant for the weather panel's date axis: 440px /
+   * 520px at md gives the 7 day labels room without crowding.
+   * Takes precedence over `wide`. Mobile is unaffected.
+   */
+  xlWide?: boolean;
 }
 
 // Reusable floating panel with drag and minimize-to-bubble.
@@ -40,6 +46,7 @@ export function FloatingPanel({
   className = '',
   defaultMinimized = false,
   wide = false,
+  xlWide = false,
 }: FloatingPanelProps) {
   const [isMinimized, setIsMinimized] = useState(defaultMinimized);
   const dragControls = useDragControls();
@@ -143,7 +150,7 @@ export function FloatingPanel({
         initial={{ x: initialPosition.x, y: initialPosition.y, opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.98 }}
-        className={`fixed z-30 hidden ${wide ? 'w-[380px]' : 'w-72'} md:block ${wide ? 'md:w-[440px]' : ''} ${className}`}
+        className={`fixed z-30 hidden ${xlWide ? 'w-[440px]' : wide ? 'w-[380px]' : 'w-72'} md:block ${xlWide ? 'md:w-[520px]' : wide ? 'md:w-[440px]' : ''} ${className}`}
         style={{ left: 0, top: 0, x: initialPosition.x, y: initialPosition.y }}
       >
         <div className="glass flex flex-col overflow-hidden rounded-2xl">
