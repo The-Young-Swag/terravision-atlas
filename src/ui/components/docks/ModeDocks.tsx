@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Grid2x2, Ruler, X, Move3d, Printer, Satellite, Link2, Copy, MapPin, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Grid2x2, Ruler, X, Move3d, Printer, Satellite, Link2, Copy, MapPin, ChevronsLeft, ChevronsRight, Telescope } from 'lucide-react';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
 import { downloadA0Png, exportA0Png } from '../../../features/export/print/a0Export';
@@ -13,12 +13,24 @@ type AppMode = 'explore' | 'monitor' | 'survey';
 
 const SURVEY_DOCK_KEY = 'terravision.survey-toolbar.dock';
 const SURVEY_COLLAPSED_KEY = 'terravision.survey-toolbar.collapsed';
+const SURVEY_Y_KEY = 'terravision.survey-toolbar.y';
+/** Clearance kept above/below the viewport edge when sliding. */
+const SLIDE_EDGE_MARGIN = 8;
 
 function readToolbarCollapsed(): boolean {
   try {
     return localStorage.getItem(SURVEY_COLLAPSED_KEY) === 'true';
   } catch {
     return false;
+  }
+}
+
+function readToolbarYOffset(): number {
+  try {
+    const raw = Number(localStorage.getItem(SURVEY_Y_KEY));
+    return Number.isFinite(raw) ? raw : 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -81,6 +93,28 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
       }
       return next;
     });
+  }, []);
+
+  // Vertical slide-along-edge: pixel offset from the vertical center,
+  // applied via `top: calc(50% + offset)` so the shared -translate-y-1/2
+  // class is untouched. Horizontal position never changes here — the
+  // edge pin (left-0/right-0) stays put for the whole gesture.
+  const [yOffset, setYOffset] = useState(readToolbarYOffset);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const slideStartRef = useRef<{ pointerY: number; offset: number } | null>(null);
+
+  const clampYOffset = useCallback((value: number) => {
+    const height = containerRef.current?.offsetHeight ?? 0;
+    const maxTravel = Math.max(0, (window.innerHeight - height) / 2 - SLIDE_EDGE_MARGIN);
+    return Math.min(maxTravel, Math.max(-maxTravel, value));
+  }, []);
+
+  const persistYOffset = useCallback((value: number) => {
+    try {
+      localStorage.setItem(SURVEY_Y_KEY, String(Math.round(value)));
+    } catch {
+      // persistence is a nicety
+    }
   }, []);
 
   const handleA0Export = async () => {
@@ -231,20 +265,46 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 footer in every state. Collapse animates width sideways
                 toward the docked edge (framer, same 260ms bezier). */}
             <motion.div
+              ref={containerRef}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1, width: collapsed ? 52 : 'auto' }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.26, ease: [0.32, 0.72, 0, 1] }}
-              className={`glass-strong fixed top-1/2 z-30 flex max-h-[70vh] -translate-y-1/2 flex-col items-center justify-center overflow-hidden px-1.5 py-2 ${left ? 'left-0 rounded-l-none' : 'right-0 rounded-r-none'} ${collapsed ? (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : left ? 'rounded-r-[20px]' : 'rounded-l-[20px]'}`}
+              style={{ top: `calc(50% + ${yOffset}px)` }}
+              className={`glass-strong fixed z-30 flex max-h-[70vh] -translate-y-1/2 flex-col items-center justify-center overflow-hidden px-1.5 py-2 ${left ? 'left-0 rounded-l-none' : 'right-0 rounded-r-none'} ${collapsed ? (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : left ? 'rounded-r-[20px]' : 'rounded-l-[20px]'}`}
             >
-              {/* Drag handle on the edge-facing side — same handle, same
-                  gesture as the notch sidebar, live in both states. */}
+              {/* Drag handle: horizontal position snaps to the nearest
+                  edge on release (shared hook); vertical position slides
+                  along the edge and clamps to the viewport. Both axes
+                  work in collapsed and expanded states. */}
               <div
                 role="separator"
-                aria-label={`Drag to dock ${left ? 'right' : 'left'}`}
-                title="Drag to dock left or right"
+                aria-label={`Drag to dock ${left ? 'right' : 'left'} or slide vertically`}
+                title="Drag to dock left/right or slide up/down"
                 className={`absolute top-1/2 z-10 flex h-11 w-[14px] -translate-y-1/2 cursor-grab touch-none items-center justify-center active:cursor-grabbing ${left ? 'left-[-2px]' : 'right-[-2px]'}`}
                 {...dragHandleProps}
+                onPointerDown={(e) => {
+                  dragHandleProps.onPointerDown(e);
+                  slideStartRef.current = { pointerY: e.clientY, offset: yOffset };
+                }}
+                onPointerMove={(e) => {
+                  dragHandleProps.onPointerMove(e);
+                  const start = slideStartRef.current;
+                  if (start) setYOffset(clampYOffset(start.offset + (e.clientY - start.pointerY)));
+                }}
+                onPointerUp={(e) => {
+                  dragHandleProps.onPointerUp(e);
+                  slideStartRef.current = null;
+                  setYOffset((prev) => {
+                    const clamped = clampYOffset(prev);
+                    persistYOffset(clamped);
+                    return clamped;
+                  });
+                }}
+                onPointerCancel={() => {
+                  dragHandleProps.onPointerCancel();
+                  slideStartRef.current = null;
+                }}
               >
                 <span className="h-6 w-[3px] rounded-full bg-white/25 shadow-[6px_0_0_rgba(255,255,255,0.25)]" aria-hidden />
               </div>
@@ -256,7 +316,10 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                   aria-label="Expand survey toolbar"
                   className={`flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
                 >
-                  <Ruler className="h-5 w-5" aria-hidden />
+                  {/* Telescope: closest surveying-instrument glyph in the
+                      project's lucide set (no theodolite/total-station
+                      icon exists there) — no new dependency. */}
+                  <Telescope className="h-5 w-5" aria-hidden />
                 </button>
               ) : (
                 <div className="flex max-w-[85vw] flex-wrap items-center justify-center gap-1 overflow-y-auto px-2 py-1">
