@@ -217,8 +217,19 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
       aria-label="Panel access"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`glass fixed top-1/2 z-30 hidden max-h-[70vh] -translate-y-1/2 flex-col overflow-hidden md:flex ${
-        expanded ? 'w-[296px]' : 'w-[52px]'
+      onClick={() => {
+        // Touch: tap collapsed pill to pin open (hover never fires on mobile)
+        if (!expanded && !dragging) {
+          setPinned(true);
+          try {
+            localStorage.setItem(PIN_STORAGE_KEY, 'true');
+          } catch {
+            // ignore storage errors (private mode)
+          }
+        }
+      }}
+      className={`glass fixed top-1/2 z-30 flex max-h-[70vh] -translate-y-1/2 flex-col overflow-hidden ${
+        expanded ? 'w-[296px] max-w-[90vw]' : 'w-[52px]'
       } ${left ? 'notch-dock-left left-0 rounded-l-none' : 'notch-dock-right right-0 rounded-r-none'} ${
         expanded ? (left ? 'rounded-r-[20px]' : 'rounded-l-[20px]') : left ? 'rounded-r-[22px]' : 'rounded-l-[22px]'
       } ${dragging ? 'transition-none' : 'transition-[width,border-radius] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]'}`}
@@ -247,12 +258,14 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
               <motion.button
                 key={row.panelId}
                 type="button"
-                layout
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 48 }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-                onClick={() => openRow(row)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openRow(row);
+                }}
                 title={`Open ${row.label}`}
                 aria-label={`Open ${row.label}`}
                 className={`flex h-12 w-full shrink-0 items-center overflow-hidden px-2 text-left transition-colors hover:bg-white/5 ${expanded ? '' : 'justify-center'}`}
@@ -266,14 +279,16 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
                     <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-[#0D1B2A] bg-[#ff4d4d]" aria-hidden />
                   )}
                 </span>
-                {/* Row text crossfades with the width animation instead
-                    of popping in/out, so expansion reads as one motion. */}
-                <span className={`${expanded ? 'ml-3 max-w-[220px] opacity-100' : 'ml-0 max-w-0 opacity-0'} flex min-w-0 flex-1 flex-col justify-center overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]`}>
+                {/* Text cross-fades with outer width; layout removed to avoid shift on preview change */}
+                <span
+                  className={`${expanded ? 'ml-3 max-w-[220px] opacity-100' : 'ml-0 max-w-0 opacity-0'} flex min-w-0 flex-1 flex-col justify-center overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]`}
+                  aria-hidden={!expanded}
+                >
                   <span className="truncate text-[13px] font-medium leading-tight text-slate-100">{row.label}</span>
                   <span className="truncate text-[11.5px] leading-tight text-slate-400">{row.preview}</span>
                 </span>
-                {row.count !== null && (
-                  <span className={`${expanded ? 'ml-2 max-w-[80px] opacity-100' : 'ml-0 max-w-0 opacity-0'} shrink-0 overflow-hidden whitespace-nowrap rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-slate-300 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]`}>
+                {expanded && row.count !== null && (
+                  <span className="ml-2 shrink-0 whitespace-nowrap rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-slate-300">
                     {row.count}
                   </span>
                 )}
@@ -286,7 +301,10 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
       {expanded && (
         <button
           type="button"
-          onClick={togglePin}
+          onClick={(e) => {
+            e.stopPropagation();
+            togglePin();
+          }}
           title={pinned ? 'Unpin — collapse on pointer leave' : 'Pin open'}
           aria-pressed={pinned}
           className={`flex h-11 shrink-0 items-center gap-2 border-t border-white/10 px-4 text-[12px] font-medium transition-colors hover:bg-white/5 ${pinned ? 'text-[#00d890]' : 'text-slate-400'}`}
