@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Chart, Plugin, registerables, ScriptableContext } from 'chart.js';
+import { Chart, Plugin, registerables, ScriptableContext, ScriptableScaleContext } from 'chart.js';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import type { HourlyPoint } from '../../../features/weather/openMeteo';
 
@@ -101,6 +101,11 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
         ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
         : '';
     });
+    // Day-boundary slot indices drive the separator gridlines below.
+    const dayBoundarySlots = new Set<number>();
+    labels.forEach((text, index) => {
+      if (text !== '') dayBoundarySlots.add(index);
+    });
     const tempData = hourly.map((point) => point.temperatureC);
     const precipData = hourly.map((point) => point.precipitationMm);
 
@@ -114,9 +119,12 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
             label: 'Temp (°C)',
             data: tempData,
             borderColor: '#FF9F1C',
-            backgroundColor: '#FF9F1C',
+            backgroundColor: 'rgba(255,159,28,0.12)',
+            fill: true,
             borderWidth: 2,
             pointRadius: 0,
+            pointHoverRadius: 4,
+            pointHoverBackgroundColor: '#FF9F1C',
             tension: 0.3,
             yAxisID: 'y-temp',
             spanGaps: false, // null values render as gaps, not interpolated
@@ -129,10 +137,10 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
               const value = ctx.raw as number | null;
               return value && value > 0 ? 'rgba(32,157,215,0.7)' : 'transparent';
             },
-            borderRadius: 3,
+            borderRadius: 4,
             yAxisID: 'y-precip',
-            barPercentage: 0.6,
-            categoryPercentage: 0.8,
+            barPercentage: 0.5,
+            categoryPercentage: 0.7,
           },
         ],
       },
@@ -179,17 +187,27 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
         },
         scales: {
           x: {
-            grid: { display: false, drawTicks: false },
+            // Day separators: a faint vertical line only at labeled day
+            // boundaries groups each day's hours visually. Single-day
+            // views keep a clean axis with no gridlines at all.
+            grid: {
+              // Gridlines render only in multi-day views, and only at
+              // labeled day boundaries — single-day views stay clean.
+              display: multiDay,
+              drawTicks: false,
+              color: (context: ScriptableScaleContext) =>
+                dayBoundarySlots.has(context.index ?? -1) ? gridColor : 'transparent',
+            },
             ticks: {
               color: tickColor,
-              font: { family: 'IBM Plex Mono', size: 9 },
+              font: { family: 'IBM Plex Mono', size: 10 },
               // Multi-day: labels exist only at day boundaries, so show
               // them all (no auto-skip hiding a day). Single-day hourly:
               // auto-skip down to a readable density.
               maxTicksLimit: multiDay ? undefined : 8,
               autoSkip: !multiDay,
               maxRotation: 0,
-              padding: 8,
+              padding: 10,
             },
             border: { display: false },
           },
@@ -236,7 +254,7 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
         layout: {
           // Extra left/right padding (28px) to give the centered y-axis
           // titles room to render without overlapping the tick labels.
-          padding: { top: 8, right: 28, bottom: 8, left: 28 },
+          padding: { top: 12, right: 28, bottom: 8, left: 28 },
         },
         animation: { duration: 400 },
       },
@@ -253,8 +271,20 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
   }, [hourly, label, tickColor, gridColor, axisTitleColor]);
 
   return (
-    <div className="h-[180px] w-full">
-      <canvas ref={canvasRef} aria-label={label} role="img" />
+    <div>
+      <div className="mb-2 flex items-center gap-4 px-1" aria-hidden="true">
+        <span className={`flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+          <span className="inline-block h-[3px] w-4 rounded-full bg-[#FF9F1C]" />
+          Temp °C
+        </span>
+        <span className={`flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+          <span className="inline-block h-2.5 w-2.5 rounded-[3px] bg-[#209dd7]/70" />
+          Precip mm
+        </span>
+      </div>
+      <div className="h-[240px] w-full">
+        <canvas ref={canvasRef} aria-label={label} role="img" />
+      </div>
     </div>
   );
 }
