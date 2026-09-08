@@ -1,12 +1,16 @@
-import { useMemo, useState } from 'react';
-import { CloudSun, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { CloudSun, MapPin, RefreshCw } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { useWeather } from '../../../hooks/useWeather';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { useMapStore } from '../../../stores/mapStore';
 import { describeWeatherCode, selectNext24Hours } from '../../../features/weather/openMeteo';
 import { ForecastChart } from './ForecastChart';
 import { HourlyStrip } from './HourlyStrip';
 import { WeatherVisual } from './WeatherVisual';
+import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
+import type { GeocodedPlace } from '../../../features/search/geocode';
+import { reverseGeocode } from '../../../core/data/geocode/reverseGeocode';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -34,6 +38,10 @@ export function WeatherPanel() {
   } = useWeather();
   const isBrightBasemap = useBrightBasemap();
   const [historyDate, setHistoryDate] = useState('');
+  const [weatherQuery, setWeatherQuery] = useState('');
+  const [placeName, setPlaceName] = useState<string | null>(null);
+  const setCenter = useMapStore((s) => s.setCenter);
+  const setZoom = useMapStore((s) => s.setZoom);
 
   const labelClass = `mb-2 block text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`;
   const valueClass = `font-mono text-[12px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`;
@@ -43,6 +51,43 @@ export function WeatherPanel() {
     () => (forecast ? selectNext24Hours(forecast.hourly) : []),
     [forecast],
   );
+
+  useEffect(() => {
+    if (!location) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync reset for null location is intentional and cheap
+      setPlaceName(null);
+      return;
+    }
+    let cancelled = false;
+    reverseGeocode(location.lat, location.lon)
+      .then((h) => {
+        if (!cancelled) setPlaceName(h?.hierarchy ?? h?.displayName ?? location.label);
+      })
+      .catch(() => {
+        if (!cancelled) setPlaceName(location.label);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [location]);
+
+  const handleWeatherSelect = (place: GeocodedPlace) => {
+    setCenter([place.lon, place.lat]);
+    setZoom(10);
+    setWeatherQuery(place.displayName.split(',')[0] ?? '');
+  };
+
+  const handleMyLocation = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCenter([pos.coords.longitude, pos.coords.latitude]);
+        setZoom(10);
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
 
   const requestHistorical = () => {
     if (!historyDate) return;
@@ -60,9 +105,31 @@ export function WeatherPanel() {
       bubbleLabel="Weather"
       xlWide
     >
-      <div className="space-y-5">
+      <div className="space-y-4">
+        <div className="flex gap-2">
+          <div className="glass flex min-w-0 flex-1 items-center rounded-xl px-2 py-1.5">
+            <PlaceAutocomplete
+              value={weatherQuery}
+              onChange={setWeatherQuery}
+              onSelect={handleWeatherSelect}
+              placeholder="Search weather location"
+              ariaLabel="Search weather location"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleMyLocation}
+            title="Center map to my location"
+            aria-label="Use my location"
+            className={`flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-medium transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
+          >
+            <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="hidden sm:inline">My location</span>
+          </button>
+        </div>
+
         <div className="flex items-center justify-between">
-          <span className={metaClass}>{location ? `Map center · ${location.label}` : 'Locating…'}</span>
+          <span className={metaClass}>{location ? (placeName ?? location.label) : 'Locating…'}</span>
           {stale && <span className={metaClass}>cached</span>}
         </div>
 
@@ -75,15 +142,17 @@ export function WeatherPanel() {
         {current && (
           <section aria-label="Current conditions">
             <p className={labelClass}>Now</p>
-            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-              <div className="flex items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className={`text-[15px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+              <div className="flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className={`flex items-center gap-1.5 truncate text-[13px] font-medium ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
+                    <MapPin className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+                    <span className="truncate">{placeName ?? location?.label ?? '—'}</span>
+                  </p>
+                  <p className={`mt-1 truncate text-[15px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>
                     {current.temperatureC.toFixed(1)}°C · {describeWeatherCode(current.weatherCode)}
                   </p>
-                  <p className={`mt-1 ${valueClass}`}>
-                    Wind {current.windSpeedKmh.toFixed(0)} km/h · {current.isDay ? 'Day' : 'Night'}
-                  </p>
+                  <p className={`mt-0.5 ${valueClass}`}>Wind {current.windSpeedKmh.toFixed(0)} km/h · {current.isDay ? 'Day' : 'Night'}</p>
                 </div>
                 <div className="flex shrink-0 items-center self-center">
                   <WeatherVisual current={current} size={64} />
