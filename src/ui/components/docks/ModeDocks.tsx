@@ -265,7 +265,7 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     URL.revokeObjectURL(url);
   }, [measurePoints, measureMode, measureClosed]);
 
-  const toolbarContent = (
+  const toolbarTools = (
     <>
 <button
               onClick={() => setSnapToGrid(!snapToGrid)}
@@ -310,52 +310,6 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 </button>
               ))}
             </div>
-            {measureMode === 'distance' && measurePoints.length > 0 && (
-              <span className={`col-span-full px-2 py-1 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
-                {formatDistanceKilometers(measuredKm)}
-                {lastSegmentBearing ? ` · ${lastSegmentBearing}` : ''}
-              </span>
-            )}
-            {measureMode === 'area' && measurePoints.length > 0 && (
-              <span className={`col-span-full px-2 py-1 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
-                {measureClosed
-                  ? formatAreaSqMeters(measuredArea)
-                  : `${measurePoints.length} vertices — click the first point or Finish to close`}
-              </span>
-            )}
-            {measureMode === 'area' && measureActive && !measureClosed && measurePoints.length >= 3 && (
-              <button
-                type="button"
-                onClick={() => setMeasureClosed(true)}
-                title="Close the polygon and compute its area"
-                className={`rounded-xl px-3 py-2 text-[11px] font-medium transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-              >
-                Finish
-              </button>
-            )}
-            {measurePoints.length > 0 && (
-              <button
-                onClick={() => {
-                  clearMeasure();
-                  setMeasureActive(false);
-                }}
-                aria-label="Clear measurement"
-                title="Clear measurement"
-                className={`flex h-7 w-7 items-center justify-center rounded-lg transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-            {measurePoints.length > 0 && (
-              <button
-                type="button"
-                onClick={handleMeasureCsvExport}
-                title="Download measurement points and totals as CSV"
-                className={`rounded-xl px-3 py-2 font-mono text-[11px] transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-              >
-                CSV
-              </button>
-            )}
             <button
               onClick={() => setShowDatumViz(!showDatumViz)}
               aria-pressed={showDatumViz}
@@ -409,16 +363,73 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               <Printer className={`h-3.5 w-3.5 ${isExporting ? 'animate-pulse' : ''}`} />
               {isExporting ? (exportNote ?? 'Exporting…') : 'A0 export'}
             </button>
+    </>
+  );
+
+  // Measurement status: its own row above the tools when
+  // measuring (or when a note/link needs display).
+  const toolbarStatus = (
+    <>
+            {measureMode === 'distance' && measurePoints.length > 0 && (
+              <span className={`px-2 py-1 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
+                {formatDistanceKilometers(measuredKm)}
+                {lastSegmentBearing ? ` · ${lastSegmentBearing}` : ''}
+              </span>
+            )}
+            {measureMode === 'area' && measurePoints.length > 0 && (
+              <span className={`px-2 py-1 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
+                {measureClosed
+                  ? formatAreaSqMeters(measuredArea)
+                  : `${measurePoints.length} vertices — click the first point or Finish to close`}
+              </span>
+            )}
+            {measureMode === 'area' && measureActive && !measureClosed && measurePoints.length >= 3 && (
+              <button
+                type="button"
+                onClick={() => setMeasureClosed(true)}
+                title="Close the polygon and compute its area"
+                className={`rounded-xl px-3 py-2 text-[11px] font-medium transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+              >
+                Finish
+              </button>
+            )}
+            {measurePoints.length > 0 && (
+              <button
+                onClick={() => {
+                  clearMeasure();
+                  setMeasureActive(false);
+                }}
+                aria-label="Clear measurement"
+                title="Clear measurement"
+                className={`flex h-7 w-7 items-center justify-center rounded-lg transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {measurePoints.length > 0 && (
+              <button
+                type="button"
+                onClick={handleMeasureCsvExport}
+                title="Download measurement points and totals as CSV"
+                className={`rounded-xl px-3 py-2 font-mono text-[11px] transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+              >
+                CSV
+              </button>
+            )}
             {exportNote && !isExporting && (
-              <span className={`col-span-full px-3 py-1 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{exportNote}</span>
+              <span className={`px-3 py-1 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{exportNote}</span>
             )}
             {shareUrl && !shareCopied && (
-              <span className={`col-span-full truncate px-2 py-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`} title={shareUrl}>
+              <span className={`truncate px-2 py-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`} title={shareUrl}>
                 {shareUrl.slice(0, 50)}…
               </span>
             )}
     </>
   );
+
+  // Status row shows only while there is something to report.
+  const hasStatus =
+    measurePoints.length > 0 || !!(exportNote && !isExporting) || !!(shareUrl && !shareCopied);
 
   return (
     <>
@@ -509,21 +520,32 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 </button>
               ) : null}
               {/* Probe (always measurable, never interactive) + visible
-                  row (original wrapping layout). Visibility is phased
-                  around the width animation so height never spikes. */}
+                  rows. Status sits above the tools; the tools stay one
+                  single row. Visibility is phased around the width
+                  animation so height never spikes. */}
               <div
                 ref={rowRef}
                 aria-hidden="true"
                 inert
-                className={`invisible pointer-events-none absolute inset-x-0 top-1/2 grid w-max -translate-y-1/2 grid-cols-4 items-center gap-1 overflow-hidden px-2 ${left ? 'pe-10' : 'ps-10'}`}
+                className={`invisible pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col items-center gap-1 overflow-hidden px-2 ${left ? 'pe-10' : 'ps-10'}`}
               >
-
-            {toolbarContent}
+                <div className="flex flex-nowrap items-center gap-1">
+            {toolbarStatus}
+                </div>
+                <div className="flex flex-nowrap items-center gap-1">
+            {toolbarTools}
+                </div>
               </div>
               {rowVisible ? (
-                <div className={`grid max-w-[85vw] grid-cols-4 items-center gap-1 overflow-y-auto px-2 py-1 ${left ? 'pe-10' : 'ps-10'} [&>button]:justify-center`}>
-
-            {toolbarContent}
+                <div className={`flex max-w-[85vw] flex-col items-center gap-1 overflow-y-auto px-2 py-1 ${left ? 'pe-10' : 'ps-10'}`}>
+                  {hasStatus ? (
+                    <div className="flex flex-wrap items-center justify-center gap-1">
+            {toolbarStatus}
+                    </div>
+                  ) : null}
+                  <div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">
+            {toolbarTools}
+                  </div>
                 </div>
               ) : null}
               {/* Collapse control on the outer edge side — opposite the
