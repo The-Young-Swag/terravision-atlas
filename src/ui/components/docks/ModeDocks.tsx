@@ -267,19 +267,6 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
 
   const toolbarContent = (
     <>
-            {/* Collapse toward the docked edge — chevron points at the edge,
-                centered on its own row at the top, opposite the bottom. */}
-            <div className="flex w-full justify-center">
-              <button
-                type="button"
-                onClick={toggleCollapsed}
-                title="Collapse toolbar"
-                aria-label="Collapse toolbar"
-                className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-              >
-                {left ? <ChevronsLeft className="h-3.5 w-3.5" aria-hidden /> : <ChevronsRight className="h-3.5 w-3.5" aria-hidden />}
-              </button>
-            </div>
 <button
               onClick={() => setSnapToGrid(!snapToGrid)}
               aria-pressed={snapToGrid}
@@ -541,16 +528,29 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 ref={rowRef}
                 aria-hidden="true"
                 inert
-                className="invisible pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-nowrap items-center gap-1 overflow-hidden px-2"
+                className={`invisible pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-nowrap items-center gap-1 overflow-hidden px-2 ${left ? 'pe-10' : 'ps-10'}`}
               >
 
             {toolbarContent}
               </div>
               {rowVisible ? (
-                <div className="flex max-w-[85vw] flex-wrap items-center justify-center gap-1 overflow-y-auto px-2 py-1">
+                <div className={`flex max-w-[85vw] flex-wrap items-center justify-center gap-1 overflow-y-auto px-2 py-1 ${left ? 'pe-10' : 'ps-10'}`}>
 
             {toolbarContent}
                 </div>
+              ) : null}
+              {/* Collapse control on the outer edge side — opposite the
+                  drag separator — vertically centered like the handle. */}
+              {rowVisible ? (
+                <button
+                  type="button"
+                  onClick={toggleCollapsed}
+                  title="Collapse toolbar"
+                  aria-label="Collapse toolbar"
+                  className={`absolute top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg transition hover:bg-white/10 ${left ? 'right-1' : 'left-1'} ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+                >
+                  {left ? <ChevronsLeft className="h-3.5 w-3.5" aria-hidden /> : <ChevronsRight className="h-3.5 w-3.5" aria-hidden />}
+                </button>
               ) : null}
 
           </motion.div>
