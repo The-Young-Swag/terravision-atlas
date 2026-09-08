@@ -283,7 +283,7 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
           Precip mm
         </span>
       </div>
-      <div className="h-[240px] w-full">
+      <div className="h-[240px] w-full min-w-0 max-w-full overflow-hidden">
         <canvas ref={canvasRef} aria-label={label} role="img" />
       </div>
     </div>
