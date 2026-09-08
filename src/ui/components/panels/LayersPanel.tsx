@@ -134,7 +134,7 @@ export function LayersPanel() {
                 aria-pressed={isActive}
                 className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${isActive ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4]/10 text-slate-900' : 'border-[#5500a4] bg-[#5500a4]/10 text-white') : isBrightBasemap ? 'border-white/10 bg-white/[0.04] text-slate-800 hover:text-slate-900' : 'border-white/10 bg-white/[0.04] text-slate-300 hover:text-white'}`}
               >
-                <BasemapIcon basemap={option.id} isActive={isActive} size={32} />
+                <BasemapIcon basemap={option.id} size={32} />
                 <span className="flex-1">
                   <span className={`block text-[13px] font-medium leading-none ${isActive ? 'text-[#10B981]' : isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>{option.label}</span>
                   <span className={`block text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>{option.desc}</span>
