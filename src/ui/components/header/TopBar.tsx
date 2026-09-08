@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings2, Fuel, Compass, BookOpen, Box } from 'lucide-react';
+import { Settings2, Fuel, BookOpen, Box } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
@@ -96,7 +96,13 @@ export function TopBar({
           child can shrink (min-w-0) so nothing overflows 375px. */}
       <header className="absolute inset-x-3 top-3 z-20 flex items-center gap-1.5 md:inset-x-4 md:top-4 md:gap-3">
         <div className="glass-strong flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 md:gap-2.5 md:rounded-2xl md:px-4 md:py-2.5">
-          <Compass className="h-4 w-4 shrink-0 text-[#5500a4] md:h-5 md:w-5" aria-hidden />
+          <img
+            src="/assets/icons/terravision-atlas.png"
+            alt="TerraVision Atlas"
+            className="h-5 w-5 shrink-0 object-contain md:h-6 md:w-6"
+            width={24}
+            height={24}
+          />
           <span className={`shrink-0 text-[13px] font-semibold tracking-tight md:text-[15px] ${isBrightBasemap ? 'text-slate-900' : 'text-slate-100'}`}>TerraVision</span>
           <span className={`hidden shrink-0 text-[10px] font-medium tracking-widest sm:inline md:text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-400'}`}>ATLAS</span>
         </div>
