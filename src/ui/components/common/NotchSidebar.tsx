@@ -223,19 +223,23 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
         expanded ? (left ? 'rounded-r-[20px]' : 'rounded-l-[20px]') : left ? 'rounded-r-[22px]' : 'rounded-l-[22px]'
       } ${dragging ? 'transition-none' : 'transition-[width,border-radius] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)]'}`}
     >
-      {/* Drag handle lives in its own reserved gutter on the
-          edge-facing side (rows container pads clear of it), so it
-          never overlaps the icon column in either docked side. */}
+      {/* Drag handle: a slim full-height strip on the edge-facing side
+          with its own reserved gutter (rows pad clear of it), so it
+          reads as part of the frame and never overlaps the icons. */}
       <div
         role="separator"
         aria-label={`Drag to dock ${left ? 'right' : 'left'}`}
         title="Drag to dock left or right"
-        className={`absolute top-1/2 z-10 flex h-11 w-[10px] -translate-y-1/2 cursor-grab touch-none items-center justify-center active:cursor-grabbing ${left ? 'left-0' : 'right-0'}`}
+        className={`absolute inset-y-0 z-10 flex w-[8px] cursor-grab touch-none items-center justify-center bg-white/[0.04] transition-colors hover:bg-white/10 active:cursor-grabbing ${left ? 'left-0' : 'right-0'}`}
         {...dragHandleProps}
       >
-        <span className="h-6 w-[2px] rounded-full bg-white/25" aria-hidden />
+        <span className="flex flex-col items-center gap-1" aria-hidden>
+          <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
+          <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
+          <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
+        </span>
       </div>
-      <div className={`custom-scrollbar flex flex-col gap-0.5 overflow-y-auto py-2 ${left ? 'pl-2.5' : 'pr-2.5'}`}>
+      <div className={`custom-scrollbar flex flex-col gap-0.5 divide-y divide-white/[0.06] overflow-y-auto py-2 ${left ? 'pl-2 pr-1' : 'pl-1 pr-2'}`}>
         <AnimatePresence initial={false}>
           {visibleRows.map((row) => {
             const Icon = row.icon;
@@ -251,7 +255,7 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
                 onClick={() => openRow(row)}
                 title={`Open ${row.label}`}
                 aria-label={`Open ${row.label}`}
-                className="flex h-12 w-full shrink-0 items-center overflow-hidden px-2 text-left transition-colors hover:bg-white/5"
+                className={`flex h-12 w-full shrink-0 items-center overflow-hidden px-2 text-left transition-colors hover:bg-white/5 ${expanded ? '' : 'justify-center'}`}
               >
                 <span
                   className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]"

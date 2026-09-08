@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useLayoutEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Grid2x2, Ruler, X, Move3d, Printer, Satellite, Link2, Copy, MapPin, ChevronsLeft, ChevronsRight, Telescope } from 'lucide-react';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
@@ -115,6 +115,31 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     } catch {
       // persistence is a nicety
     }
+  }, []);
+
+  // Fixed container height (equal in both states) plus a measured
+  // expanded width: the row is always mounted (invisible + absolute
+  // when collapsed, so it stays measurable) and never wraps, so the
+  // width animation can never push the height around mid-transition.
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [expandedWidth, setExpandedWidth] = useState(560);
+  // Re-measure whenever the row's content size changes (new points,
+  // mode switches, GPS/share states) so the width animation always
+  // targets the true content width.
+  useLayoutEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+    const measure = () => {
+      const capped = Math.min(
+        Math.ceil(el.scrollWidth) + 16,
+        Math.floor(window.innerWidth * 0.85),
+      );
+      setExpandedWidth((prev) => (prev === capped ? prev : capped));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   const handleA0Export = async () => {
@@ -267,21 +292,20 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
             <motion.div
               ref={containerRef}
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1, width: collapsed ? 52 : 'auto' }}
+              animate={{ opacity: 1, width: collapsed ? 52 : expandedWidth }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.26, ease: [0.32, 0.72, 0, 1] }}
               style={{ top: `calc(50% + ${yOffset}px)` }}
-              className={`glass-strong fixed z-30 flex max-h-[70vh] -translate-y-1/2 flex-col items-center justify-center overflow-hidden py-2 ${left ? 'left-0 rounded-l-none pl-3 pr-1.5' : 'right-0 rounded-r-none pl-1.5 pr-3'} ${collapsed ? (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : left ? 'rounded-r-[20px]' : 'rounded-l-[20px]'}`}
+              className={`glass-strong fixed z-30 flex h-16 -translate-y-1/2 flex-col items-center justify-center overflow-hidden ${left ? 'left-0 rounded-l-none pl-2 pr-1.5' : 'right-0 rounded-r-none pl-1.5 pr-2'} ${collapsed ? (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : left ? 'rounded-r-[20px]' : 'rounded-l-[20px]'}`}
             >
-              {/* Drag handle: horizontal position snaps to the nearest
-                  edge on release (shared hook); vertical position slides
-                  along the edge and clamps to the viewport. Both axes
-                  work in collapsed and expanded states. */}
+              {/* Drag handle: slim full-height strip on the edge-facing
+                  side with a reserved gutter, matching the notch
+                  sidebar — never overlaps content in either state. */}
               <div
                 role="separator"
                 aria-label={`Drag to dock ${left ? 'right' : 'left'} or slide vertically`}
                 title="Drag to dock left/right or slide up/down"
-                className={`absolute top-1/2 z-10 flex h-11 w-[10px] -translate-y-1/2 cursor-grab touch-none items-center justify-center active:cursor-grabbing ${left ? 'left-0' : 'right-0'}`}
+                className={`absolute inset-y-0 z-10 flex w-[8px] cursor-grab touch-none items-center justify-center bg-white/[0.04] transition-colors hover:bg-white/10 active:cursor-grabbing ${left ? 'left-0' : 'right-0'}`}
                 {...dragHandleProps}
                 onPointerDown={(e) => {
                   dragHandleProps.onPointerDown(e);
@@ -306,7 +330,11 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                   slideStartRef.current = null;
                 }}
               >
-                <span className="h-6 w-[2px] rounded-full bg-white/25" aria-hidden />
+                <span className="flex flex-col items-center gap-1" aria-hidden>
+                  <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
+                  <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
+                  <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
+                </span>
               </div>
               {collapsed ? (
                 <button
@@ -321,8 +349,15 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                       icon exists there) — no new dependency. */}
                   <Telescope className="h-5 w-5" aria-hidden />
                 </button>
-              ) : (
-                <div className="flex max-w-[85vw] flex-wrap items-center justify-center gap-1 overflow-y-auto px-2 py-1">
+              ) : null}
+              {/* The row stays mounted in both states (invisible + out of
+                  flow when collapsed) so the expanded width is always
+                  measurable and the height never reflows mid-animation. */}
+              <div
+                ref={rowRef}
+                className={`flex-nowrap items-center gap-1 px-2 ${collapsed ? 'invisible pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 overflow-hidden' : 'flex overflow-x-auto'}`}
+                aria-hidden={collapsed || undefined}
+              >
             <button
               onClick={() => setSnapToGrid(!snapToGrid)}
               aria-pressed={snapToGrid}
@@ -479,12 +514,12 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               onClick={toggleCollapsed}
               title="Collapse toolbar to a single icon"
               aria-label="Collapse toolbar"
-              className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+              tabIndex={collapsed ? -1 : undefined}
+              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
             >
               {left ? <ChevronsLeft className="h-3.5 w-3.5" aria-hidden /> : <ChevronsRight className="h-3.5 w-3.5" aria-hidden />}
             </button>
-                </div>
-              )}
+              </div>
           </motion.div>
           </>
         )}

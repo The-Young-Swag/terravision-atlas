@@ -201,11 +201,12 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
             ticks: {
               color: tickColor,
               font: { family: 'IBM Plex Mono', size: 10 },
-              // Multi-day: labels exist only at day boundaries, so show
-              // them all (no auto-skip hiding a day). Single-day hourly:
-              // auto-skip down to a readable density.
-              maxTicksLimit: multiDay ? undefined : 8,
+              // Multi-day: exactly 7 day labels exist, so show them all
+              // (auto-skip could silently drop a whole day). Single-day
+              // hourly: cap + pad the density so labels never collide.
+              maxTicksLimit: multiDay ? 7 : 6,
               autoSkip: !multiDay,
+              autoSkipPadding: 16,
               maxRotation: 0,
               padding: 10,
             },
