@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
@@ -28,6 +28,17 @@ interface NotchSidebarProps {
 
 const PIN_STORAGE_KEY = 'terravision.notch.pinned';
 const DOCK_STORAGE_KEY = 'terravision.notch.dock';
+const NOTCH_Y_KEY = 'terravision.notch.y';
+const SLIDE_EDGE_MARGIN = 8;
+
+function readNotchYOffset(): number {
+  try {
+    const raw = Number(localStorage.getItem(NOTCH_Y_KEY));
+    return Number.isFinite(raw) ? raw : -40;
+  } catch {
+    return -40;
+  }
+}
 
 function readPinned(): boolean {
   try {
@@ -74,6 +85,23 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
     dockKey: DOCK_STORAGE_KEY,
     defaultSide: 'left',
   });
+  const [yOffset, setYOffset] = useState(readNotchYOffset);
+  const containerRef = useRef<HTMLElement>(null);
+  const slideStartRef = useRef<{ pointerY: number; offset: number } | null>(null);
+
+  const clampYOffset = useCallback((value: number) => {
+    const height = containerRef.current?.offsetHeight ?? 0;
+    const maxTravel = Math.max(0, (window.innerHeight - height) / 2 - SLIDE_EDGE_MARGIN);
+    return Math.min(maxTravel, Math.max(-maxTravel, value));
+  }, []);
+
+  const persistYOffset = useCallback((value: number) => {
+    try {
+      localStorage.setItem(NOTCH_Y_KEY, String(Math.round(value)));
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
 
   const basemap = useMapStore((s) => s.basemap);
   const viewMode = useMapStore((s) => s.viewMode);
@@ -214,6 +242,7 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
         className={`pointer-events-none fixed bottom-0 right-0 top-0 z-40 w-16 transition-opacity duration-150 ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'right' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
       />
     <nav
+      ref={containerRef as unknown as React.RefObject<HTMLElement>}
       aria-label="Panel access"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -228,21 +257,42 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
           }
         }
       }}
-      className={`glass fixed top-1/2 z-30 flex max-h-[70vh] -translate-y-1/2 flex-col overflow-hidden ${
+      style={{ top: `calc(50% + ${yOffset}px)` }}
+      className={`glass fixed z-30 flex max-h-[70vh] -translate-y-1/2 flex-col overflow-hidden ${
         expanded ? 'w-[296px] max-w-[90vw]' : 'w-[52px]'
       } ${left ? 'notch-dock-left left-0 rounded-l-none' : 'notch-dock-right right-0 rounded-r-none'} ${
         expanded ? (left ? 'rounded-r-[20px]' : 'rounded-l-[20px]') : left ? 'rounded-r-[22px]' : 'rounded-l-[22px]'
       } ${dragging ? 'transition-none' : 'transition-[width,border-radius] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]'}`}
     >
-      {/* Drag handle: a slim full-height strip on the edge-facing side
-          with its own reserved gutter (rows pad clear of it), so it
-          reads as part of the frame and never overlaps the icons. */}
+      {/* Drag handle: slim strip on edge side; supports dock left/right and vertical slide */}
       <div
         role="separator"
-        aria-label={`Drag to dock ${left ? 'right' : 'left'}`}
-        title="Drag to dock left or right"
+        aria-label={`Drag to dock ${left ? 'right' : 'left'} or slide vertically`}
+        title="Drag to dock left/right or slide up/down"
         className={`absolute inset-y-0 z-10 flex w-[8px] cursor-grab touch-none items-center justify-center bg-white/[0.04] transition-colors hover:bg-white/10 active:cursor-grabbing ${left ? 'left-0' : 'right-0'}`}
         {...dragHandleProps}
+        onPointerDown={(e) => {
+          dragHandleProps.onPointerDown(e);
+          slideStartRef.current = { pointerY: e.clientY, offset: yOffset };
+        }}
+        onPointerMove={(e) => {
+          dragHandleProps.onPointerMove(e);
+          const start = slideStartRef.current;
+          if (start) setYOffset(clampYOffset(start.offset + (e.clientY - start.pointerY)));
+        }}
+        onPointerUp={(e) => {
+          dragHandleProps.onPointerUp(e);
+          slideStartRef.current = null;
+          setYOffset((prev) => {
+            const clamped = clampYOffset(prev);
+            persistYOffset(clamped);
+            return clamped;
+          });
+        }}
+        onPointerCancel={() => {
+          dragHandleProps.onPointerCancel();
+          slideStartRef.current = null;
+        }}
       >
         <span className="flex flex-col items-center gap-1" aria-hidden>
           <span className="h-[3px] w-[3px] rounded-full bg-white/30" />

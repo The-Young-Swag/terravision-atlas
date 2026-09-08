@@ -27,10 +27,12 @@ function readToolbarCollapsed(): boolean {
 
 function readToolbarYOffset(): number {
   try {
-    const raw = Number(localStorage.getItem(SURVEY_Y_KEY));
-    return Number.isFinite(raw) ? raw : 0;
+    const raw = localStorage.getItem(SURVEY_Y_KEY);
+    if (raw === null) return -40;
+    const num = Number(raw);
+    return Number.isFinite(num) ? num : -40;
   } catch {
-    return 0;
+    return -40;
   }
 }
 
