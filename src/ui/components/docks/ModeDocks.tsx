@@ -423,19 +423,6 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
   return (
     <>
       <AnimatePresence>
-        {activeMode === 'monitor' && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            className="glass-strong absolute bottom-20 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-2xl px-2 py-2"
-          >
-            <span className={`px-3 py-2 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>Evacuation tools ready — shelter data is community-sourced, coverage varies</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
         {activeMode === 'survey' && (
           <>
             {/* Snap-zone indicators while dragging — same zones, same
