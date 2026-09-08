@@ -221,7 +221,7 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
         expanded ? 'w-[296px]' : 'w-[52px]'
       } ${left ? 'notch-dock-left left-0 rounded-l-none' : 'notch-dock-right right-0 rounded-r-none'} ${
         expanded ? (left ? 'rounded-r-[20px]' : 'rounded-l-[20px]') : left ? 'rounded-r-[22px]' : 'rounded-l-[22px]'
-      } ${dragging ? 'transition-none' : 'transition-[width,border-radius] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)]'}`}
+      } ${dragging ? 'transition-none' : 'transition-[width,border-radius] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]'}`}
     >
       {/* Drag handle: a slim full-height strip on the edge-facing side
           with its own reserved gutter (rows pad clear of it), so it
@@ -251,7 +251,7 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 48 }}
                 exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.26, ease: [0.32, 0.72, 0, 1] }}
+                transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
                 onClick={() => openRow(row)}
                 title={`Open ${row.label}`}
                 aria-label={`Open ${row.label}`}
@@ -266,14 +266,14 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
                     <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-[#0D1B2A] bg-[#ff4d4d]" aria-hidden />
                   )}
                 </span>
-                {expanded && (
-                  <span className="ml-3 flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-                    <span className="truncate text-[13px] font-medium leading-tight text-slate-100">{row.label}</span>
-                    <span className="truncate text-[11.5px] leading-tight text-slate-400">{row.preview}</span>
-                  </span>
-                )}
-                {expanded && row.count !== null && (
-                  <span className="ml-2 shrink-0 rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-slate-300">
+                {/* Row text crossfades with the width animation instead
+                    of popping in/out, so expansion reads as one motion. */}
+                <span className={`${expanded ? 'ml-3 max-w-[220px] opacity-100' : 'ml-0 max-w-0 opacity-0'} flex min-w-0 flex-1 flex-col justify-center overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]`}>
+                  <span className="truncate text-[13px] font-medium leading-tight text-slate-100">{row.label}</span>
+                  <span className="truncate text-[11.5px] leading-tight text-slate-400">{row.preview}</span>
+                </span>
+                {row.count !== null && (
+                  <span className={`${expanded ? 'ml-2 max-w-[80px] opacity-100' : 'ml-0 max-w-0 opacity-0'} shrink-0 overflow-hidden whitespace-nowrap rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-slate-300 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]`}>
                     {row.count}
                   </span>
                 )}
