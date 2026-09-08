@@ -298,7 +298,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
   };
 
   return (
-    <div ref={boxRef} className="relative flex flex-1 items-center gap-2.5">
+    <div ref={boxRef} className="relative flex min-w-0 flex-1 items-center gap-2">
       <Search className={`h-4 w-4 shrink-0 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`} aria-hidden />
       <input
         value={value}
@@ -310,7 +310,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
         onFocus={() => {
           if (suggestions.length > 0) openDropdown();
         }}
-        className={`flex-1 bg-transparent text-[13.5px] focus:outline-none ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-400'}`}
+        className={`min-w-0 flex-1 bg-transparent text-[13.5px] focus:outline-none ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-400'}`}
         placeholder={placeholder ?? 'Search places'}
         aria-label={ariaLabel ?? 'Search places'}
         role="combobox"

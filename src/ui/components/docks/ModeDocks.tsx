@@ -232,102 +232,108 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
 
   const toolbarTools = (
     <>
-<button
-              onClick={() => setSnapToGrid(!snapToGrid)}
-              aria-pressed={snapToGrid}
-              title="Snap to the UTM 51N meter grid — map center and measure points (2D and Vector maps)"
-              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${snapToGrid ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-            >
-              <Grid2x2 className="h-3.5 w-3.5" />
-              Snap to grid
-            </button>
-            <button
-              onClick={() => {
-                if (measureActive) {
-                  setMeasureActive(false);
-                  clearMeasure();
-                } else {
-                  setMeasureActive(true);
-                }
-              }}
-              aria-pressed={measureActive}
-              title={
-                measureMode === 'area'
-                  ? 'Measure geodesic area: click vertices, then click the first point or Finish to close (Esc exits)'
-                  : 'Measure geodesic distance: keep clicking to add segments (Esc exits)'
-              }
-              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${measureActive ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-            >
-              <Ruler className="h-3.5 w-3.5" />
-              Measure geodesic
-            </button>
-            <div className="flex rounded-xl bg-white/[0.04] p-1 text-[11px]" role="group" aria-label="Measure mode">
-              {(['distance', 'area'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setMeasureMode(mode)}
-                  aria-pressed={measureMode === mode}
-                  title={mode === 'distance' ? 'Path distance across all segments' : 'Enclosed polygon area'}
-                  className={`rounded-lg px-2.5 py-1.5 capitalize transition ${measureMode === mode ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setShowDatumViz(!showDatumViz)}
-              aria-pressed={showDatumViz}
-              title="Show the datum shift visualization panel"
-              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${showDatumViz ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-            >
-              <Move3d className="h-3.5 w-3.5" />
-              Datum shift viz
-            </button>
-            {/* Live GPS tracking — uses browser Geolocation API (free, no key) */}
-            <button
-              onClick={() => setGpsTracking(!gpsTracking)}
-              aria-pressed={gpsTracking}
-              disabled={gpsError !== null && !gpsTracking}
-              title={gpsTracking
-                ? `Live GPS tracking active — accuracy ${gpsAccuracy ? `${Math.round(gpsAccuracy)}m` : '?'} — click to stop`
-                : gpsError
-                  ? `GPS error: ${gpsError} — click to retry`
-                  : 'Start live GPS tracking (uses device location)'}
-              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${gpsTracking ? 'bg-[#00d890]/20 text-[#00d890] border border-[#00d890]/30' : gpsError ? 'text-[#E63946] hover:text-[#E63946]' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-            >
-              <Satellite className="h-3.5 w-3.5" />
-              {gpsTracking ? 'GPS live' : gpsError ? 'GPS error' : 'Live GPS'}
-            </button>
-            {/* Shareable session link */}
-            <button
-              onClick={handleShareClick}
-              aria-label={shareCopied ? 'Copied!' : 'Copy shareable survey session link'}
-              title={shareCopied ? 'Link copied to clipboard' : 'Copy a link that restores this survey session (view, measurements, tools)'}
-              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${shareCopied ? 'bg-[#00d890]/20 text-[#00d890] border border-[#00d890]/30' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-            >
-              <Link2 className="h-3.5 w-3.5" />
-              {shareCopied ? <Copy className="h-3.5 w-3.5" /> : 'Share session'}
-            </button>
-            {/* New session button */}
-            <button
-              onClick={handleNewSession}
-              aria-label="Start new survey session"
-              title="Clear all measurements and generate a new session ID"
-              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-            >
-              <MapPin className="h-3.5 w-3.5" />
-              New session
-            </button>
-            <button
-              onClick={() => void handleA0Export()}
-              disabled={isExporting}
-              title="Download the current 2D view as an A0-size PNG (2D Map view only)"
-              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition disabled:opacity-60 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-            >
-              <Printer className={`h-3.5 w-3.5 ${isExporting ? 'animate-pulse' : ''}`} />
-              {isExporting ? (exportNote ?? 'Exporting…') : 'A0 export'}
-            </button>
+      <button
+        onClick={() => setSnapToGrid(!snapToGrid)}
+        aria-pressed={snapToGrid}
+        title="Snap to the UTM 51N meter grid — map center and measure points (2D and Vector maps)"
+        className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition max-md:w-full max-md:justify-center ${snapToGrid ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+      >
+        <Grid2x2 className="h-3.5 w-3.5 shrink-0" />
+        Snap to grid
+      </button>
+      <button
+        onClick={() => {
+          if (measureActive) {
+            setMeasureActive(false);
+            clearMeasure();
+          } else {
+            setMeasureActive(true);
+          }
+        }}
+        aria-pressed={measureActive}
+        title={
+          measureMode === 'area'
+            ? 'Measure geodesic area: click vertices, then click the first point or Finish to close (Esc exits)'
+            : 'Measure geodesic distance: keep clicking to add segments (Esc exits)'
+        }
+        className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition max-md:w-full max-md:justify-center ${measureActive ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+      >
+        <Ruler className="h-3.5 w-3.5 shrink-0" />
+        Measure geodesic
+      </button>
+      <div
+        className="flex rounded-xl bg-white/[0.04] p-1 text-[11px] max-md:col-span-2 max-md:w-full max-md:justify-center md:justify-center"
+        role="group"
+        aria-label="Measure mode"
+      >
+        {(['distance', 'area'] as const).map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => setMeasureMode(mode)}
+            aria-pressed={measureMode === mode}
+            title={mode === 'distance' ? 'Path distance across all segments' : 'Enclosed polygon area'}
+            className={`flex-1 rounded-lg px-2.5 py-1.5 capitalize transition max-md:flex-1 ${measureMode === mode ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+          >
+            {mode}
+          </button>
+        ))}
+      </div>
+      <button
+        onClick={() => setShowDatumViz(!showDatumViz)}
+        aria-pressed={showDatumViz}
+        title="Show the datum shift visualization panel"
+        className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition max-md:w-full max-md:justify-center ${showDatumViz ? 'bg-[#5500a4] text-white' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+      >
+        <Move3d className="h-3.5 w-3.5 shrink-0" />
+        Datum shift viz
+      </button>
+      {/* Live GPS tracking — uses browser Geolocation API (free, no key) */}
+      <button
+        onClick={() => setGpsTracking(!gpsTracking)}
+        aria-pressed={gpsTracking}
+        disabled={gpsError !== null && !gpsTracking}
+        title={
+          gpsTracking
+            ? `Live GPS tracking active — accuracy ${gpsAccuracy ? `${Math.round(gpsAccuracy)}m` : '?'} — click to stop`
+            : gpsError
+              ? `GPS error: ${gpsError} — click to retry`
+              : 'Start live GPS tracking (uses device location)'
+        }
+        className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition max-md:w-full max-md:justify-center ${gpsTracking ? 'bg-[#00d890]/20 text-[#00d890] border border-[#00d890]/30' : gpsError ? 'text-[#E63946] hover:text-[#E63946]' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+      >
+        <Satellite className="h-3.5 w-3.5 shrink-0" />
+        {gpsTracking ? 'GPS live' : gpsError ? 'GPS error' : 'Live GPS'}
+      </button>
+      {/* Shareable session link */}
+      <button
+        onClick={handleShareClick}
+        aria-label={shareCopied ? 'Copied!' : 'Copy shareable survey session link'}
+        title={shareCopied ? 'Link copied to clipboard' : 'Copy a link that restores this survey session (view, measurements, tools)'}
+        className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition max-md:w-full max-md:justify-center ${shareCopied ? 'bg-[#00d890]/20 text-[#00d890] border border-[#00d890]/30' : isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+      >
+        <Link2 className="h-3.5 w-3.5 shrink-0" />
+        {shareCopied ? <Copy className="h-3.5 w-3.5" /> : 'Share session'}
+      </button>
+      {/* New session button */}
+      <button
+        onClick={handleNewSession}
+        aria-label="Start new survey session"
+        title="Clear all measurements and generate a new session ID"
+        className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition max-md:w-full max-md:justify-center ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+      >
+        <MapPin className="h-3.5 w-3.5 shrink-0" />
+        New session
+      </button>
+      <button
+        onClick={() => void handleA0Export()}
+        disabled={isExporting}
+        title="Download the current 2D view as an A0-size PNG (2D Map view only)"
+        className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium transition disabled:opacity-60 max-md:w-full max-md:justify-center ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+      >
+        <Printer className={`h-3.5 w-3.5 shrink-0 ${isExporting ? 'animate-pulse' : ''}`} />
+        {isExporting ? (exportNote ?? 'Exporting…') : 'A0 export'}
+      </button>
     </>
   );
 
@@ -424,7 +430,12 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
               style={{ top: `calc(50% + ${yOffset}px)` }}
-              className={`glass-strong fixed z-30 flex max-h-[70vh] -translate-y-1/2 flex-col items-center justify-center overflow-hidden py-2 ${left ? 'left-0 rounded-l-none pl-2 pr-1.5' : 'right-0 rounded-r-none pl-1.5 pr-2'} ${collapsed ? 'w-[52px] ' + (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : 'w-max max-w-[85vw] ' + (left ? 'rounded-r-[20px]' : 'rounded-l-[20px]')}`}
+              className={`glass-strong fixed z-30 flex max-h-[min(70vh,calc(100dvh-8rem))] -translate-y-1/2 flex-col items-center justify-center overflow-hidden py-2 max-md:max-h-[min(60vh,calc(100dvh-10rem))] ${left ? 'left-0 rounded-l-none pl-2 pr-1.5' : 'right-0 rounded-r-none pl-1.5 pr-2'} ${
+                collapsed
+                  ? 'w-[52px] ' + (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]')
+                  : 'w-max max-w-[85vw] max-md:fixed max-md:inset-x-3 max-md:w-auto max-md:rounded-2xl ' +
+                    (left ? 'rounded-r-[20px] md:rounded-r-[20px]' : 'rounded-l-[20px] md:rounded-l-[20px]')
+              }`}
             >
               {/* Drag handle: slim full-height strip on the edge-facing
                   side with a reserved gutter, matching the notch
@@ -480,28 +491,26 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               ) : null}
               {!collapsed ? (
                 <>
-                  <div className={`flex max-w-[85vw] flex-wrap items-center justify-center gap-1 overflow-y-auto px-2 py-1 ${left ? 'pe-10' : 'ps-10'}`}>
-            {toolbarTools}
+                  {/* Mobile: 2-col grid for symmetry; desktop: flex-wrap centered */}
+                  <div className="grid max-h-[40vh] w-full max-w-[85vw] grid-cols-2 gap-1.5 overflow-y-auto px-8 py-2 max-md:max-w-[85vw] md:flex md:max-w-[85vw] md:flex-wrap md:items-center md:justify-center md:gap-1 md:px-2 md:py-1">
+                    {toolbarTools}
                   </div>
                   {hasStatus ? (
-                    <div className="flex flex-wrap items-center justify-center gap-1 px-2">
-            {toolbarStatus}
+                    <div className="flex w-full flex-wrap items-center justify-center gap-1 px-3 pt-1">
+                      {toolbarStatus}
                     </div>
                   ) : null}
+                  {/* Collapse control — below tools on mobile (symmetric), edge on desktop */}
+                  <button
+                    type="button"
+                    onClick={toggleCollapsed}
+                    title="Collapse toolbar"
+                    aria-label="Collapse toolbar"
+                    className={`mt-2 flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 md:absolute md:top-1/2 md:mt-0 md:-translate-y-1/2 ${left ? 'md:right-1' : 'md:left-1'} ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+                  >
+                    {left ? <ChevronsLeft className="h-3.5 w-3.5" aria-hidden /> : <ChevronsRight className="h-3.5 w-3.5" aria-hidden />}
+                  </button>
                 </>
-              ) : null}
-              {/* Collapse control on the outer edge side — opposite the
-                  drag separator — vertically centered like the handle. */}
-              {!collapsed ? (
-                <button
-                  type="button"
-                  onClick={toggleCollapsed}
-                  title="Collapse toolbar"
-                  aria-label="Collapse toolbar"
-                  className={`absolute top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg transition hover:bg-white/10 ${left ? 'right-1' : 'left-1'} ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
-                >
-                  {left ? <ChevronsLeft className="h-3.5 w-3.5" aria-hidden /> : <ChevronsRight className="h-3.5 w-3.5" aria-hidden />}
-                </button>
               ) : null}
 
           </motion.div>

@@ -92,15 +92,16 @@ export function TopBar({
 
   return (
     <>
-      {/* Top bar */}
-      <header className="absolute left-4 right-4 top-4 z-20 flex items-center gap-3">
-        <div className="glass-strong flex shrink-0 items-center gap-2.5 rounded-2xl px-4 py-2.5">
-          <Compass className="h-5 w-5 text-[#5500a4]" aria-hidden />
-          <span className={`text-[15px] font-semibold tracking-tight ${isBrightBasemap ? 'text-slate-900' : 'text-slate-100'}`}>TerraVision</span>
-          <span className={`text-[11px] font-medium tracking-widest ${isBrightBasemap ? 'text-slate-700' : 'text-slate-400'}`}>ATLAS</span>
+      {/* Top bar — mobile-first: single row on >=640px, two rows below; every
+          child can shrink (min-w-0) so nothing overflows 375px. */}
+      <header className="absolute inset-x-3 top-3 z-20 flex items-center gap-1.5 md:inset-x-4 md:top-4 md:gap-3">
+        <div className="glass-strong flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 md:gap-2.5 md:rounded-2xl md:px-4 md:py-2.5">
+          <Compass className="h-4 w-4 shrink-0 text-[#5500a4] md:h-5 md:w-5" aria-hidden />
+          <span className={`shrink-0 text-[13px] font-semibold tracking-tight md:text-[15px] ${isBrightBasemap ? 'text-slate-900' : 'text-slate-100'}`}>TerraVision</span>
+          <span className={`hidden shrink-0 text-[10px] font-medium tracking-widest sm:inline md:text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-400'}`}>ATLAS</span>
         </div>
 
-        <div className="glass flex max-w-md flex-1 items-center gap-2.5 rounded-2xl px-4 py-2.5 search-bar-shell">
+        <div className="glass flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2.5 py-2 md:gap-2.5 md:rounded-2xl md:px-4 md:py-2.5">
           <PlaceSearchBox />
         </div>
 
@@ -127,26 +128,26 @@ export function TopBar({
 
         <button
           onClick={() => setStoryOpen(true)}
-          className={`glass flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+          className={`glass flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition md:h-10 md:w-10 md:rounded-2xl ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
           aria-label="Open storytelling"
         >
-          <BookOpen className="h-[18px] w-[18px]" />
+          <BookOpen className="h-4 w-4 md:h-[18px] md:w-[18px]" />
         </button>
 
         <button
           onClick={() => setMinecraftOpen(true)}
-          className={`glass flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+          className={`glass flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition md:h-10 md:w-10 md:rounded-2xl ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
           aria-label="Open Minecraft export"
         >
-          <Box className="h-[18px] w-[18px]" />
+          <Box className="h-4 w-4 md:h-[18px] md:w-[18px]" />
         </button>
 
         <button
           onClick={() => setFuelOpen(true)}
-          className={`glass flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+          className={`glass flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition md:h-10 md:w-10 md:rounded-2xl ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
           aria-label="Open fuel calculator"
         >
-          <Fuel className="h-[18px] w-[18px]" />
+          <Fuel className="h-4 w-4 md:h-[18px] md:w-[18px]" />
         </button>
 
         <button
@@ -159,14 +160,15 @@ export function TopBar({
         </button>
       </header>
 
-      {/* Mobile mode switcher */}
-      <div className="absolute left-4 right-4 top-[4.75rem] z-20 flex justify-center md:hidden">
-        <div className={`glass flex items-center gap-1 rounded-full p-1 text-[13px] font-medium ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+      {/* Mobile mode switcher — centered pill below the header; uses same
+          inset-x as header so it never overflows. */}
+      <div className="absolute inset-x-3 top-[3.5rem] z-20 flex justify-center md:hidden">
+        <div className={`glass flex max-w-full items-center gap-1 overflow-x-auto rounded-full p-1 text-[12px] font-medium [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
           {(['explore', 'monitor', 'survey'] as const).map((mode) => (
             <button
               key={mode}
               onClick={() => setActiveMode(mode)}
-              className={`rounded-full px-3 py-1.5 capitalize transition ${activeMode === mode ? `${getModeColor(mode)} text-white shadow` : isBrightBasemap ? 'hover:text-slate-900' : 'hover:text-white'}`}
+              className={`shrink-0 rounded-full px-3 py-1.5 capitalize transition ${activeMode === mode ? `${getModeColor(mode)} text-white shadow` : isBrightBasemap ? 'hover:text-slate-900' : 'hover:text-white'}`}
             >
               {mode}
             </button>

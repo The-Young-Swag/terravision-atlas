@@ -67,6 +67,35 @@ body {
   max-width: 28rem; /* max-w-md */
 }
 
+/* Attribution controls must stay above the footer and remain tappable
+   on mobile. The footer reserves right-14 on <md, but these rules lift
+   the control's hit-area and ensure it paints above glass. */
+.ol-attribution,
+.maplibregl-ctrl-attrib,
+.cesium-widget-credits {
+  z-index: 15 !important;
+}
+
+@media (max-width: 767px) {
+  .ol-attribution {
+    bottom: 0.5rem !important;
+    right: 0.5rem !important;
+    max-width: calc(50vw - 0.75rem);
+  }
+  .ol-attribution.ol-collapsed {
+    bottom: 3.25rem !important;
+  }
+  .maplibregl-ctrl-bottom-right {
+    bottom: 3.25rem !important;
+    right: 0.5rem !important;
+  }
+  .cesium-widget-credits {
+    bottom: 3.25rem !important;
+    right: 0.5rem !important;
+    max-width: 50vw;
+  }
+}
+
 /* Subtle glass scrollbar — minimal, low-contrast, integrated */
 .custom-scrollbar {
   scrollbar-width: thin;

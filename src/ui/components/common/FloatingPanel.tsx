@@ -60,6 +60,8 @@ export function FloatingPanel({
   // the bubble from reopening immediately after a drag release
   const hasDraggedRef = useState(() => ({ current: false }))[0];
 
+
+
   if (isMinimized) {
     // display:none (not unmount) so minimize/bubble drag state and all
     // panel content survive a toolbar close/restore cycle.
@@ -116,21 +118,30 @@ export function FloatingPanel({
           </span>
         </motion.div>
 
-        {/* Mobile bubble — bottom, easy to grab */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          onClick={() => setIsMinimized(false)}
-          className="fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 cursor-pointer items-center gap-2 rounded-full border border-white/20 bg-[#0D1B2A]/90 px-4 py-2.5 shadow-xl backdrop-blur-md md:hidden"
-          role="button"
-          aria-label={`Restore ${title}`}
-        >
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white">
-            {icon}
-          </span>
-          <span className="text-[13px] font-medium text-white">{bubbleLabel ?? title}</span>
-          <Maximize2 className="h-3.5 w-3.5 text-white/70" />
-        </motion.div>
+        {/* Mobile bubble — staggered so multiple minimized panels don't fully
+            overlap; each id maps to a stable vertical offset. */}
+        {(() => {
+          const order = ['layers', 'alerts', 'weather', 'evacuation', 'geodetic', 'shelters', 'fuel', 'storytelling'];
+          const idx = order.indexOf(id);
+          const bottom = idx >= 0 ? 5 + idx * 3.25 : 5;
+          return (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              onClick={() => setIsMinimized(false)}
+              className="fixed left-1/2 z-40 flex -translate-x-1/2 cursor-pointer items-center gap-2 rounded-full border border-white/20 bg-[#0D1B2A]/90 px-4 py-2.5 shadow-xl backdrop-blur-md md:hidden"
+              style={{ bottom: `${bottom}rem` }}
+              role="button"
+              aria-label={`Restore ${title}`}
+            >
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white">
+                {icon}
+              </span>
+              <span className="text-[13px] font-medium text-white">{bubbleLabel ?? title}</span>
+              <Maximize2 className="h-3.5 w-3.5 text-white/70" />
+            </motion.div>
+          );
+        })()}
       </>
       </div>
     );
@@ -208,8 +219,9 @@ export function FloatingPanel({
       </div>
     </motion.div>
 
-      {/* Mobile bottom sheet */}
-      <div className="fixed inset-x-0 bottom-0 z-30 flex max-h-[65vh] flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-[#0D1B2A]/95 backdrop-blur-xl md:hidden">
+      {/* Mobile bottom sheet — inset-x-3 keeps it off the viewport edge so it
+          never overflows 375px; bottom-3 leaves the footer/attribution gap. */}
+      <div className="fixed inset-x-3 bottom-3 z-30 flex max-h-[min(65vh,calc(100dvh-7rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0D1B2A]/95 backdrop-blur-xl md:hidden">
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white">
