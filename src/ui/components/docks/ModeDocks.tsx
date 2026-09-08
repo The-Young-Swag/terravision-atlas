@@ -1,14 +1,26 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Grid2x2, Ruler, X, Move3d, Printer, Satellite, Link2, Copy, MapPin } from 'lucide-react';
+import { Grid2x2, Ruler, X, Move3d, Printer, Satellite, Link2, Copy, MapPin, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
 import { downloadA0Png, exportA0Png } from '../../../features/export/print/a0Export';
 import { bearingDegrees, formatBearing, formatDistanceKilometers, geodesicKilometers } from '../../../core/geodetic/measurements/distance';
 import { formatAreaSqMeters, geodesicAreaSqMeters } from '../../../core/geodetic/measurements/area';
 import { useSurveyStore } from '../../../stores/surveyStore';
+import { useEdgeDock } from '../../../hooks/useEdgeDock';
 
 type AppMode = 'explore' | 'monitor' | 'survey';
+
+const SURVEY_DOCK_KEY = 'terravision.survey-toolbar.dock';
+const SURVEY_COLLAPSED_KEY = 'terravision.survey-toolbar.collapsed';
+
+function readToolbarCollapsed(): boolean {
+  try {
+    return localStorage.getItem(SURVEY_COLLAPSED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
 
 interface ModeDocksProps {
   activeMode: AppMode;
@@ -48,6 +60,28 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
   const datumVizOpen = useSurveyStore((s) => s.datumVizOpen);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
+
+  // Edge-dock + drag-to-snap via the shared hook (same implementation the
+  // notch sidebar uses — same snap zones, same z-index constants, same
+  // persistence approach). Collapse is click-toggled here (not hover/pin),
+  // per the toolbar spec. Default side is right so the two edge docks
+  // don't stack on top of each other out of the box.
+  const { left, dragging, dragSide, dragHandleProps } = useEdgeDock({
+    dockKey: SURVEY_DOCK_KEY,
+    defaultSide: 'right',
+  });
+  const [collapsed, setCollapsed] = useState(readToolbarCollapsed);
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SURVEY_COLLAPSED_KEY, String(next));
+      } catch {
+        // persistence is a nicety — the toggle still works for the session
+      }
+      return next;
+    });
+  }, []);
 
   const handleA0Export = async () => {
     if (viewMode !== '2d') {
@@ -179,12 +213,53 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
 
       <AnimatePresence>
         {activeMode === 'survey' && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            className="glass-strong absolute bottom-20 left-1/2 z-10 flex max-w-[90vw] -translate-x-1/2 flex-wrap items-center justify-center gap-1 rounded-2xl px-2 py-2"
-          >
+          <>
+            {/* Snap-zone indicators while dragging — same zones, same
+                z-index (z-40) as the notch sidebar. Left/right only. */}
+            <div
+              aria-hidden
+              className={`pointer-events-none fixed bottom-0 left-0 top-0 z-40 w-16 transition-opacity duration-150 ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'left' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
+            />
+            <div
+              aria-hidden
+              className={`pointer-events-none fixed bottom-0 right-0 top-0 z-40 w-16 transition-opacity duration-150 ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'right' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
+            />
+            {/* Edge-docked toolbar: single vertical anchor (top-1/2) shared
+                by expanded and collapsed states, flush to the docked side
+                edge (left-0/right-0), z-30 — the exact notch sidebar
+                values. Vertically centered + max-h keeps it clear of the
+                footer in every state. Collapse animates width sideways
+                toward the docked edge (framer, same 260ms bezier). */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, width: collapsed ? 52 : 'auto' }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.26, ease: [0.32, 0.72, 0, 1] }}
+              className={`glass-strong fixed top-1/2 z-30 flex max-h-[70vh] -translate-y-1/2 flex-col items-center justify-center overflow-hidden px-1.5 py-2 ${left ? 'left-0 rounded-l-none' : 'right-0 rounded-r-none'} ${collapsed ? (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : left ? 'rounded-r-[20px]' : 'rounded-l-[20px]'}`}
+            >
+              {/* Drag handle on the edge-facing side — same handle, same
+                  gesture as the notch sidebar, live in both states. */}
+              <div
+                role="separator"
+                aria-label={`Drag to dock ${left ? 'right' : 'left'}`}
+                title="Drag to dock left or right"
+                className={`absolute top-1/2 z-10 flex h-11 w-[14px] -translate-y-1/2 cursor-grab touch-none items-center justify-center active:cursor-grabbing ${left ? 'left-[-2px]' : 'right-[-2px]'}`}
+                {...dragHandleProps}
+              >
+                <span className="h-6 w-[3px] rounded-full bg-white/25 shadow-[6px_0_0_rgba(255,255,255,0.25)]" aria-hidden />
+              </div>
+              {collapsed ? (
+                <button
+                  type="button"
+                  onClick={toggleCollapsed}
+                  title="Expand survey toolbar"
+                  aria-label="Expand survey toolbar"
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+                >
+                  <Ruler className="h-5 w-5" aria-hidden />
+                </button>
+              ) : (
+                <div className="flex max-w-[85vw] flex-wrap items-center justify-center gap-1 overflow-y-auto px-2 py-1">
             <button
               onClick={() => setSnapToGrid(!snapToGrid)}
               aria-pressed={snapToGrid}
@@ -335,7 +410,20 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 {shareUrl.slice(0, 50)}…
               </span>
             )}
+            {/* Collapse toward the docked edge — chevron points at the edge. */}
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              title="Collapse toolbar to a single icon"
+              aria-label="Collapse toolbar"
+              className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+            >
+              {left ? <ChevronsLeft className="h-3.5 w-3.5" aria-hidden /> : <ChevronsRight className="h-3.5 w-3.5" aria-hidden />}
+            </button>
+                </div>
+              )}
           </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>

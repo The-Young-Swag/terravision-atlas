@@ -17,6 +17,7 @@ import { useRouteStore } from '../../../stores/routeStore';
 import { useShelterStore } from '../../../stores/shelterStore';
 import { useUiPanelStore } from '../../../stores/uiPanelStore';
 import { describeWeatherCode } from '../../../features/weather/openMeteo';
+import { useEdgeDock } from '../../../hooks/useEdgeDock';
 
 type AppMode = 'explore' | 'monitor' | 'survey';
 
@@ -28,21 +29,11 @@ interface NotchSidebarProps {
 const PIN_STORAGE_KEY = 'terravision.notch.pinned';
 const DOCK_STORAGE_KEY = 'terravision.notch.dock';
 
-type DockSide = 'left' | 'right';
-
 function readPinned(): boolean {
   try {
     return localStorage.getItem(PIN_STORAGE_KEY) === 'true';
   } catch {
     return false;
-  }
-}
-
-function readDock(): DockSide {
-  try {
-    return localStorage.getItem(DOCK_STORAGE_KEY) === 'right' ? 'right' : 'left';
-  } catch {
-    return 'left';
   }
 }
 
@@ -79,9 +70,10 @@ const VIEW_MODE_LABEL: Record<string, string> = { '2d': '2D map', vector: 'Vecto
 export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(readPinned);
-  const [dockSide, setDockSide] = useState<DockSide>(readDock);
-  const [dragging, setDragging] = useState(false);
-  const [dragSide, setDragSide] = useState<DockSide | null>(null);
+  const { left, dragging, dragSide, dragHandleProps } = useEdgeDock({
+    dockKey: DOCK_STORAGE_KEY,
+    defaultSide: 'left',
+  });
 
   const basemap = useMapStore((s) => s.basemap);
   const viewMode = useMapStore((s) => s.viewMode);
@@ -101,7 +93,6 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
   const reopenPanel = useUiPanelStore((s) => s.reopenPanel);
 
   const expanded = (hovered || pinned) && !dragging;
-  const left = dockSide === 'left';
 
   const highSeverity = disasterEvents.filter((e) => e.severity === 'high').length;
   const routePreview = route
@@ -198,15 +189,6 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
     reopenPanel(row.panelId);
   };
 
-  const commitDock = (side: DockSide) => {
-    setDockSide(side);
-    try {
-      localStorage.setItem(DOCK_STORAGE_KEY, side);
-    } catch {
-      // persistence is a nicety — the dock still moves for the session
-    }
-  };
-
   const togglePin = () => {
     setPinned((next) => {
       const value = !next;
@@ -248,26 +230,7 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
         aria-label={`Drag to dock ${left ? 'right' : 'left'}`}
         title="Drag to dock left or right"
         className={`absolute top-1/2 z-10 flex h-11 w-[14px] -translate-y-1/2 cursor-grab touch-none items-center justify-center active:cursor-grabbing ${left ? 'left-[-2px]' : 'right-[-2px]'}`}
-        onPointerDown={(e) => {
-          e.preventDefault();
-          e.currentTarget.setPointerCapture(e.pointerId);
-          setDragging(true);
-          setDragSide(null);
-        }}
-        onPointerMove={(e) => {
-          if (!dragging) return;
-          setDragSide(e.clientX < window.innerWidth / 2 ? 'left' : 'right');
-        }}
-        onPointerUp={(e) => {
-          if (!dragging) return;
-          setDragging(false);
-          setDragSide(null);
-          commitDock(e.clientX < window.innerWidth / 2 ? 'left' : 'right');
-        }}
-        onPointerCancel={() => {
-          setDragging(false);
-          setDragSide(null);
-        }}
+        {...dragHandleProps}
       >
         <span className="h-6 w-[3px] rounded-full bg-white/25 shadow-[6px_0_0_rgba(255,255,255,0.25)]" aria-hidden />
       </div>
