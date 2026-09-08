@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Grid2x2, Ruler, X, Move3d, Printer, Satellite, Link2, Copy, MapPin, ChevronsLeft, ChevronsRight, Telescope } from 'lucide-react';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
@@ -83,27 +83,17 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     defaultSide: 'right',
   });
   const [collapsed, setCollapsed] = useState(readToolbarCollapsed);
-  // Row visibility is phased separately from the width animation so the
-  // height never spikes mid-transition: on expand the icon stays put
-  // while the width animates, and the row only appears once the width
-  // is final (no wrapping/unwrapping while the width is in flight). On
-  // collapse the row hides immediately. Either way only width animates.
-  const [rowVisible, setRowVisible] = useState(() => !readToolbarCollapsed());
-  const expandPendingRef = useRef(false);
   const toggleCollapsed = useCallback(() => {
-    const next = !collapsed;
-    try {
-      localStorage.setItem(SURVEY_COLLAPSED_KEY, String(next));
-    } catch {
-      // persistence is a nicety — the toggle still works for the session
-    }
-    if (next) {
-      setRowVisible(false);
-    } else {
-      expandPendingRef.current = true;
-    }
-    setCollapsed(next);
-  }, [collapsed]);
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SURVEY_COLLAPSED_KEY, String(next));
+      } catch {
+        // persistence is a nicety — the toggle still works for the session
+      }
+      return next;
+    });
+  }, []);
 
   // Vertical slide-along-edge: pixel offset from the vertical center,
   // applied via `top: calc(50% + offset)` so the shared -translate-y-1/2
@@ -125,31 +115,6 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     } catch {
       // persistence is a nicety
     }
-  }, []);
-
-  // Fixed container height (equal in both states) plus a measured
-  // expanded width: the row is always mounted (invisible + absolute
-  // when collapsed, so it stays measurable) and never wraps, so the
-  // width animation can never push the height around mid-transition.
-  const rowRef = useRef<HTMLDivElement>(null);
-  const [expandedWidth, setExpandedWidth] = useState(560);
-  // Re-measure whenever the row's content size changes (new points,
-  // mode switches, GPS/share states) so the width animation always
-  // targets the true content width.
-  useLayoutEffect(() => {
-    const el = rowRef.current;
-    if (!el) return;
-    const measure = () => {
-      const capped = Math.min(
-        Math.ceil(el.scrollWidth) + 16,
-        Math.floor(window.innerWidth * 0.85),
-      );
-      setExpandedWidth((prev) => (prev === capped ? prev : capped));
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
   }, []);
 
   const handleA0Export = async () => {
@@ -450,22 +415,16 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                 by expanded and collapsed states, flush to the docked side
                 edge (left-0/right-0), z-30 — the exact notch sidebar
                 values. Vertically centered + max-h keeps it clear of the
-                footer in every state. Collapse animates width sideways
-                toward the docked edge (framer, same 260ms bezier). */}
+                footer in every state. Expand/collapse crossfades (no
+                geometry animation), so the height can never spike. */}
             <motion.div
               ref={containerRef}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, width: collapsed ? 52 : expandedWidth }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.26, ease: [0.32, 0.72, 0, 1] }}
-              onAnimationComplete={() => {
-                if (expandPendingRef.current) {
-                  expandPendingRef.current = false;
-                  setRowVisible(true);
-                }
-              }}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
               style={{ top: `calc(50% + ${yOffset}px)` }}
-              className={`glass-strong fixed z-30 flex max-h-[70vh] -translate-y-1/2 flex-col items-center justify-center overflow-hidden py-2 ${left ? 'left-0 rounded-l-none pl-2 pr-1.5' : 'right-0 rounded-r-none pl-1.5 pr-2'} ${collapsed ? (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : left ? 'rounded-r-[20px]' : 'rounded-l-[20px]'}`}
+              className={`glass-strong fixed z-30 flex max-h-[70vh] -translate-y-1/2 flex-col items-center justify-center overflow-hidden py-2 ${left ? 'left-0 rounded-l-none pl-2 pr-1.5' : 'right-0 rounded-r-none pl-1.5 pr-2'} ${collapsed ? 'w-[52px] ' + (left ? 'rounded-r-[22px]' : 'rounded-l-[22px]') : 'w-max max-w-[85vw] ' + (left ? 'rounded-r-[20px]' : 'rounded-l-[20px]')}`}
             >
               {/* Drag handle: slim full-height strip on the edge-facing
                   side with a reserved gutter, matching the notch
@@ -505,7 +464,7 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                   <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
                 </span>
               </div>
-              {!rowVisible ? (
+              {collapsed ? (
                 <button
                   type="button"
                   onClick={toggleCollapsed}
@@ -519,38 +478,21 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
                   <Telescope className="h-5 w-5" aria-hidden />
                 </button>
               ) : null}
-              {/* Probe (always measurable, never interactive) + visible
-                  rows. Status sits above the tools; the tools stay one
-                  single row. Visibility is phased around the width
-                  animation so height never spikes. */}
-              <div
-                ref={rowRef}
-                aria-hidden="true"
-                inert
-                className={`invisible pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col items-center gap-1 overflow-hidden px-2 ${left ? 'pe-10' : 'ps-10'}`}
-              >
-                <div className="flex flex-nowrap items-center gap-1">
-            {toolbarStatus}
-                </div>
-                <div className="flex flex-nowrap items-center gap-1">
+              {!collapsed ? (
+                <>
+                  <div className={`flex max-w-[85vw] flex-wrap items-center justify-center gap-1 overflow-y-auto px-2 py-1 ${left ? 'pe-10' : 'ps-10'}`}>
             {toolbarTools}
-                </div>
-              </div>
-              {rowVisible ? (
-                <div className={`flex max-w-[85vw] flex-col items-center gap-1 overflow-y-auto px-2 py-1 ${left ? 'pe-10' : 'ps-10'}`}>
+                  </div>
                   {hasStatus ? (
-                    <div className="flex flex-wrap items-center justify-center gap-1">
+                    <div className="flex flex-wrap items-center justify-center gap-1 px-2">
             {toolbarStatus}
                     </div>
                   ) : null}
-                  <div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">
-            {toolbarTools}
-                  </div>
-                </div>
+                </>
               ) : null}
               {/* Collapse control on the outer edge side — opposite the
                   drag separator — vertically centered like the handle. */}
-              {rowVisible ? (
+              {!collapsed ? (
                 <button
                   type="button"
                   onClick={toggleCollapsed}
