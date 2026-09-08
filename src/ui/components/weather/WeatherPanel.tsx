@@ -172,7 +172,9 @@ export function WeatherPanel() {
         {forecast && forecast.hourly.length > 0 && (
           <section aria-label="7-day outlook">
             <p className={labelClass}>7-day outlook</p>
-            <ForecastChart hourly={forecast.hourly} label="7-day temperature and precipitation forecast" />
+            <div className="-mx-4 sm:-mx-2">
+              <ForecastChart hourly={forecast.hourly} label="7-day temperature and precipitation forecast" />
+            </div>
           </section>
         )}
 
@@ -197,7 +199,7 @@ export function WeatherPanel() {
             </button>
           </div>
           {historical && historicalDate && historical.hourly.length > 0 && (
-            <div className="mt-3">
+            <div className="mt-3 -mx-4 sm:-mx-2">
               <ForecastChart hourly={historical.hourly} label={`Weather on ${historicalDate}`} />
             </div>
           )}
