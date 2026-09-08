@@ -79,25 +79,27 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
       chartRef.current = null;
     }
 
-    // Prepare labels and data, preserving nulls as gaps.
-    // For a 7-day hourly forecast, the date+hour concatenation from
-    // toLocaleString (e.g. "Sep 7, 00") is ambiguous — "00" reads as
-    // a day or month, not an hour. Use an explicit, unambiguous format:
-    //   - Midnight (00:00) ticks show the day label "Sep 7" so each day
-    //     boundary is visually anchored.
-    //   - All other ticks show the 24h hour "06" / "12" / "18" so the
-    //     time is unambiguous.
-    // Using Date methods instead of toLocaleString also removes the
-    // locale-dependent rendering that produced inconsistent output.
-    const labels = hourly.map((point) => {
+    // Labels match the data granularity so they read at a glance:
+    // single-day hourly data gets time-of-day labels ("6 AM"), while a
+    // multi-day window gets one label per calendar day ("Sep 7") at each
+    // midnight boundary — never bare numbers ("04") and never hours
+    // leaking into a daily view.
+    const dayKeys = hourly.map((point) => new Date(point.time).toDateString());
+    const multiDay = new Set(dayKeys).size > 1;
+    const formatHour = (date: Date) => {
+      let hours = date.getHours();
+      const suffix = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      if (hours === 0) hours = 12;
+      return `${hours} ${suffix}`;
+    };
+    const labels = hourly.map((point, index) => {
       const date = new Date(point.time);
-      const hours = date.getHours();
-      if (hours === 0) {
-        // Day boundary — show the day label.
-        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-      }
-      // 24h zero-padded hour for unambiguous time.
-      return `${hours.toString().padStart(2, '0')}`;
+      if (!multiDay) return formatHour(date);
+      const isDayBoundary = date.getHours() === 0 && (index === 0 || dayKeys[index] !== dayKeys[index - 1]);
+      return isDayBoundary
+        ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        : '';
     });
     const tempData = hourly.map((point) => point.temperatureC);
     const precipData = hourly.map((point) => point.precipitationMm);
@@ -154,6 +156,16 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
             bodyFont: { family: 'IBM Plex Mono', size: 11 },
             displayColors: true,
             callbacks: {
+              // Axis labels are sparse by design (one per day in a
+              // multi-day view), so the tooltip always shows the full
+              // date + time of the hovered point.
+              title: (items) => {
+                const point = hourly[items[0]?.dataIndex ?? -1];
+                if (!point) return '';
+                const date = new Date(point.time);
+                const day = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                return multiDay ? `${day}, ${formatHour(date)}` : `${day} · ${formatHour(date)}`;
+              },
               label: (context) => {
                 const value = context.raw as number | null;
                 if (value === null) return `${context.dataset.label}: no data`;
@@ -167,13 +179,16 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
         },
         scales: {
           x: {
-            grid: { display: false },
+            grid: { display: false, drawTicks: false },
             ticks: {
               color: tickColor,
               font: { family: 'IBM Plex Mono', size: 9 },
-              maxTicksLimit: 10,
+              // Multi-day: labels exist only at day boundaries, so show
+              // them all (no auto-skip hiding a day). Single-day hourly:
+              // auto-skip down to a readable density.
+              maxTicksLimit: multiDay ? undefined : 8,
+              autoSkip: !multiDay,
               maxRotation: 0,
-              autoSkip: true,
               padding: 8,
             },
             border: { display: false },

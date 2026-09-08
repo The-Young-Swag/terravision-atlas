@@ -58,4 +58,11 @@ describe('describeWeatherCode', () => {
     expect(describeWeatherCode(95)).toBe('Thunderstorm');
     expect(describeWeatherCode(999)).toBe('Unknown');
   });
+
+  it('distinguishes partly cloudy, overcast, and fog', () => {
+    expect(describeWeatherCode(2)).toBe('Partly cloudy');
+    expect(describeWeatherCode(3)).toBe('Overcast');
+    expect(describeWeatherCode(45)).toBe('Fog');
+    expect(describeWeatherCode(48)).toBe('Fog');
+  });
 });

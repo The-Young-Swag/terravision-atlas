@@ -30,15 +30,23 @@ export interface Forecast {
 }
 
 // WMO weather-code groups (https://open-meteo.com/en/docs#weathercode).
+// Partly cloudy (2), overcast (3), and fog (45, 48) are distinct groups
+// so visuals and labels can treat each honestly instead of lumping them.
 export const CLEAR_CODES = [0, 1];
-export const CLOUDY_CODES = [2, 3, 45, 48];
+export const PARTLY_CLOUDY_CODES = [2];
+export const OVERCAST_CODES = [3];
+export const FOG_CODES = [45, 48];
+/** Kept for compatibility: every non-precipitation cloud/fog code. */
+export const CLOUDY_CODES = [...PARTLY_CLOUDY_CODES, ...OVERCAST_CODES, ...FOG_CODES];
 export const RAIN_CODES = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82];
 export const SNOW_CODES = [71, 73, 75, 77, 85, 86];
 export const STORM_CODES = [95, 96, 99];
 
 export function describeWeatherCode(code: number): string {
   if (CLEAR_CODES.includes(code)) return code === 0 ? 'Clear sky' : 'Mainly clear';
-  if (CLOUDY_CODES.includes(code)) return 'Cloudy';
+  if (PARTLY_CLOUDY_CODES.includes(code)) return 'Partly cloudy';
+  if (OVERCAST_CODES.includes(code)) return 'Overcast';
+  if (FOG_CODES.includes(code)) return 'Fog';
   if (RAIN_CODES.includes(code)) return 'Rain';
   if (SNOW_CODES.includes(code)) return 'Snow';
   if (STORM_CODES.includes(code)) return 'Thunderstorm';

@@ -1,18 +1,30 @@
 import type { CurrentConditions } from '../../../features/weather/openMeteo';
 import {
   CLEAR_CODES,
-  CLOUDY_CODES,
+  PARTLY_CLOUDY_CODES,
+  OVERCAST_CODES,
+  FOG_CODES,
   RAIN_CODES,
   SNOW_CODES,
   STORM_CODES,
   describeWeatherCode,
 } from '../../../features/weather/openMeteo';
 
-type WeatherCategory = 'clear' | 'cloudy' | 'rain' | 'snow' | 'storm' | 'unknown';
+type WeatherCategory =
+  | 'clear'
+  | 'partly'
+  | 'overcast'
+  | 'fog'
+  | 'rain'
+  | 'snow'
+  | 'storm'
+  | 'unknown';
 
 function categorizeWeatherCode(code: number): WeatherCategory {
   if (CLEAR_CODES.includes(code)) return 'clear';
-  if (CLOUDY_CODES.includes(code)) return 'cloudy';
+  if (PARTLY_CLOUDY_CODES.includes(code)) return 'partly';
+  if (OVERCAST_CODES.includes(code)) return 'overcast';
+  if (FOG_CODES.includes(code)) return 'fog';
   if (RAIN_CODES.includes(code)) return 'rain';
   if (SNOW_CODES.includes(code)) return 'snow';
   if (STORM_CODES.includes(code)) return 'storm';
@@ -24,9 +36,15 @@ interface WeatherVisualProps {
   size?: number;
 }
 
-// CSS-based claymorphism weather visual. Single consistent light-source
-// direction (top-left) across every state. Each condition uses a CSS
-// gradient + box-shadow for the extruded 3D look; no SVG elements.
+// CSS claymorphism weather visual (no SVG elements anywhere in this
+// component). Layering rule, applied to every state: celestial body
+// (sun/moon) sits small at top-right, cloud mass sits bottom-left —
+// the two never overlap into a fused blob. Overcast skies (overcast,
+// fog, rain, storm, snow) show no celestial body at all; day/night
+// there is a tint shift on the cloud instead. One depth rule: shared
+// soft shadow, cloud opacity .95, precipitation opacity .9.
+// Motion rule: no idle loops. A single 300ms enter fade/scale runs
+// once when the condition changes (keyed by category + time of day).
 export function WeatherVisual({ current, size = 96 }: WeatherVisualProps) {
   if (!current) {
     return (
@@ -46,13 +64,16 @@ export function WeatherVisual({ current, size = 96 }: WeatherVisualProps) {
 
   return (
     <div
-      className={`weather-visual weather-${category} weather-${timeOfDay}`}
+      key={`${category}-${timeOfDay}`}
+      className={`weather-visual weather-enter weather-${category} weather-${timeOfDay}`}
       style={{ width: size, height: size }}
       aria-label={label}
       role="img"
     >
       {category === 'clear' && <ClearVisual isDay={current.isDay} />}
-      {category === 'cloudy' && <CloudyVisual isDay={current.isDay} />}
+      {category === 'partly' && <PartlyVisual isDay={current.isDay} />}
+      {category === 'overcast' && <OvercastVisual />}
+      {category === 'fog' && <FogVisual />}
       {category === 'rain' && <RainVisual />}
       {category === 'snow' && <SnowVisual />}
       {category === 'storm' && <StormVisual />}
@@ -67,27 +88,44 @@ function ClearVisual({ isDay }: { isDay: boolean }) {
       {isDay ? (
         <div className="weather-shape weather-sun-core weather-clay" />
       ) : (
-        // Night: show a moon (not the sun) — confirmed day/night fix.
         <div className="weather-shape weather-moon-core weather-clay" />
       )}
     </>
   );
 }
 
-function CloudyVisual({ isDay }: { isDay: boolean }) {
+function PartlyVisual({ isDay }: { isDay: boolean }) {
   return (
     <div className="weather-cloud-group">
       {isDay ? (
-        <>
-          <div className="weather-shape weather-sun-core weather-clay weather-sun-behind-cloud" />
-        </>
+        <div className="weather-shape weather-sun-small weather-clay" />
       ) : (
-        // Night: show a moon, not the sun.
-        <div className="weather-shape weather-moon-core weather-clay weather-moon-behind-cloud" />
+        <div className="weather-shape weather-moon-small weather-clay" />
       )}
       <div className="weather-shape weather-cloud-part weather-clay weather-cloud-left" />
       <div className="weather-shape weather-cloud-part weather-clay weather-cloud-center" />
       <div className="weather-shape weather-cloud-part weather-clay weather-cloud-right" />
+    </div>
+  );
+}
+
+function OvercastVisual() {
+  return (
+    <div className="weather-cloud-group">
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-left" />
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-center" />
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-right" />
+    </div>
+  );
+}
+
+function FogVisual() {
+  return (
+    <div className="weather-cloud-group">
+      <div className="weather-shape weather-cloud-part weather-clay weather-cloud-fog" />
+      <div className="weather-fog-bank weather-fog-bank-1" />
+      <div className="weather-fog-bank weather-fog-bank-2" />
+      <div className="weather-fog-bank weather-fog-bank-3" />
     </div>
   );
 }
