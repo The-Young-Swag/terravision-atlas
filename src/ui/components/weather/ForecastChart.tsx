@@ -253,9 +253,7 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
           },
         },
         layout: {
-          // Extra left/right padding (28px) to give the centered y-axis
-          // titles room to render without overlapping the tick labels.
-          padding: { top: 12, right: 28, bottom: 8, left: 28 },
+          padding: { top: 8, right: 12, bottom: 4, left: 12 },
         },
         animation: { duration: 400 },
       },
