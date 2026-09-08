@@ -12,8 +12,14 @@ import cesium from 'vite-plugin-cesium';
 // - React Fast Refresh
 // - CesiumJS asset handling (workers, WASM, static assets)
 // - Dev server bound to 0.0.0.0:4900 for devcontainer host visibility
+// - CSS transformer set to PostCSS to preserve both backdrop-filter and
+//   -webkit-backdrop-filter in production (Lightning CSS was deduping the
+//   unprefixed rule as redundant and stripping the blur in prod only).
 export default defineConfig({
   plugins: [react(), cesium()],
+  css: {
+    transformer: 'postcss',
+  },
   server: {
     host: '0.0.0.0',
     port: 4900,

@@ -29,25 +29,32 @@ body {
     100% 100%;
 }
 
-/* Glass utilities — static rgba + both backdrop-filter prefixes so Tailwind
-   JIT never purges them (no `bg-white/${opacity}` template literals). Keep
-   low alpha (0.06/0.10) + blur for true frosting; see NotchSidebar/
-   FloatingPanel for stacking-context fixes. */
+/* Glass utilities — both prefixes must survive prod minification.
+   Uses @supports to separate -webkit- and standard so neither is deduped
+   as redundant (Vite 8 Lightning CSS was stripping one). */
 .glass {
   background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
+@supports (backdrop-filter: blur(0)) {
+  .glass {
+    backdrop-filter: blur(20px) saturate(160%);
+  }
+}
 
 .glass-strong {
   background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.22);
+}
+@supports (backdrop-filter: blur(0)) {
+  .glass-strong {
+    backdrop-filter: blur(24px) saturate(180%);
+  }
 }
 
 /* Notch sidebar dock edge: .glass above is unlayered author CSS, so no
