@@ -38,10 +38,6 @@ export function StatusBar({ activeMode }: StatusBarProps) {
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#00d890]" />
           Live · updated 12s ago
         </div>
-        <div className="hidden flex-col items-end leading-tight sm:flex">
-          <span>1 : 150,000</span>
-          <span>50 km</span>
-        </div>
       </footer>
 
       <div className="absolute bottom-20 left-1/2 z-10 flex -translate-x-1/2 gap-2 md:hidden">
