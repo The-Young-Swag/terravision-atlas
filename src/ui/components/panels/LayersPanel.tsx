@@ -141,7 +141,7 @@ export function LayersPanel() {
               {
                 id: 'terrain' as const,
                 label: 'Terrain',
-                desc: 'Esri World Topo',
+                desc: 'OpenTopoMap · contours + hillshade',
                 icon: Mountain,
               },
               {

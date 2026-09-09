@@ -67,9 +67,13 @@ export const MAPLIBRE_STYLES: Record<BasemapId, StyleSpecification> = {
   streets: streetsStyle('osm'),
   satellite: satelliteStyle('esri'),
   terrain: rasterStyle(
-    ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],
-    'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community',
-    19,
+    [
+      'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
+      'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
+      'https://c.tile.opentopomap.org/{z}/{x}/{y}.png',
+    ],
+    '© OpenTopoMap (CC-BY-SA) © OpenStreetMap contributors',
+    17,
   ),
   get dark() {
     return darkStyle();
