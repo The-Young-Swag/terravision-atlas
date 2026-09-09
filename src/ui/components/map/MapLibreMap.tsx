@@ -527,16 +527,31 @@ export function MapLibreMap() {
     return apply();
   }, [weatherLocation, weatherCurrent]);
 
-  // Base Map reactivity — the four Vector styles mirror the 2D basemaps.
-  // setStyle drops runtime sources, so contour/traffic overlays are
-  // re-applied from live store state once the new style loads.
+  // Base Map reactivity — Vector's four styles are raster mirrors of the 2D
+  // basemaps. Swap the source tiles in place when possible (no style reload,
+  // no overlay re-add) for instant switching; fall back to setStyle only if
+  // the source is missing (first load or style not yet ready).
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+    const targetStyle = maplibreStyleFor(basemap, satelliteSource);
+    const targetTiles = (targetStyle.sources.basemap as { tiles?: string[] }).tiles;
+    const targetAttrib = (targetStyle.sources.basemap as { attribution?: string }).attribution;
     const currentTiles = (map.getStyle()?.sources?.basemap as { tiles?: string[] } | undefined)?.tiles;
-    const targetTiles = (maplibreStyleFor(basemap, satelliteSource).sources.basemap as { tiles?: string[] }).tiles;
     if (JSON.stringify(currentTiles) === JSON.stringify(targetTiles)) return;
-    map.setStyle(maplibreStyleFor(basemap, satelliteSource));
+
+    const basemapSource = map.getSource('basemap') as { setTiles?: (tiles: string[]) => void; tiles?: string[] } | undefined;
+    if (basemapSource?.setTiles) {
+      basemapSource.setTiles(targetTiles as string[]);
+      // Attribution is not auto-updated via setTiles, so patch it
+      const style = map.getStyle();
+      if (style?.sources?.basemap) {
+        (style.sources.basemap as { attribution?: string }).attribution = targetAttrib;
+      }
+      return;
+    }
+
+    map.setStyle(targetStyle);
     map.once('style.load', () => {
       const liveMap = mapRef.current;
       if (!liveMap) return;

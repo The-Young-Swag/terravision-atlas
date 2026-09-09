@@ -61,39 +61,54 @@ export function globeImageryCredit(basemap: BasemapId, satelliteSource: Satellit
   return '© OpenStreetMap contributors';
 }
 
+const globeImageryCache = new Map<string, Cesium.ImageryProvider>();
+
 export function createGlobeImagery(
   basemap: BasemapId,
   satelliteSource: SatelliteSourceId,
 ): Cesium.ImageryProvider {
+  const cacheKey = `${basemap}:${satelliteSource}`;
+  const cached = globeImageryCache.get(cacheKey);
+  if (cached) return cached;
   if (basemap === 'satellite') {
     if (satelliteSource === 'esri') {
-      return new Cesium.UrlTemplateImageryProvider({
+      const p = new Cesium.UrlTemplateImageryProvider({
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         maximumLevel: 19,
       });
+      globeImageryCache.set(cacheKey, p);
+      return p;
     }
     const meta = gibsLayerMeta(satelliteSource);
-    return new Cesium.UrlTemplateImageryProvider({
+    const p = new Cesium.UrlTemplateImageryProvider({
       url: gibsTileUrlTemplate(meta.product, gibsBestDate()),
       maximumLevel: GIBS_MAX_ZOOM,
     });
+    globeImageryCache.set(cacheKey, p);
+    return p;
   }
   if (basemap === 'terrain') {
-    return new Cesium.UrlTemplateImageryProvider({
+    const p = new Cesium.UrlTemplateImageryProvider({
       url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
       subdomains: ['a', 'b', 'c'],
       maximumLevel: 17,
     });
+    globeImageryCache.set(cacheKey, p);
+    return p;
   }
   if (basemap === 'dark') {
-    return new Cesium.UrlTemplateImageryProvider({
+    const p = new Cesium.UrlTemplateImageryProvider({
       url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png',
       maximumLevel: 20,
     });
+    globeImageryCache.set(cacheKey, p);
+    return p;
   }
-  return new Cesium.OpenStreetMapImageryProvider({
+  const p = new Cesium.OpenStreetMapImageryProvider({
     url: 'https://a.tile.openstreetmap.org/',
   });
+  globeImageryCache.set(cacheKey, p);
+  return p;
 }
 
 export async function createCesiumViewer(options: CreateCesiumOptions): Promise<CreatedCesiumViewer> {

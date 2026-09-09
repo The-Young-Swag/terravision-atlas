@@ -25,22 +25,20 @@ const SATELLITE_SOURCES: { id: SatelliteSourceId; label: string; desc: string }[
 ];
 
 export function LayersPanel() {
-  const {
-    basemap,
-    satelliteSource,
-    viewMode,
-    showHazards,
-    showTerrainContours,
-    showTraffic,
-    center,
-    zoom,
-    setBasemap,
-    setSatelliteSource,
-    setViewMode,
-    setShowHazards,
-    setShowTerrainContours,
-    setShowTraffic,
-  } = useMapStore();
+  const basemap = useMapStore((s) => s.basemap);
+  const satelliteSource = useMapStore((s) => s.satelliteSource);
+  const viewMode = useMapStore((s) => s.viewMode);
+  const showHazards = useMapStore((s) => s.showHazards);
+  const showTerrainContours = useMapStore((s) => s.showTerrainContours);
+  const showTraffic = useMapStore((s) => s.showTraffic);
+  const center = useMapStore((s) => s.center);
+  const zoom = useMapStore((s) => s.zoom);
+  const setBasemap = useMapStore((s) => s.setBasemap);
+  const setSatelliteSource = useMapStore((s) => s.setSatelliteSource);
+  const setViewMode = useMapStore((s) => s.setViewMode);
+  const setShowHazards = useMapStore((s) => s.setShowHazards);
+  const setShowTerrainContours = useMapStore((s) => s.setShowTerrainContours);
+  const setShowTraffic = useMapStore((s) => s.setShowTraffic);
   const trafficStatus = useTrafficStore((s) => s.status);
 
   const isBrightBasemap = useBrightBasemap();

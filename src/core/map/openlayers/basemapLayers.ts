@@ -11,6 +11,15 @@ import {
   type SatelliteSourceId,
 } from '../gibs';
 
+// Factory for the four TerraVision basemaps. Sources are cached per
+// basemap/satelliteSource so switching back to an already-loaded basemap
+// reuses its tile cache instead of refetching (network-bound fix).
+const basemapCache = new Map<string, TileLayer<XYZ | OSM>>();
+
+function basemapCacheKey(basemap: BasemapId, satelliteSource: SatelliteSourceId, crossOrigin?: string): string {
+  return `${basemap}:${satelliteSource}:${crossOrigin ?? ''}`;
+}
+
 // Factory for the four TerraVision basemaps.
 // The 'satellite' slot renders the selected satellite source: Esri World
 // Imagery (default) or one of the NASA GIBS layers (see core/map/gibs.ts).
@@ -24,19 +33,25 @@ export function createBasemapLayer(
   crossOrigin?: 'anonymous',
   satelliteSource: SatelliteSourceId = 'esri',
 ): TileLayer<XYZ | OSM> {
+  const cacheKey = basemapCacheKey(basemap, satelliteSource, crossOrigin);
+  const cached = basemapCache.get(cacheKey);
+  if (cached) return cached;
   switch (basemap) {
-    case 'streets':
-      return new TileLayer({
+    case 'streets': {
+      const layer = new TileLayer({
         source: new OSM(),
         properties: { basemap },
       });
+      basemapCache.set(cacheKey, layer);
+      return layer;
+    }
 
     case 'satellite': {
       const isGibs = satelliteSource !== 'esri';
       const url = isGibs
         ? gibsTileUrlTemplate(gibsLayerMeta(satelliteSource).product, gibsBestDate())
         : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-      return new TileLayer({
+      const layer = new TileLayer({
         source: new XYZ({
           url,
           maxZoom: isGibs ? GIBS_MAX_ZOOM : 19,
@@ -45,10 +60,12 @@ export function createBasemapLayer(
         }),
         properties: { basemap },
       });
+      basemapCache.set(cacheKey, layer);
+      return layer;
     }
 
-    case 'terrain':
-      return new TileLayer({
+    case 'terrain': {
+      const layer = new TileLayer({
         source: new XYZ({
           url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
           maxZoom: 17,
@@ -57,9 +74,12 @@ export function createBasemapLayer(
         }),
         properties: { basemap },
       });
+      basemapCache.set(cacheKey, layer);
+      return layer;
+    }
 
-    case 'dark':
-      return new TileLayer({
+    case 'dark': {
+      const layer = new TileLayer({
         source: new XYZ({
           url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
           maxZoom: 20,
@@ -68,8 +88,14 @@ export function createBasemapLayer(
         }),
         properties: { basemap },
       });
+      basemapCache.set(cacheKey, layer);
+      return layer;
+    }
 
-    default:
-      return new TileLayer({ source: new OSM(), properties: { basemap } });
+    default: {
+      const layer = new TileLayer({ source: new OSM(), properties: { basemap } });
+      basemapCache.set(cacheKey, layer);
+      return layer;
+    }
   }
 }
