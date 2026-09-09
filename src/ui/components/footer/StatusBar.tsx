@@ -108,13 +108,9 @@ export function StatusBar({ activeMode }: StatusBarProps) {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-[4.75rem] left-1/2 z-10 flex max-w-[85vw] -translate-x-1/2 justify-center md:hidden">
-        <span
-          className={`glass max-w-full truncate rounded-full px-3 py-1.5 text-center text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}
-        >
-          {activeMode === 'explore' ? 'Pan & zoom' : activeMode === 'monitor' ? `Monitoring ${disasterCount} events` : 'Survey tools active'}
-        </span>
-      </div>
+      {/* Mobile mode-hint pill ("Pan & zoom" / "Monitoring N events" /
+          "Survey tools active") removed: it overlapped the map on small
+          screens. The desktop engine strip below is unchanged. */}
 
       <div
         className={`pointer-events-none absolute bottom-4 left-1/2 hidden -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] backdrop-blur md:flex ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
