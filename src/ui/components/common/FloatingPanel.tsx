@@ -292,32 +292,36 @@ export function FloatingPanel({
       {/* Mobile floating panel — draggable via header (touch-none so the
           map never pans underneath a drag), clamped live to the viewport,
           raised above siblings while dragging. Closed panels reopen from
-          the mobile FAB bubble via the shared store. */}
+          the mobile FAB bubble via the shared store.
+          Mobile-only contrast rule: the shell uses the same translucent
+          glass as desktop (never the opaque dark fill), so the shared
+          bright-basemap text logic in panel content stays legible — dark
+          text over bright map, light text over dark map. */}
       <motion.div
         ref={mobilePanelRef}
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.98 }}
         style={{ left: mobilePos.x, top: mobilePos.y }}
-        className={`fixed z-30 flex w-[min(19rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0D1B2A]/95 backdrop-blur-xl md:hidden ${mobileDragging ? 'mobile-panel-dragging shadow-2xl' : 'shadow-xl'}`}
+        className={`glass fixed z-30 flex w-[min(19rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl md:hidden ${mobileDragging ? 'mobile-panel-dragging shadow-2xl' : 'shadow-xl'}`}
       >
         <div
           onPointerDown={mobileDragStart}
-          className="flex cursor-grab touch-none items-center justify-between border-b border-white/10 px-4 py-3 active:cursor-grabbing"
+          className="flex cursor-grab touch-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-4 py-3 active:cursor-grabbing"
         >
           <div className="flex items-center gap-2">
-            <Grip className="h-3.5 w-3.5 text-white/50" aria-hidden />
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white">
+            <Grip className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-500' : 'text-white/50'}`} aria-hidden />
+            <span className={`flex h-7 w-7 items-center justify-center rounded-full bg-white/10 ${isBrightBasemap ? 'text-slate-700' : 'text-white'}`}>
               {icon}
             </span>
-            <h2 className="text-[14px] font-semibold text-white">{title}</h2>
+            <h2 className={`text-[14px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>{title}</h2>
           </div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setIsMinimized(true)}
               onPointerDown={(e) => e.stopPropagation()}
               title={`Minimize ${title} to a bubble`}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white"
+              className={`flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ${isBrightBasemap ? 'text-slate-600' : 'text-white'}`}
               aria-label={`Minimize ${title}`}
             >
               <Minimize2 className="h-4 w-4" />
@@ -326,7 +330,7 @@ export function FloatingPanel({
               onClick={() => closePanel(id)}
               onPointerDown={(e) => e.stopPropagation()}
               title={`Close ${title} — reopen from the tools bubble`}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white"
+              className={`flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ${isBrightBasemap ? 'text-slate-600' : 'text-white'}`}
               aria-label={`Close ${title}`}
             >
               <X className="h-4 w-4" />
@@ -336,7 +340,7 @@ export function FloatingPanel({
                 onClick={onClose}
                 onPointerDown={(e) => e.stopPropagation()}
                 title={`Remove ${title} completely`}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white"
+                className={`flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ${isBrightBasemap ? 'text-slate-600' : 'text-white'}`}
                 aria-label={`Remove ${title}`}
               >
                 <XCircle className="h-4 w-4" />
