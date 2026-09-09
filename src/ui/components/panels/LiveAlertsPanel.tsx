@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, AlertTriangle, Navigation, ShieldAlert, Globe, MapPin } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
-import { NasaBadge } from '../common/NasaBadge';
 import { useDisaster } from '../../../hooks/useDisaster';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
@@ -55,7 +54,7 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
       .then((h) => {
         if (!cancelled && h?.country) setCenterCountry(h.country);
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       cancelled = true;
     };
@@ -190,13 +189,12 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
                   key={c}
                   type="button"
                   onClick={() => setSelectedSeverity(severityKey)}
-                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
-                    isSelected
-                      ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-[#5500a4] bg-[#5500a4] text-white')
-                      : isBrightBasemap
-                        ? 'border-white/10 bg-white/5 text-slate-700 hover:bg-white/10'
-                        : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                  }`}
+                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${isSelected
+                    ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-[#5500a4] bg-[#5500a4] text-white')
+                    : isBrightBasemap
+                      ? 'border-white/10 bg-white/5 text-slate-700 hover:bg-white/10'
+                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                    }`}
                 >
                   {c}
                 </button>
@@ -216,13 +214,12 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
                 key={s}
                 type="button"
                 onClick={() => setAlertScope(scopeKey)}
-                className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition flex items-center gap-1.5 ${
-                  isSelected
-                    ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-[#5500a4] bg-[#5500a4] text-white')
-                    : isBrightBasemap
-                      ? 'border-white/10 bg-white/5 text-slate-700 hover:bg-white/10'
-                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                }`}
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition flex items-center gap-1.5 ${isSelected
+                  ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-[#5500a4] bg-[#5500a4] text-white')
+                  : isBrightBasemap
+                    ? 'border-white/10 bg-white/5 text-slate-700 hover:bg-white/10'
+                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                  }`}
                 title={s === 'Global' ? 'All events worldwide' : s === 'Country-wide' ? 'Events in the same country as the map center' : `Events within ${100} km of the map center`}
               >
                 {icon}
@@ -274,7 +271,6 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
                     </p>
                   )}
                   <p className={`mt-1 flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-500'}`}>
-                    {event.source.startsWith('NASA') && <NasaBadge />}
                     <span>
                       {event.source}
                       {cached?.countryCode ? ` · ${cached.countryCode}` : ''}
