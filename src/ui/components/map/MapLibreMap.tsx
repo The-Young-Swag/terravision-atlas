@@ -6,6 +6,7 @@ import type { MapLayerMouseEvent } from 'maplibre-gl';
 import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../stores/mapStore';
 import { maplibreStyleFor } from '../../../core/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
+import { setTrailsVisible } from '../../../core/map/maplibre/trails';
 import { useTiltStore } from '../../../stores/tiltStore';
 import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
 import { MEASURE_POINT_LAYER_ID, removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
@@ -92,7 +93,7 @@ export function MapLibreMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibre | null>(null);
 
-  const { center, zoom, basemap, satelliteSource, streetsSource, showTerrainContours, showTraffic, showHazards } = useMapStore();
+  const { center, zoom, basemap, satelliteSource, streetsSource, showTerrainContours, showHikingTrails, showTraffic, showHazards } = useMapStore();
   const trafficStatus = useTrafficStore((s) => s.status);
   const trafficIncidents = useTrafficStore((s) => s.incidents);
   const incidentPopupRef = useRef<Popup | null>(null);
@@ -558,6 +559,7 @@ export function MapLibreMap() {
       const mapState = useMapStore.getState();
       const trafficState = useTrafficStore.getState();
       setContoursVisible(liveMap, mapState.showTerrainContours);
+      setTrailsVisible(liveMap, mapState.showHikingTrails);
       setTrafficVisible(liveMap, mapState.showTraffic && trafficState.status === 'ok', tomtomApiKey());
       setAvoidVisible(liveMap, useRouteStore.getState().avoidCircle);
       const liveRoute = useRouteStore.getState().route;
@@ -575,6 +577,20 @@ export function MapLibreMap() {
       setWeatherVisible(liveMap, liveWeather?.lon ?? null, liveWeather?.lat ?? null);
     });
   }, [basemap, satelliteSource, streetsSource]);
+
+  // Hiking-trails overlay — same lifecycle as the contour overlay above:
+  // sources added once the style is live, removed on toggle-off.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (map.isStyleLoaded()) {
+      setTrailsVisible(map, showHikingTrails);
+    } else if (showHikingTrails) {
+      map.once('load', () => {
+        if (mapRef.current) setTrailsVisible(map, true);
+      });
+    }
+  }, [showHikingTrails]);
 
   // Search-result pin — mirrors the 2D marker.
   useEffect(() => {

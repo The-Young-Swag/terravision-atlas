@@ -23,6 +23,8 @@ interface MapState {
   showHazards: boolean;
   showTraffic: boolean;
   showTerrainContours: boolean;
+  /** Waymarked Trails hiking-route overlay (free, keyless OSM-data overlay). */
+  showHikingTrails: boolean;
   snapToGrid: boolean;
   measureActive: boolean;
   measurePoints: [number, number][];
@@ -36,6 +38,7 @@ interface MapState {
   setShowHazards: (show: boolean) => void;
   setShowTraffic: (show: boolean) => void;
   setShowTerrainContours: (show: boolean) => void;
+  setShowHikingTrails: (show: boolean) => void;
   setSnapToGrid: (snap: boolean) => void;
   setMeasureActive: (active: boolean) => void;
   measureMode: MeasureMode;
@@ -58,6 +61,7 @@ export const useMapStore = create<MapState>((set) => ({
   showHazards: true,
   showTraffic: false,
   showTerrainContours: false,
+  showHikingTrails: false,
   snapToGrid: false,
   measureActive: false,
   measurePoints: [],
@@ -75,6 +79,7 @@ export const useMapStore = create<MapState>((set) => ({
   setShowHazards: (showHazards) => set({ showHazards }),
   setShowTraffic: (showTraffic) => set({ showTraffic }),
   setShowTerrainContours: (showTerrainContours) => set({ showTerrainContours }),
+  setShowHikingTrails: (showHikingTrails) => set({ showHikingTrails }),
   setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
   setMeasureActive: (measureActive) =>
     set((state) => ({ measureActive, measurePoints: measureActive ? state.measurePoints : [] })),

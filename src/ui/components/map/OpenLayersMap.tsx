@@ -9,6 +9,7 @@ import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../stores/mapStor
 import { useDisasterStore } from '../../../stores/disasterStore';
 import { createMap, updateBasemap } from '../../../core/map/openlayers/createMap';
 import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';
+import { createHikingTrailsLayer } from '../../../core/map/openlayers/trailsLayer';
 import { createRouteLayer } from '../../../core/map/openlayers/routeLayer';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import { createAvoidLayer } from '../../../core/map/openlayers/avoidLayer';
@@ -47,6 +48,7 @@ export function OpenLayersMap() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const hazardLayerRef = useRef<ReturnType<typeof createHazardLayer> | null>(null);
+  const trailsLayerRef = useRef<ReturnType<typeof createHikingTrailsLayer> | null>(null);
   const routeLayerRef = useRef<ReturnType<typeof createRouteLayer> | null>(null);
   const shelterLayerRef = useRef<ReturnType<typeof createShelterLayer> | null>(null);
   const trafficFlowLayerRef = useRef<ReturnType<typeof createTrafficFlowLayer> | null>(null);
@@ -57,7 +59,7 @@ export function OpenLayersMap() {
   const measureLayerRef = useRef<ReturnType<typeof createMeasureLayer> | null>(null);
   const isProgrammaticRef = useRef(false);
 
-  const { center, zoom, basemap, satelliteSource, streetsSource, showHazards, showTraffic, setCenter, setZoom } = useMapStore();
+  const { center, zoom, basemap, satelliteSource, streetsSource, showHazards, showTraffic, showHikingTrails, setCenter, setZoom } = useMapStore();
   const measureActive = useMapStore((s) => s.measureActive);
   const measurePoints = useMapStore((s) => s.measurePoints);
   const measureMode = useMapStore((s) => s.measureMode);
@@ -183,6 +185,14 @@ export function OpenLayersMap() {
       const hazardLayer = createHazardLayer(hazardFeatures, markerStroke);
       map.addLayer(hazardLayer);
       hazardLayerRef.current = hazardLayer;
+    }
+
+    // Initial hiking-trails overlay, same lifecycle as hazards above
+    if (showHikingTrails) {
+      const trailsLayer = createHikingTrailsLayer();
+      trailsLayer.setZIndex(8);
+      map.addLayer(trailsLayer);
+      trailsLayerRef.current = trailsLayer;
     }
 
     // Incident popup — shows real TomTom incident fields on marker click.
@@ -556,6 +566,24 @@ export function OpenLayersMap() {
       hazardLayerRef.current = layer;
     }
   }, [showHazards, hazardFeatures, markerStroke]);
+
+  // Hiking-trails overlay — Waymarked Trails tiles above the basemap.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (trailsLayerRef.current) {
+      map.removeLayer(trailsLayerRef.current);
+      trailsLayerRef.current = null;
+    }
+
+    if (showHikingTrails) {
+      const layer = createHikingTrailsLayer();
+      layer.setZIndex(8);
+      map.addLayer(layer);
+      trailsLayerRef.current = layer;
+    }
+  }, [showHikingTrails]);
 
   // Evacuation route overlay — rebuilt whenever the route or avoid area changes.
   // The route renders above the traffic flow layer (explicit z-index, not
