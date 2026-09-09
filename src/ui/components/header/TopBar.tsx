@@ -97,13 +97,6 @@ export function TopBar({
           child can shrink (min-w-0) so nothing overflows 375px. */}
       <header className="absolute inset-x-3 top-3 z-20 flex items-center gap-1.5 md:inset-x-4 md:top-4 md:gap-3">
         <div className="glass-strong flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 md:gap-2.5 md:rounded-2xl md:px-4 md:py-2.5">
-          <img
-            src="/assets/icons/terravision-atlas.png"
-            alt="TerraVision Atlas"
-            className="h-7 w-7 shrink-0 object-contain md:h-9 md:w-9"
-            width={32}
-            height={32}
-          />
           <span className={`shrink-0 text-[13px] font-semibold tracking-tight md:text-[15px] ${isBrightBasemap ? 'text-slate-900' : 'text-slate-100'}`}>TerraVision</span>
           <span className={`hidden shrink-0 text-[10px] font-medium tracking-widest sm:inline md:text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>ATLAS</span>
         </div>

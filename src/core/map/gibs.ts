@@ -32,21 +32,21 @@ export interface GibsLayerMeta {
 export const GIBS_LAYERS: GibsLayerMeta[] = [
   {
     id: 'modis-terra',
-    label: 'MODIS Terra (daily)',
+    label: 'NASA MODIS Terra (daily)',
     desc: 'True color · ~250m · daily since 2000',
     product: 'MODIS_Terra_CorrectedReflectance_TrueColor',
     attribution: 'Imagery © NASA EOSDIS GIBS (MODIS Terra)',
   },
   {
     id: 'modis-aqua',
-    label: 'MODIS Aqua (daily)',
+    label: 'NASA MODIS Aqua (daily)',
     desc: 'True color · ~250m · daily since 2002',
     product: 'MODIS_Aqua_CorrectedReflectance_TrueColor',
     attribution: 'Imagery © NASA EOSDIS GIBS (MODIS Aqua)',
   },
   {
     id: 'viirs-snpp',
-    label: 'VIIRS SNPP (near real-time, ~3hr)',
+    label: 'NASA VIIRS SNPP (near real-time, ~3hr)',
     desc: 'True color · ~375m · updated within hours',
     product: 'VIIRS_SNPP_CorrectedReflectance_TrueColor',
     attribution: 'Imagery © NASA EOSDIS GIBS (VIIRS SNPP)',
