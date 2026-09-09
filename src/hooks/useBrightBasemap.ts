@@ -21,7 +21,13 @@ import { useMapStore } from '../stores/mapStore';
 // option lists, semantic accents) keep static colors — only variable-glass
 // text adapts.
 export function useBrightBasemap(): boolean {
+  // Single source of truth: text color keys off the ACTIVE BASEMAP only.
+  // Vector is a map type, not a basemap — it inherits its brightness from
+  // whichever basemap is active (Streets/Terrain bright, Dark/Satellite
+  // dark). The old `viewMode === 'vector'` clause hardcoded vector as
+  // always-bright (true when the vector styles were all bright rasters);
+  // with a Dark vector style that assumption flips Dark to dark text, so
+  // it was removed — no separate Vector-mode logic remains.
   const basemap = useMapStore((s) => s.basemap);
-  const viewMode = useMapStore((s) => s.viewMode);
-  return viewMode === 'vector' || ['streets', 'terrain'].includes(basemap);
+  return ['streets', 'terrain'].includes(basemap);
 }
