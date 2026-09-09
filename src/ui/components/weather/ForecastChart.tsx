@@ -1,6 +1,14 @@
 import { useEffect, useRef } from 'react';
-import { Chart, Plugin, registerables, ScriptableContext, ScriptableScaleContext } from 'chart.js';
+import {
+  Chart,
+  Plugin,
+  registerables,
+  ScriptableContext,
+  ScriptableLineSegmentContext,
+  ScriptableScaleContext,
+} from 'chart.js';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { temperatureColorFor } from '../../../features/weather/temperatureScale';
 import type { HourlyPoint } from '../../../features/weather/openMeteo';
 
 Chart.register(...registerables);
@@ -73,6 +81,10 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
   const tickColor = isBrightBasemap ? '#475569' : '#94a3b8';
   const gridColor = isBrightBasemap ? 'rgba(15,23,42,0.08)' : 'rgba(255,255,255,0.06)';
   const axisTitleColor = isBrightBasemap ? '#64748b' : '#7c8aa3';
+  // Legend swatch reflects the latest value's band (confirmed behavior),
+  // resolved through the same shared scale as the line itself.
+  const latestTemp = [...hourly].reverse().find((point) => point.temperatureC !== null)?.temperatureC ?? null;
+  const legendTempColor = temperatureColorFor(latestTemp);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -131,11 +143,19 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
             type: 'line',
             label: 'Temperature (°C)',
             data: tempData,
-            borderColor: TEMPERATURE_ORANGE,
-            backgroundColor: 'rgba(255,159,28,0.12)',
+            // Per-point band colors from the shared threshold scale (nulls
+            // fall back so gaps never render a misleading band).
+            segment: {
+              borderColor: (ctx: ScriptableLineSegmentContext) =>
+                temperatureColorFor(hourly[ctx.p1DataIndex]?.temperatureC ?? null),
+            },
+            backgroundColor: (ctx: ScriptableContext<'line'>) =>
+              `${temperatureColorFor(hourly[ctx.dataIndex]?.temperatureC ?? null)}1F`,
             fill: true,
             borderWidth: 2,
-            pointRadius: 0,
+            pointRadius: 2,
+            pointBackgroundColor: (ctx: ScriptableContext<'line'>) =>
+              temperatureColorFor(hourly[ctx.dataIndex]?.temperatureC ?? null),
             pointHoverRadius: 4,
             pointHoverBackgroundColor: TEMPERATURE_ORANGE,
             tension: 0.3,
@@ -288,7 +308,7 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
     <div>
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1" aria-hidden="true">
         <span className={`flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
-          <span className="inline-block h-[3px] w-4 rounded-full bg-[#FF9F1C]" />
+          <span className="inline-block h-[3px] w-4 rounded-full" style={{ backgroundColor: legendTempColor }} />
           Temperature
         </span>
         <span className={`flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
