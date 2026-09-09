@@ -1,7 +1,9 @@
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import OSM from 'ol/source/OSM';
+import StadiaMaps from 'ol/source/StadiaMaps';
 import type { BasemapId } from '../../../stores/mapStore';
+import { darkTileSource, stadiaApiKey } from '../stadia';
 import {
   GIBS_MAX_ZOOM,
   gibsBestDate,
@@ -92,21 +94,32 @@ export function createBasemapLayer(
     }
 
     case 'dark': {
-      // Esri Dark Gray Canvas (keyless, CORS-enabled). Previously Stadia
-      // alidade_smooth_dark, which returns HTTP 401 without an API key for
-      // any non-localhost referer — Dark never loaded in production builds.
-      // Detail ends around z16 (deeper levels serve uniform tiles), so cap
-      // maxZoom at 16 and let the renderers overzoom beyond that.
-      const layer = new TileLayer({
-        source: new XYZ({
-          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-          maxZoom: 16,
-          attributions:
-            'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community',
-          crossOrigin,
-        }),
-        properties: { basemap },
-      });
+      // Stadia alidade_smooth_dark via ol's StadiaMaps source, which bakes
+      // the @2x retina suffix and ?api_key= into the URL at construction —
+      // a hand-rolled {r} placeholder is NOT substituted by XYZ and 404s.
+      // Keyless Esri fallback when VITE_STADIA_API_KEY is unconfigured.
+      const key = stadiaApiKey();
+      const layer =
+        key !== null
+          ? new TileLayer({
+              source: new StadiaMaps({
+                layer: 'alidade_smooth_dark',
+                apiKey: key,
+                // StadiaMaps hardcodes crossOrigin 'anonymous', which also
+                // satisfies the export compositor's pixel-access need.
+                retina: window.devicePixelRatio > 1,
+              }),
+              properties: { basemap },
+            })
+          : new TileLayer({
+              source: new XYZ({
+                url: darkTileSource().url,
+                maxZoom: darkTileSource().maxZoom,
+                attributions: darkTileSource().attribution,
+                crossOrigin,
+              }),
+              properties: { basemap },
+            });
       basemapCache.set(cacheKey, layer);
       return layer;
     }

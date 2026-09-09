@@ -1,5 +1,6 @@
 import * as Cesium from 'cesium';
 import type { BasemapId } from '../../../stores/mapStore';
+import { darkTileSource } from '../stadia';
 import {
   GIBS_MAX_ZOOM,
   gibsBestDate,
@@ -56,8 +57,7 @@ export function globeImageryCredit(basemap: BasemapId, satelliteSource: Satellit
     if (satelliteSource === 'esri') return 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics';
     return gibsLayerMeta(satelliteSource).attribution;
   }
-  if (basemap === 'terrain') return 'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community';
-  if (basemap === 'dark') return 'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community';
+  if (basemap === 'dark') return darkTileSource().attribution;
   return 'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community';
 }
 
@@ -96,9 +96,10 @@ export function createGlobeImagery(
     return p;
   }
   if (basemap === 'dark') {
+    const dark = darkTileSource();
     const p = new Cesium.UrlTemplateImageryProvider({
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-      maximumLevel: 16,
+      url: dark.url,
+      maximumLevel: dark.maxZoom,
     });
     globeImageryCache.set(cacheKey, p);
     return p;

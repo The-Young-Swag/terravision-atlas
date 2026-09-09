@@ -7,6 +7,7 @@
 
 import type { StyleSpecification } from 'maplibre-gl';
 import type { BasemapId } from '../../../stores/mapStore';
+import { darkTileSource } from '../stadia';
 import {
   GIBS_MAX_ZOOM,
   gibsBestDate,
@@ -49,6 +50,12 @@ function satelliteStyle(source: SatelliteSourceId): StyleSpecification {
   return rasterStyle([gibsTileUrlTemplate(meta.product, gibsBestDate())], meta.attribution, GIBS_MAX_ZOOM);
 }
 
+/** Dark style resolves the Stadia key at build time (see core/map/stadia.ts). */
+function darkStyle(): StyleSpecification {
+  const dark = darkTileSource();
+  return rasterStyle([dark.url], dark.attribution, dark.maxZoom);
+}
+
 export const MAPLIBRE_STYLES: Record<BasemapId, StyleSpecification> = {
   streets: rasterStyle(
     ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'],
@@ -60,16 +67,15 @@ export const MAPLIBRE_STYLES: Record<BasemapId, StyleSpecification> = {
     'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community',
     19,
   ),
-  dark: rasterStyle(
-    ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'],
-    'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community',
-    16,
-  ),
+  get dark() {
+    return darkStyle();
+  },
 };
 
 /** Style for a basemap + satellite-source combination. */
 export function maplibreStyleFor(basemap: BasemapId, satelliteSource: SatelliteSourceId): StyleSpecification {
   if (basemap === 'satellite') return satelliteStyle(satelliteSource);
+  if (basemap === 'dark') return darkStyle();
   return MAPLIBRE_STYLES[basemap];
 }
 

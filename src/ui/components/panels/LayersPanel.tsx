@@ -144,7 +144,7 @@ export function LayersPanel() {
               {
                 id: 'dark' as const,
                 label: 'Dark',
-                desc: 'Esri Dark Gray',
+                desc: 'Stadia Dark',
                 icon: Moon,
               },
             ] as const
