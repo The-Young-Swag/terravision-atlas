@@ -1,6 +1,7 @@
 import * as Cesium from 'cesium';
-import type { BasemapId } from '../../../stores/mapStore';
+import type { BasemapId, StreetsSourceId } from '../../../stores/mapStore';
 import { darkTileSource } from '../stadia';
+import { streetsSourceMeta } from '../streets';
 import {
   GIBS_MAX_ZOOM,
   gibsBestDate,
@@ -25,6 +26,7 @@ export interface CreateCesiumOptions {
   zoom: number; // approximate, converted to height
   basemap?: BasemapId;
   satelliteSource?: SatelliteSourceId;
+  streetsSource?: StreetsSourceId;
 }
 
 export type TerrainStatus =
@@ -52,13 +54,19 @@ function zoomToHeight(zoom: number): number {
 }
 
 /** Imagery credit for the active 3D source (rendered in our own overlay). */
-export function globeImageryCredit(basemap: BasemapId, satelliteSource: SatelliteSourceId): string {
+export function globeImageryCredit(
+  basemap: BasemapId,
+  satelliteSource: SatelliteSourceId,
+  streetsSource: StreetsSourceId = 'osm',
+): string {
   if (basemap === 'satellite') {
     if (satelliteSource === 'esri') return 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics';
     return gibsLayerMeta(satelliteSource).attribution;
   }
   if (basemap === 'dark') return darkTileSource().attribution;
-  return 'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community';
+  if (basemap === 'terrain')
+    return 'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community';
+  return streetsSourceMeta(streetsSource).attribution;
 }
 
 const globeImageryCache = new Map<string, Cesium.ImageryProvider>();
@@ -66,8 +74,9 @@ const globeImageryCache = new Map<string, Cesium.ImageryProvider>();
 export function createGlobeImagery(
   basemap: BasemapId,
   satelliteSource: SatelliteSourceId,
+  streetsSource: StreetsSourceId = 'osm',
 ): Cesium.ImageryProvider {
-  const cacheKey = `${basemap}:${satelliteSource}`;
+  const cacheKey = `${basemap}:${satelliteSource}:${streetsSource}`;
   const cached = globeImageryCache.get(cacheKey);
   if (cached) return cached;
   if (basemap === 'satellite') {
@@ -104,16 +113,18 @@ export function createGlobeImagery(
     globeImageryCache.set(cacheKey, p);
     return p;
   }
+  // Streets slot honours the selected streets source (OSM default).
+  const streets = streetsSourceMeta(streetsSource);
   const p = new Cesium.UrlTemplateImageryProvider({
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-    maximumLevel: 19,
+    url: streets.url,
+    maximumLevel: streets.maxZoom,
   });
   globeImageryCache.set(cacheKey, p);
   return p;
 }
 
 export async function createCesiumViewer(options: CreateCesiumOptions): Promise<CreatedCesiumViewer> {
-  const { container, center, zoom, basemap = 'satellite', satelliteSource = 'esri' } = options;
+  const { container, center, zoom, basemap = 'satellite', satelliteSource = 'esri', streetsSource = 'osm' } = options;
 
   const token = cesiumIonToken();
   if (token) {
@@ -149,7 +160,7 @@ export async function createCesiumViewer(options: CreateCesiumOptions): Promise<
   // terrain mesh. Terrain comes from Cesium Ion when a token is
   // configured; otherwise the globe is flat AND the UI says so.
   viewer.imageryLayers.removeAll();
-  viewer.imageryLayers.addImageryProvider(createGlobeImagery(basemap, satelliteSource));
+  viewer.imageryLayers.addImageryProvider(createGlobeImagery(basemap, satelliteSource, streetsSource));
 
   let terrain: TerrainStatus;
   if (!token) {

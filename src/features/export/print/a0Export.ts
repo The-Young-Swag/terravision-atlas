@@ -2,7 +2,7 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import { fromLonLat } from 'ol/proj';
 import { createBasemapLayer } from '../../../core/map/openlayers/basemapLayers';
-import type { BasemapId } from '../../../stores/mapStore';
+import type { BasemapId, StreetsSourceId } from '../../../stores/mapStore';
 import type { SatelliteSourceId } from '../../../core/map/gibs';
 
 // Large-format map export: re-renders the current 2D view offscreen at A0
@@ -31,6 +31,7 @@ export async function exportA0Png(
   zoom: number,
   basemap: BasemapId,
   satelliteSource: SatelliteSourceId = 'esri',
+  streetsSource: StreetsSourceId = 'osm',
   onProgress?: (stage: string) => void,
 ): Promise<Blob> {
   onProgress?.('Preparing A0 canvas…');
@@ -43,7 +44,7 @@ export async function exportA0Png(
   document.body.appendChild(container);
 
   const printMap = new Map({
-    layers: [createBasemapLayer(basemap, 'anonymous', satelliteSource)],
+    layers: [createBasemapLayer(basemap, 'anonymous', satelliteSource, streetsSource)],
     target: container,
     view: new View({ center: fromLonLat([centerLon, centerLat]), zoom }),
   });

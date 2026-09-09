@@ -6,8 +6,9 @@
 // or a NASA GIBS layer); GIBS serves levels 0-9 so maxzoom 9 overzooms.
 
 import type { StyleSpecification } from 'maplibre-gl';
-import type { BasemapId } from '../../../stores/mapStore';
+import type { BasemapId, StreetsSourceId } from '../../../stores/mapStore';
 import { darkTileSource } from '../stadia';
+import { streetsSourceMeta } from '../streets';
 import {
   GIBS_MAX_ZOOM,
   gibsBestDate,
@@ -50,6 +51,12 @@ function satelliteStyle(source: SatelliteSourceId): StyleSpecification {
   return rasterStyle([gibsTileUrlTemplate(meta.product, gibsBestDate())], meta.attribution, GIBS_MAX_ZOOM);
 }
 
+/** Streets style follows the selected streets source (OSM default). */
+function streetsStyle(source: StreetsSourceId): StyleSpecification {
+  const meta = streetsSourceMeta(source);
+  return rasterStyle([meta.url], meta.attribution, meta.maxZoom);
+}
+
 /** Dark style resolves the Stadia key at build time (see core/map/stadia.ts). */
 function darkStyle(): StyleSpecification {
   const dark = darkTileSource();
@@ -57,10 +64,7 @@ function darkStyle(): StyleSpecification {
 }
 
 export const MAPLIBRE_STYLES: Record<BasemapId, StyleSpecification> = {
-  streets: rasterStyle(
-    ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'],
-    'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community',
-  ),
+  streets: streetsStyle('osm'),
   satellite: satelliteStyle('esri'),
   terrain: rasterStyle(
     ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],
@@ -72,10 +76,15 @@ export const MAPLIBRE_STYLES: Record<BasemapId, StyleSpecification> = {
   },
 };
 
-/** Style for a basemap + satellite-source combination. */
-export function maplibreStyleFor(basemap: BasemapId, satelliteSource: SatelliteSourceId): StyleSpecification {
+/** Style for a basemap + source combination. */
+export function maplibreStyleFor(
+  basemap: BasemapId,
+  satelliteSource: SatelliteSourceId,
+  streetsSource: StreetsSourceId = 'osm',
+): StyleSpecification {
   if (basemap === 'satellite') return satelliteStyle(satelliteSource);
   if (basemap === 'dark') return darkStyle();
+  if (basemap === 'streets') return streetsStyle(streetsSource);
   return MAPLIBRE_STYLES[basemap];
 }
 

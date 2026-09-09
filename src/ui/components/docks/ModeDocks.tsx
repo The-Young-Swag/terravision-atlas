@@ -59,6 +59,7 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
   const zoom = useMapStore((s) => s.zoom);
   const basemap = useMapStore((s) => s.basemap);
   const satelliteSource = useMapStore((s) => s.satelliteSource);
+  const streetsSource = useMapStore((s) => s.streetsSource);
   const [isExporting, setIsExporting] = useState(false);
   const [exportNote, setExportNote] = useState<string | null>(null);
 
@@ -127,7 +128,7 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
     setExportNote(null);
     setIsExporting(true);
     try {
-      const blob = await exportA0Png(center[0], center[1], zoom, basemap, satelliteSource, setExportNote);
+      const blob = await exportA0Png(center[0], center[1], zoom, basemap, satelliteSource, streetsSource, setExportNote);
       downloadA0Png(blob, basemap, zoom);
       setExportNote(`Saved ${(blob.size / 1048576).toFixed(1)} MB PNG`);
     } catch (err) {

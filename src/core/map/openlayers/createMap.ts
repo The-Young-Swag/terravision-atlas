@@ -3,7 +3,7 @@ import View from 'ol/View';
 import Attribution from 'ol/control/Attribution';
 import { fromLonLat } from 'ol/proj';
 import { createBasemapLayer } from './basemapLayers';
-import type { BasemapId } from '../../../stores/mapStore';
+import type { BasemapId, StreetsSourceId } from '../../../stores/mapStore';
 import type { SatelliteSourceId } from '../gibs';
 
 export interface CreateMapOptions {
@@ -12,14 +12,15 @@ export interface CreateMapOptions {
   zoom: number;
   basemap: BasemapId;
   satelliteSource?: SatelliteSourceId;
+  streetsSource?: StreetsSourceId;
 }
 
 // Creates an OpenLayers map with a single basemap layer.
 // The caller owns lifecycle (setTarget(null) on unmount).
 export function createMap(options: CreateMapOptions): Map {
-  const { target, center, zoom, basemap, satelliteSource } = options;
+  const { target, center, zoom, basemap, satelliteSource, streetsSource } = options;
 
-  const basemapLayer = createBasemapLayer(basemap, undefined, satelliteSource);
+  const basemapLayer = createBasemapLayer(basemap, undefined, satelliteSource, streetsSource);
 
   const map = new Map({
     target,
@@ -39,12 +40,17 @@ export function createMap(options: CreateMapOptions): Map {
 }
 
 // Helper to swap basemap without recreating the whole map.
-export function updateBasemap(map: Map, basemap: BasemapId, satelliteSource: SatelliteSourceId = 'esri'): void {
+export function updateBasemap(
+  map: Map,
+  basemap: BasemapId,
+  satelliteSource: SatelliteSourceId = 'esri',
+  streetsSource: StreetsSourceId = 'osm',
+): void {
   const layers = map.getLayers();
   const oldBasemap = layers.item(0);
   if (oldBasemap) {
     map.removeLayer(oldBasemap);
   }
-  const newLayer = createBasemapLayer(basemap, undefined, satelliteSource);
+  const newLayer = createBasemapLayer(basemap, undefined, satelliteSource, streetsSource);
   layers.insertAt(0, newLayer);
 }

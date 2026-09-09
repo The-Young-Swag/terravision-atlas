@@ -28,6 +28,7 @@ export function CesiumGlobe() {
   const { center, zoom } = useMapStore();
   const basemap = useMapStore((s) => s.basemap);
   const satelliteSource = useMapStore((s) => s.satelliteSource);
+  const streetsSource = useMapStore((s) => s.streetsSource);
   const setCesiumTiltInstance = useTiltStore((s) => s.setCesium);
 
   // Publish the live Cesium viewer to the tilt store so the Layers panel
@@ -48,7 +49,7 @@ export function CesiumGlobe() {
     let cancelled = false;
     let viewer: Cesium.Viewer | null = null;
 
-    createCesiumViewer({ container, center, zoom, basemap, satelliteSource })
+    createCesiumViewer({ container, center, zoom, basemap, satelliteSource, streetsSource })
       .then(({ viewer: v, terrain: terrainStatus }) => {
         if (cancelled) {
           v.destroy();
@@ -134,7 +135,7 @@ export function CesiumGlobe() {
         }
       }
     };
-  }, [basemap, satelliteSource, center, zoom, theme]);
+  }, [basemap, satelliteSource, streetsSource, center, zoom, theme]);
 
   useEffect(() => {
     const viewer = viewerRef.current;
@@ -147,9 +148,9 @@ export function CesiumGlobe() {
     const viewer = viewerRef.current;
     if (!viewer || viewer.isDestroyed()) return;
     viewer.imageryLayers.removeAll();
-    viewer.imageryLayers.addImageryProvider(createGlobeImagery(basemap, satelliteSource));
+    viewer.imageryLayers.addImageryProvider(createGlobeImagery(basemap, satelliteSource, streetsSource));
     viewer.scene.requestRender();
-  }, [basemap, satelliteSource]);
+  }, [basemap, satelliteSource, streetsSource]);
 
   const navRoute = useRouteStore((s) => s.route);
   const navJog = useRouteStore((s) => s.jogLoop);
@@ -311,7 +312,7 @@ export function CesiumGlobe() {
           our own glass UI), so imagery + Ion credits render here and always
           reflect the currently active satellite source. */}
       <div className="pointer-events-none absolute bottom-1 right-2 z-10 rounded bg-black/45 px-1.5 py-0.5 font-mono text-[10px] text-slate-300">
-        {globeImageryCredit(basemap, satelliteSource)}
+        {globeImageryCredit(basemap, satelliteSource, streetsSource)}
         {terrain?.kind === 'ion' ? ' · Terrain © Cesium Ion' : null}
       </div>
       {/* Honest terrain-failure notice — never silently fall back to flat. */}

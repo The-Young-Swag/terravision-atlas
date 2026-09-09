@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import type { SatelliteSourceId } from '../core/map/gibs';
 
 export type BasemapId = 'satellite' | 'streets' | 'terrain' | 'dark';
+/** Tile provider for the 'streets' basemap slot. 'osm' (default) is the
+ *  community OpenStreetMap standard style; 'esri' is Esri World Street Map. */
+export type StreetsSourceId = 'osm' | 'esri';
 export type MapViewMode = '2d' | 'vector' | '3d';
 export type MeasureMode = 'distance' | 'area';
 
@@ -14,6 +17,8 @@ interface MapState {
   basemap: BasemapId;
   /** Satellite imagery source for the 'satellite' basemap slot. */
   satelliteSource: SatelliteSourceId;
+  /** Tile provider for the 'streets' basemap slot. */
+  streetsSource: StreetsSourceId;
   viewMode: MapViewMode;
   showHazards: boolean;
   showTraffic: boolean;
@@ -26,6 +31,7 @@ interface MapState {
   setZoom: (zoom: number) => void;
   setBasemap: (basemap: BasemapId) => void;
   setSatelliteSource: (source: SatelliteSourceId) => void;
+  setStreetsSource: (source: StreetsSourceId) => void;
   setViewMode: (mode: MapViewMode) => void;
   setShowHazards: (show: boolean) => void;
   setShowTraffic: (show: boolean) => void;
@@ -47,6 +53,7 @@ export const useMapStore = create<MapState>((set) => ({
   zoom: 11,
   basemap: 'satellite',
   satelliteSource: 'esri',
+  streetsSource: 'osm',
   viewMode: '2d',
   showHazards: true,
   showTraffic: false,
@@ -63,6 +70,7 @@ export const useMapStore = create<MapState>((set) => ({
   setZoom: (zoom) => set({ zoom }),
   setBasemap: (basemap) => set({ basemap }),
   setSatelliteSource: (satelliteSource) => set({ satelliteSource }),
+  setStreetsSource: (streetsSource) => set({ streetsSource }),
   setViewMode: (viewMode) => set({ viewMode }),
   setShowHazards: (showHazards) => set({ showHazards }),
   setShowTraffic: (showTraffic) => set({ showTraffic }),

@@ -3,6 +3,7 @@ import { FloatingPanel } from '../common/FloatingPanel';
 
 import { TrafficLegend } from './TrafficLegend';
 import { useMapStore } from '../../../stores/mapStore';
+import { STREETS_SOURCES } from '../../../core/map/streets';
 import { useTrafficStore } from '../../../stores/trafficStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { GIBS_LAYERS, type SatelliteSourceId } from '../../../core/map/gibs';
@@ -27,6 +28,7 @@ const SATELLITE_SOURCES: { id: SatelliteSourceId; label: string; desc: string }[
 export function LayersPanel() {
   const basemap = useMapStore((s) => s.basemap);
   const satelliteSource = useMapStore((s) => s.satelliteSource);
+  const streetsSource = useMapStore((s) => s.streetsSource);
   const viewMode = useMapStore((s) => s.viewMode);
   const showHazards = useMapStore((s) => s.showHazards);
   const showTerrainContours = useMapStore((s) => s.showTerrainContours);
@@ -35,6 +37,7 @@ export function LayersPanel() {
   const zoom = useMapStore((s) => s.zoom);
   const setBasemap = useMapStore((s) => s.setBasemap);
   const setSatelliteSource = useMapStore((s) => s.setSatelliteSource);
+  const setStreetsSource = useMapStore((s) => s.setStreetsSource);
   const setViewMode = useMapStore((s) => s.setViewMode);
   const setShowHazards = useMapStore((s) => s.setShowHazards);
   const setShowTerrainContours = useMapStore((s) => s.setShowTerrainContours);
@@ -132,7 +135,7 @@ export function LayersPanel() {
               {
                 id: 'streets' as const,
                 label: 'Streets',
-                desc: 'Esri World Street Map',
+                desc: STREETS_SOURCES.find((s) => s.id === streetsSource)?.label ?? 'OpenStreetMap',
                 icon: MapIcon,
               },
               {
@@ -190,6 +193,45 @@ export function LayersPanel() {
                     key={source.id}
                     onClick={() => setSatelliteSource(source.id)}
                     aria-label={`Satellite source ${source.label}`}
+                    aria-pressed={isSourceActive}
+                    className={`flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-1.5 text-left transition ${isSourceActive ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4]/10 text-slate-900' : 'border-[#5500a4] bg-[#5500a4]/10 text-white') : isBrightBasemap ? 'border-transparent text-slate-800 hover:bg-white/10' : 'border-transparent text-slate-300 hover:bg-white/5 hover:text-white'}`}
+                  >
+                    <span className="flex-1">
+                      <span className={`block text-[12px] font-medium leading-tight ${isSourceActive ? 'text-[#10B981]' : ''}`}>
+                        {source.label}
+                      </span>
+                      <span className={`block font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>{source.desc}</span>
+                    </span>
+                    {isSourceActive ? (
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#5500a4] text-white">
+                        <Check className="h-2.5 w-2.5" />
+                      </span>
+                    ) : (
+                      <span className="h-4 w-4 shrink-0 rounded-full border border-white/10" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Streets source picker — same selection pattern as Satellite
+            source above, shown only for the Streets basemap slot
+            (OpenStreetMap default + Esri alternate). */}
+        {basemap === 'streets' && (
+          <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-2">
+            <p className={`mb-1.5 px-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-500'}`}>
+              Streets source
+            </p>
+            <div className="space-y-1">
+              {STREETS_SOURCES.map((source) => {
+                const isSourceActive = streetsSource === source.id;
+                return (
+                  <button
+                    key={source.id}
+                    onClick={() => setStreetsSource(source.id)}
+                    aria-label={`Streets source ${source.label}`}
                     aria-pressed={isSourceActive}
                     className={`flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-1.5 text-left transition ${isSourceActive ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4]/10 text-slate-900' : 'border-[#5500a4] bg-[#5500a4]/10 text-white') : isBrightBasemap ? 'border-transparent text-slate-800 hover:bg-white/10' : 'border-transparent text-slate-300 hover:bg-white/5 hover:text-white'}`}
                   >

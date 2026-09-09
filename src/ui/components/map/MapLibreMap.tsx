@@ -92,7 +92,7 @@ export function MapLibreMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibre | null>(null);
 
-  const { center, zoom, basemap, satelliteSource, showTerrainContours, showTraffic, showHazards } = useMapStore();
+  const { center, zoom, basemap, satelliteSource, streetsSource, showTerrainContours, showTraffic, showHazards } = useMapStore();
   const trafficStatus = useTrafficStore((s) => s.status);
   const trafficIncidents = useTrafficStore((s) => s.incidents);
   const incidentPopupRef = useRef<Popup | null>(null);
@@ -111,7 +111,7 @@ export function MapLibreMap() {
 
     const map = new MapLibre({
       container,
-      style: maplibreStyleFor(basemap, satelliteSource),
+      style: maplibreStyleFor(basemap, satelliteSource, streetsSource),
       center,
       zoom,
       attributionControl: false,
@@ -534,7 +534,7 @@ export function MapLibreMap() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const targetStyle = maplibreStyleFor(basemap, satelliteSource);
+    const targetStyle = maplibreStyleFor(basemap, satelliteSource, streetsSource);
     const targetTiles = (targetStyle.sources.basemap as { tiles?: string[] }).tiles;
     const targetAttrib = (targetStyle.sources.basemap as { attribution?: string }).attribution;
     const currentTiles = (map.getStyle()?.sources?.basemap as { tiles?: string[] } | undefined)?.tiles;
@@ -574,7 +574,7 @@ export function MapLibreMap() {
       const liveWeather = useWeatherStore.getState().location;
       setWeatherVisible(liveMap, liveWeather?.lon ?? null, liveWeather?.lat ?? null);
     });
-  }, [basemap, satelliteSource]);
+  }, [basemap, satelliteSource, streetsSource]);
 
   // Search-result pin — mirrors the 2D marker.
   useEffect(() => {
