@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, AlertTriangle, Navigation, ShieldAlert, Globe, MapPin } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
+import { NasaBadge } from '../common/NasaBadge';
 import { useDisaster } from '../../../hooks/useDisaster';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
@@ -272,10 +273,13 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
                       <span className="truncate">{hierarchy}</span>
                     </p>
                   )}
-                  <p className={`mt-1 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-500'}`}>
-                    {event.source}
-                    {cached?.countryCode ? ` · ${cached.countryCode}` : ''}
-                    {cached ? '' : ' · reverse-geocoding…'}
+                  <p className={`mt-1 flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-500'}`}>
+                    {event.source.startsWith('NASA') && <NasaBadge />}
+                    <span>
+                      {event.source}
+                      {cached?.countryCode ? ` · ${cached.countryCode}` : ''}
+                      {cached ? '' : ' · reverse-geocoding…'}
+                    </span>
                   </p>
                   {activeMode === 'monitor' && (
                     <button

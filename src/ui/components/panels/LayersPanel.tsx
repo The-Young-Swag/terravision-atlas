@@ -1,5 +1,6 @@
 import { Layers, Satellite, Map as MapIcon, Mountain, Moon, Check, RotateCcw, Info, X } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
+import { NasaBadge } from '../common/NasaBadge';
 import { TrafficLegend } from './TrafficLegend';
 import { useMapStore } from '../../../stores/mapStore';
 import { useTrafficStore } from '../../../stores/trafficStore';
@@ -180,8 +181,8 @@ export function LayersPanel() {
             the Satellite basemap slot (Esri default + NASA GIBS layers). */}
         {basemap === 'satellite' && (
           <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-2">
-            <p className={`mb-1.5 px-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-500'}`}>
-              Satellite source
+            <p className={`mb-1.5 flex items-center gap-1.5 px-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-500'}`}>
+              Satellite source <NasaBadge />
             </p>
             <div className="space-y-1">
               {SATELLITE_SOURCES.map((source) => {
@@ -195,7 +196,10 @@ export function LayersPanel() {
                     className={`flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-1.5 text-left transition ${isSourceActive ? (isBrightBasemap ? 'border-[#5500a4] bg-[#5500a4]/10 text-slate-900' : 'border-[#5500a4] bg-[#5500a4]/10 text-white') : isBrightBasemap ? 'border-transparent text-slate-800 hover:bg-white/10' : 'border-transparent text-slate-300 hover:bg-white/5 hover:text-white'}`}
                   >
                     <span className="flex-1">
-                      <span className={`block text-[12px] font-medium leading-tight ${isSourceActive ? 'text-[#10B981]' : ''}`}>{source.label}</span>
+                      <span className={`flex items-center gap-1.5 text-[12px] font-medium leading-tight ${isSourceActive ? 'text-[#10B981]' : ''}`}>
+                        {source.label}
+                        {source.id !== 'esri' && <NasaBadge />}
+                      </span>
                       <span className={`block font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>{source.desc}</span>
                     </span>
                     {isSourceActive ? (
