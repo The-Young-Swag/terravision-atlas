@@ -99,12 +99,12 @@ export function TopBar({
           child can shrink (min-w-0) so nothing overflows 375px. */}
       <header className="absolute inset-x-3 top-3 z-20 flex items-center gap-1.5 md:inset-x-4 md:top-4 md:gap-3">
         {/* Brand — plain logo graphic on mobile (no frame/border), full
-            logotype on desktop. The mark uses the same h-8 toolbar sizing
-            as the neighboring header icon buttons. */}
+            logotype on desktop. h-14 reads clearly larger than the search
+            bar height; the nav dropdown below is offset to clear it. */}
         <img
           src={`${import.meta.env.BASE_URL}assets/logos/terravision-atlas.png`}
           alt="TerraVision home"
-          className="h-8 w-8 shrink-0 object-contain md:hidden"
+          className="h-14 w-14 shrink-0 object-contain md:hidden"
         />
         <div className="glass-strong hidden shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 md:flex md:gap-2.5 md:rounded-2xl md:px-4 md:py-2.5">
           <span className={`hidden shrink-0 text-[13px] font-semibold tracking-tight md:inline md:text-[15px] ${isBrightBasemap ? 'text-slate-900' : 'text-slate-100'}`}>TerraVision</span>
@@ -185,7 +185,7 @@ export function TopBar({
 
       {/* Mobile nav dropdown — replaces the pill row (Explore/Monitor/Survey
           live here on mobile). Dismisses on selection. Desktop untouched. */}
-      <div className="absolute inset-x-3 top-[3.5rem] z-40 md:hidden">
+      <div className="absolute inset-x-3 top-[4.75rem] z-40 md:hidden">
         <div className={`mobile-nav-dropdown glass-strong rounded-2xl ${mobileNavOpen ? 'open' : ''}`}>
           <div>
             <div className="flex flex-col gap-1 p-2">
