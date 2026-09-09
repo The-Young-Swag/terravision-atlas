@@ -61,6 +61,11 @@ const centerYAxisTitlePlugin: Plugin<'bar'> = {
 // on a hidden secondary axis so rain stays visible next to temperature).
 // Rebuilt on every data change, following the FuelChart instance pattern.
 // Null temperature/precipitation values render as gaps (not interpolated).
+// Series colors live as named constants next to the datasets that use
+// them (same convention as the temp line below) — the legend swatches
+// reference the same constants, never a second copy of the hex.
+export const PRECIPITATION_BLUE = '#7DF9FF';
+const TEMPERATURE_ORANGE = '#FF9F1C';
 export function ForecastChart({ hourly, label }: ForecastChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
@@ -124,26 +129,26 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
         datasets: [
           {
             type: 'line',
-            label: 'Temp (°C)',
+            label: 'Temperature (°C)',
             data: tempData,
-            borderColor: '#FF9F1C',
+            borderColor: TEMPERATURE_ORANGE,
             backgroundColor: 'rgba(255,159,28,0.12)',
             fill: true,
             borderWidth: 2,
             pointRadius: 0,
             pointHoverRadius: 4,
-            pointHoverBackgroundColor: '#FF9F1C',
+            pointHoverBackgroundColor: TEMPERATURE_ORANGE,
             tension: 0.3,
             yAxisID: 'y-temp',
             spanGaps: false, // null values render as gaps, not interpolated
           },
           {
             type: 'bar',
-            label: 'Precip (mm)',
+            label: 'Precipitation (mm)',
             data: precipData,
             backgroundColor: (ctx: ScriptableContext<'bar'>) => {
               const value = ctx.raw as number | null;
-              return value && value > 0 ? 'rgba(32,157,215,0.7)' : 'transparent';
+              return value && value > 0 ? `${PRECIPITATION_BLUE}B3` : 'transparent';
             },
             borderRadius: 4,
             yAxisID: 'y-precip',
@@ -281,14 +286,14 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
 
   return (
     <div>
-      <div className="mb-2 flex items-center gap-4 px-1" aria-hidden="true">
+      <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1" aria-hidden="true">
         <span className={`flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           <span className="inline-block h-[3px] w-4 rounded-full bg-[#FF9F1C]" />
-          Temp °C
+          Temperature
         </span>
         <span className={`flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
-          <span className="inline-block h-2.5 w-2.5 rounded-[3px] bg-[#209dd7]/70" />
-          Precip mm
+          <span className="inline-block h-2.5 w-2.5 rounded-[3px] bg-[#7DF9FF]/70" />
+          Precipitation
         </span>
       </div>
       <div className="h-[240px] w-full min-w-0 max-w-full overflow-hidden">
