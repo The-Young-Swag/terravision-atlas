@@ -11,6 +11,7 @@ import { routeStatusSegments } from '../../../features/traffic/flowStatus';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import {
   createCesiumViewer,
+  createGlobeImagery,
   flyToCesium,
   globeImageryCredit,
   type TerrainStatus,
@@ -140,6 +141,15 @@ export function CesiumGlobe() {
     if (!viewer || viewer.isDestroyed()) return;
     flyToCesium(viewer, center, zoom);
   }, [center, zoom]);
+
+  // Basemap switching without recreating the entire Viewer (fixes dark-on-return)
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || viewer.isDestroyed()) return;
+    viewer.imageryLayers.removeAll();
+    viewer.imageryLayers.addImageryProvider(createGlobeImagery(basemap, satelliteSource));
+    viewer.scene.requestRender();
+  }, [basemap, satelliteSource]);
 
   const navRoute = useRouteStore((s) => s.route);
   const navJog = useRouteStore((s) => s.jogLoop);

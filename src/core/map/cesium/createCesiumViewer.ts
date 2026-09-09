@@ -61,7 +61,7 @@ export function globeImageryCredit(basemap: BasemapId, satelliteSource: Satellit
   return '© OpenStreetMap contributors';
 }
 
-function createGlobeImagery(
+export function createGlobeImagery(
   basemap: BasemapId,
   satelliteSource: SatelliteSourceId,
 ): Cesium.ImageryProvider {
