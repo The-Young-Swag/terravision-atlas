@@ -101,11 +101,12 @@ export function TopBar({
           <span className={`hidden shrink-0 text-[10px] font-medium tracking-widest sm:inline md:text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>ATLAS</span>
         </div>
 
-        <div className="glass flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2.5 py-2 md:gap-2.5 md:rounded-2xl md:px-4 md:py-2.5">
-          <PlaceSearchBox />
+        <div className="glass flex min-w-0 flex-1 items-center gap-1.5 rounded-xl px-2 py-2 md:gap-2 md:rounded-2xl md:px-3 md:py-2">
+          <div className="min-w-0 flex-1">
+            <PlaceSearchBox />
+          </div>
+          <MyLocationButton compact className="!border-white/20 !bg-white/10 hover:!bg-white/15 !px-2 !py-1.5" />
         </div>
-
-        <MyLocationButton compact />
 
         {/* Mode switcher — Explore / Monitor / Survey with per-mode colors */}
         <div className={`glass hidden items-center gap-1 rounded-full p-1 text-[13px] font-medium md:flex ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>

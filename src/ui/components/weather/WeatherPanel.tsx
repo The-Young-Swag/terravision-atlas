@@ -95,8 +95,8 @@ export function WeatherPanel() {
       xlWide
     >
       <div className="space-y-4">
-        <div className="flex gap-2">
-          <div className="glass flex min-w-0 flex-1 items-center rounded-xl px-2 py-1.5">
+        <div className="glass flex min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5">
+          <div className="min-w-0 flex-1">
             <PlaceAutocomplete
               value={weatherQuery}
               onChange={setWeatherQuery}
@@ -105,7 +105,7 @@ export function WeatherPanel() {
               ariaLabel="Search weather location"
             />
           </div>
-          <MyLocationButton />
+          <MyLocationButton compact className="!px-2 !py-1.5" />
         </div>
 
         <div className="flex items-center justify-between">
