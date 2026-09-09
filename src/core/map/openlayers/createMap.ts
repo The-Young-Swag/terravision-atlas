@@ -30,8 +30,6 @@ export function createMap(options: CreateMapOptions): Map {
       maxZoom: 19,
       minZoom: 2,
     }),
-    loadTilesWhileAnimating: false,
-    loadTilesWhileInteracting: false,
     // Collapsed attribution (mirrors MapLibre's compact control) so the
     // per-basemap credits — including the active GIBS layer — are visible.
     controls: [new Attribution({ collapsible: true, collapsed: true })],
