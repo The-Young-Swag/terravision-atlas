@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings2, Fuel, BookOpen, Box, Menu, X, Mountain } from 'lucide-react';
+import { Settings2, Fuel, BookOpen, Box, Menu, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { MyLocationButton } from '../common/MyLocationButton';
@@ -98,11 +98,13 @@ export function TopBar({
       {/* Top bar — mobile-first: single row on >=640px, two rows below; every
           child can shrink (min-w-0) so nothing overflows 375px. */}
       <header className="absolute inset-x-3 top-3 z-20 flex items-center gap-1.5 md:inset-x-4 md:top-4 md:gap-3">
-        {/* Brand — icon-only badge on mobile, full logotype on desktop */}
+        {/* Brand — real logo mark, icon-only on mobile; full logotype on desktop */}
         <div className="glass-strong flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 md:gap-2.5 md:rounded-2xl md:px-4 md:py-2.5">
-          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#059669] md:hidden" aria-label="TerraVision home">
-            <Mountain className="h-4 w-4 text-white" aria-hidden />
-          </span>
+          <img
+            src={`${import.meta.env.BASE_URL}assets/logos/terravision-atlas.png`}
+            alt="TerraVision home"
+            className="h-6 w-6 shrink-0 rounded-lg object-cover md:hidden"
+          />
           <span className={`hidden shrink-0 text-[13px] font-semibold tracking-tight md:inline md:text-[15px] ${isBrightBasemap ? 'text-slate-900' : 'text-slate-100'}`}>TerraVision</span>
           <span className={`hidden shrink-0 text-[10px] font-medium tracking-widest md:inline md:text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>ATLAS</span>
         </div>

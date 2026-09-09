@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMapStore } from '../../../stores/mapStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useDisaster } from '../../../hooks/useDisaster';
@@ -60,39 +60,51 @@ export function StatusBar({ activeMode }: StatusBarProps) {
         </div>
       </footer>
 
-      {/* Mobile footer — centered, collapsible; the native map attribution
-          controls take its place (exact inverse) while collapsed. */}
-      <div className="absolute inset-x-0 bottom-0 z-10 px-3 pb-3 md:hidden">
-        <div className="mb-1.5 flex justify-center">
+      {/* Mobile footer — stretched edge-to-edge, thin two-liner (coords on
+          line 1, live status on line 2), lowered near the screen edge. It
+          collapses sideways to the left; a round glass expand chip (styled
+          like the attribution button, different icon) appears bottom-left
+          to bring it back. The native map attribution controls take the
+          footer's place (exact inverse) while collapsed. */}
+      <div className="pointer-events-none absolute inset-x-3 bottom-0 z-10 pb-2 md:hidden">
+        <div className="mobile-footer-toggle pointer-events-auto mb-1.5 flex justify-center">
           <button
             type="button"
-            onClick={() => setMobileCollapsed((value) => !value)}
-            aria-label={mobileCollapsed ? 'Expand footer' : 'Collapse footer'}
-            aria-expanded={!mobileCollapsed}
+            onClick={() => setMobileCollapsed(true)}
+            aria-label="Collapse footer"
             className="glass flex h-7 w-7 items-center justify-center rounded-full"
           >
             <ChevronDown
-              className={`h-3.5 w-3.5 transition-transform duration-300 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
-              style={{ transform: mobileCollapsed ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
               aria-hidden
             />
           </button>
         </div>
-        <div className="relative flex min-h-[64px] items-center justify-center">
+        <div className="relative flex min-h-[52px] items-center justify-center">
           <footer
-            className={`mobile-footer-panel glass-strong flex flex-col items-center gap-0.5 rounded-2xl px-4 py-2.5 text-center ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}
+            className={`mobile-footer-panel glass-strong pointer-events-auto flex w-full flex-col items-center gap-0 rounded-2xl px-3 py-1.5 text-center ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}
           >
-            <span className="font-mono text-[13px] tracking-tight">{centerLabel}</span>
-            <span className="flex items-center gap-1.5 font-mono text-[11px]">
-              <span className="shrink-0">Zoom {zoom.toFixed(1)}</span>
-              {activeMode === 'survey' && <span className="shrink-0">EPSG:32651 · UTM 51N</span>}
-              {activeMode === 'monitor' && <span className="shrink-0 text-[#FF9F1C]">{disasterCount} active</span>}
+            <span className="w-full truncate font-mono text-[12px] tracking-tight">
+              {centerLabel} · Zoom {zoom.toFixed(1)}
+              {activeMode === 'survey' && ' · EPSG:32651'}
+              {activeMode === 'monitor' && <span className="text-[#FF9F1C]"> · {disasterCount} active</span>}
             </span>
             <span className={`flex items-center gap-1.5 font-sans text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#00d890]" />
               Live · 12s ago
             </span>
           </footer>
+          <button
+            type="button"
+            onClick={() => setMobileCollapsed(false)}
+            aria-label="Expand footer"
+            className="mobile-expand-chip glass absolute bottom-0 left-0 flex h-9 w-9 items-center justify-center rounded-full"
+          >
+            <ChevronRight
+              className={`h-4 w-4 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
+              aria-hidden
+            />
+          </button>
         </div>
       </div>
 

@@ -141,32 +141,38 @@ body {
 .mobile-fab-open .mobile-fab-item-4 { transform: translate(0, 70px); }
 .mobile-fab-open .mobile-fab-item-5 { transform: translate(-70px, 52px); }
 
-/* Footer collapse: panel slides down, attribution chip takes its place.
-   Visibility is ALWAYS inverse — never both shown or both hidden. */
+/* Footer collapse: panel slides away to the LEFT, the collapse toggle
+   fades with it, and a round glass expand chip (attribution-style, clear
+   icon) appears bottom-left. Visibility is ALWAYS inverse — the expanded
+   footer and the expand chip are never shown together. */
 .mobile-footer-panel,
-.mobile-attrib-chip {
+.mobile-footer-toggle,
+.mobile-expand-chip {
   transition:
     transform 380ms cubic-bezier(0.4, 0, 0.2, 1),
     opacity 280ms ease;
 }
-body.mobile-footer-collapsed .mobile-footer-panel {
-  transform: translateY(140%);
+body.mobile-footer-collapsed .mobile-footer-panel,
+body.mobile-footer-collapsed .mobile-footer-toggle {
+  transform: translateX(-120%);
   opacity: 0;
   pointer-events: none;
 }
-.mobile-attrib-chip {
-  transform: translateY(140%);
+.mobile-expand-chip {
+  transform: translateX(-140%);
   opacity: 0;
   pointer-events: none;
 }
-body.mobile-footer-collapsed .mobile-attrib-chip {
-  transform: translateY(0);
+body.mobile-footer-collapsed .mobile-expand-chip {
+  transform: translateX(0);
   opacity: 1;
   pointer-events: auto;
 }
 
 /* Third-party attribution controls follow the same inverse rule:
-   hidden while the footer panel is expanded, fading in when collapsed. */
+   hidden while the footer panel is expanded, fading in when collapsed.
+   Compact and lowered near the screen edge; raised above panels (below
+   the FAB) while visible so the button stays tappable. */
 .ol-attribution,
 .maplibregl-ctrl-attrib,
 .maplibregl-ctrl-bottom-right,
@@ -185,6 +191,12 @@ body.mobile-footer-expanded .cesium-widget-credits {
   transform: translateY(8px);
   pointer-events: none !important;
 }
+body.mobile-footer-collapsed .ol-attribution,
+body.mobile-footer-collapsed .maplibregl-ctrl-attrib,
+body.mobile-footer-collapsed .maplibregl-ctrl-bottom-right,
+body.mobile-footer-collapsed .cesium-widget-credits {
+  z-index: 45 !important;
+}
 
 /* Mobile floating panels: raised while dragging */
 .mobile-panel-dragging {
@@ -194,19 +206,22 @@ body.mobile-footer-expanded .cesium-widget-credits {
 .ol-attribution {
   bottom: 0.5rem !important;
   right: 0.5rem !important;
-  max-width: calc(50vw - 0.75rem);
+  max-width: 40vw;
+}
+.ol-attribution ul {
+  font-size: 10px;
 }
 .ol-attribution.ol-collapsed {
-  bottom: 3.25rem !important;
+  bottom: 0.5rem !important;
 }
 .maplibregl-ctrl-bottom-right {
-  bottom: 3.25rem !important;
+  bottom: 0.5rem !important;
   right: 0.5rem !important;
 }
 .cesium-widget-credits {
-  bottom: 3.25rem !important;
+  bottom: 0.5rem !important;
   right: 0.5rem !important;
-  max-width: 50vw;
+  max-width: 40vw;
 }
 
 } /* end mobile-only */
@@ -217,7 +232,8 @@ body.mobile-footer-expanded .cesium-widget-credits {
   .mobile-fab-item,
   .mobile-fab-main,
   .mobile-footer-panel,
-  .mobile-attrib-chip {
+  .mobile-footer-toggle,
+  .mobile-expand-chip {
     transition: none !important;
   }
 }
