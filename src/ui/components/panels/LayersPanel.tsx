@@ -116,7 +116,7 @@ export function LayersPanel() {
               setBasemap('satellite');
               setShowHazards(true);
             }}
-            className={`text-[12px] ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'}`}
+            className={`text-[12px] ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
           >
             Reset
           </button>
@@ -162,8 +162,8 @@ export function LayersPanel() {
               >
                 <BasemapIcon basemap={option.id} size={32} />
                 <span className="flex-1">
-                  <span className={`block text-[13px] font-medium leading-none ${isActive ? 'text-[#10B981]' : isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>{option.label}</span>
-                  <span className={`block text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>{option.desc}</span>
+                  <span className={`block text-[13px] font-medium leading-none ${isActive ? 'text-[#10B981]' : isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>{option.label}</span>
+                  <span className={`block text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>{option.desc}</span>
                 </span>
                 {isActive ? (
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#5500a4] text-white">
@@ -200,7 +200,7 @@ export function LayersPanel() {
                         {source.label}
                         {source.id !== 'esri' && <NasaBadge />}
                       </span>
-                      <span className={`block font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>{source.desc}</span>
+                      <span className={`block font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>{source.desc}</span>
                     </span>
                     {isSourceActive ? (
                       <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#5500a4] text-white">
@@ -229,13 +229,13 @@ export function LayersPanel() {
               <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
                 <input type="checkbox" checked={showTraffic} onChange={(e) => setShowTraffic(e.target.checked)} className="rounded" />
                 <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Traffic</span>
-                <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>TomTom</span>
+                <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>TomTom</span>
               </label>
               {showTraffic && trafficStatus === 'unavailable' && (
-                <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>traffic data unavailable</p>
+                <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}`}>traffic data unavailable</p>
               )}
               {showTraffic && trafficStatus === 'no-key' && (
-                <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>traffic unavailable — API key not configured</p>
+                <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}`}>traffic unavailable — API key not configured</p>
               )}
               {showTraffic && trafficStatus === 'ok' && (
                 <div className="px-1.5 py-1">
@@ -248,7 +248,7 @@ export function LayersPanel() {
             <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
               <input type="checkbox" checked={showTerrainContours} onChange={(e) => setShowTerrainContours(e.target.checked)} className="rounded" />
               <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Terrain contours</span>
-              <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Vector</span>
+              <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Vector</span>
             </label>
           )}
         </div>
@@ -278,14 +278,14 @@ export function LayersPanel() {
           {showTiltSlider && (
             <div className="mt-3">
               <div className="mb-1.5 flex items-center justify-between">
-                <span className={`flex items-center gap-1.5 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+                <span className={`flex items-center gap-1.5 text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                   Camera tilt
                   <button
                     type="button"
                     onClick={() => setShowTiltHelp((v) => !v)}
                     title="How to tilt"
                     aria-label="Show tilt help"
-                    className={`flex h-4 w-4 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[10px] leading-none transition hover:bg-white/20 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
+                    className={`flex h-4 w-4 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[10px] leading-none transition hover:bg-white/20 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
                   >
                     <Info className="h-3 w-3" aria-hidden />
                   </button>

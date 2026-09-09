@@ -390,10 +390,10 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               </button>
             )}
             {exportNote && !isExporting && (
-              <span className={`px-3 py-1 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{exportNote}</span>
+              <span className={`px-3 py-1 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>{exportNote}</span>
             )}
             {shareUrl && !shareCopied && (
-              <span className={`truncate px-2 py-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`} title={shareUrl}>
+              <span className={`truncate px-2 py-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`} title={shareUrl}>
                 {shareUrl.slice(0, 50)}…
               </span>
             )}
@@ -493,8 +493,10 @@ export function ModeDocks({ activeMode }: ModeDocksProps) {
               ) : null}
               {!collapsed ? (
                 <>
-                  {/* Mobile: 2-col grid for symmetry; desktop: flex-wrap centered */}
-                  <div className="grid max-h-[40vh] w-full max-w-[85vw] grid-cols-2 gap-1.5 overflow-y-auto px-8 py-2 max-md:max-w-[85vw] md:flex md:max-w-[85vw] md:flex-wrap md:items-center md:justify-center md:gap-1 md:px-2 md:py-1">
+                  {/* Mobile: 2-col grid for symmetry; desktop: flex-wrap centered with breathing room for collapse button */}
+                  <div
+                    className={`grid max-h-[40vh] w-full max-w-[85vw] grid-cols-2 gap-1.5 overflow-y-auto px-8 py-2 max-md:max-w-[85vw] md:flex md:max-w-[85vw] md:flex-wrap md:items-center md:justify-center md:gap-1 md:py-1 ${left ? 'md:pl-2 md:pr-10' : 'md:pl-10 md:pr-2'}`}
+                  >
                     {toolbarTools}
                   </div>
                   {hasStatus ? (

@@ -282,11 +282,11 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
   return (
     <div>
       <div className="mb-2 flex items-center gap-4 px-1" aria-hidden="true">
-        <span className={`flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+        <span className={`flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           <span className="inline-block h-[3px] w-4 rounded-full bg-[#FF9F1C]" />
           Temp °C
         </span>
-        <span className={`flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+        <span className={`flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           <span className="inline-block h-2.5 w-2.5 rounded-[3px] bg-[#209dd7]/70" />
           Precip mm
         </span>

@@ -73,12 +73,12 @@ export function CoordinatePanel() {
     >
       <div>
         <div className="mb-3">
-        <p className={`mb-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>WGS84 (EPSG:4326)</p>
+        <p className={`mb-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>WGS84 (EPSG:4326)</p>
         <p className={`font-mono text-[12px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>{wgs84Label}</p>
       </div>
 
       <div className="mb-3">
-        <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           Target projection
         </label>
         <select
@@ -95,21 +95,21 @@ export function CoordinatePanel() {
       </div>
 
       <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
-        <p className={`mb-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{targetEpsg}</p>
+        <p className={`mb-1 text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>{targetEpsg}</p>
         {transformed.error ? (
           <p className="font-mono text-[11px] text-[#E63946]">{transformed.error}</p>
         ) : (
           <p className={`font-mono text-[12px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>
             E: {transformed.x.toFixed(2)}<br />
-            N: {transformed.y.toFixed(2)} <span className={isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}>m</span>
+            N: {transformed.y.toFixed(2)} <span className={isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}>m</span>
           </p>
         )}
       </div>
 
       <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <div className="mb-2 flex items-center gap-2">
-          <SlidersHorizontal className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`} />
-          <p className={`text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+          <SlidersHorizontal className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`} />
+          <p className={`text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
             Datum pair (WGS84 → target)
           </p>
         </div>
@@ -125,7 +125,7 @@ export function CoordinatePanel() {
         {datumShift.error ? (
           <p className="mt-2 font-mono text-[11px] text-[#E63946]">{datumShift.error}</p>
         ) : (
-          <p className={`mt-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+          <p className={`mt-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
             ΔN: {datumShift.dNorthM.toFixed(2)} m · ΔE: {datumShift.dEastM.toFixed(2)} m
             <br />
             {datumTarget === 'EPSG:4682'
@@ -133,15 +133,15 @@ export function CoordinatePanel() {
               : `E: ${datumShift.shifted[0].toFixed(2)} · N: ${datumShift.shifted[1].toFixed(2)} m`}
           </p>
         )}
-        <p className={`mt-1 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <p className={`mt-1 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           EPSG 7-parameter approximation (~1 m) — load an NTv2 grid below for precise local shifts
         </p>
       </div>
 
       <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <div className="mb-2 flex items-center gap-2">
-          <SlidersHorizontal className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`} />
-          <p className={`text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+          <SlidersHorizontal className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`} />
+          <p className={`text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
             Datum shift visualization
           </p>
         </div>
@@ -153,12 +153,12 @@ export function CoordinatePanel() {
           onChange={(e) => setDatumBlend(Number(e.target.value))}
           className="h-1 w-full appearance-none rounded-full bg-white/10 accent-[#5500a4]"
         />
-        <div className={`mt-1 flex justify-between font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <div className={`mt-1 flex justify-between font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           <span>WGS84</span>
           <span>{datumBlend}%</span>
           <span>Shifted</span>
         </div>
-        <p className={`mt-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <p className={`mt-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           {gridShift ? (
             <>
               ΔN: {((gridShift.dNorthM * datumBlend) / 100).toFixed(2)} m · ΔE:{' '}
@@ -187,16 +187,16 @@ export function CoordinatePanel() {
         </label>
         {gridError && <p className="mt-1 font-mono text-[10px] text-[#E63946]">{gridError}</p>}
         {!gridError && grid && !gridShift && (
-          <p className={`mt-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+          <p className={`mt-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
             Map center is outside this grid&apos;s coverage
           </p>
         )}
-        <p className={`mt-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <p className={`mt-1 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           Supports NTv2 grids for sub-centimeter shifts
         </p>
       </div>
 
-      <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+      <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
         Powered by Proj4js · 9 EPSG bundled · NTv2 precise (full 5k+ requires proj4-epsg fetch)
       </p>
       </div>

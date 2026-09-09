@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Settings2, Fuel, BookOpen, Box } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { MyLocationButton } from '../common/MyLocationButton';
 import { useMapStore } from '../../../stores/mapStore';
 import { useSearchStore } from '../../../stores/searchStore';
 import { useRouteStore } from '../../../stores/routeStore';
@@ -104,15 +105,17 @@ export function TopBar({
             height={32}
           />
           <span className={`shrink-0 text-[13px] font-semibold tracking-tight md:text-[15px] ${isBrightBasemap ? 'text-slate-900' : 'text-slate-100'}`}>TerraVision</span>
-          <span className={`hidden shrink-0 text-[10px] font-medium tracking-widest sm:inline md:text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-400'}`}>ATLAS</span>
+          <span className={`hidden shrink-0 text-[10px] font-medium tracking-widest sm:inline md:text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>ATLAS</span>
         </div>
 
         <div className="glass flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2.5 py-2 md:gap-2.5 md:rounded-2xl md:px-4 md:py-2.5">
           <PlaceSearchBox />
         </div>
 
+        <MyLocationButton compact />
+
         {/* Mode switcher — Explore / Monitor / Survey with per-mode colors */}
-        <div className={`glass hidden items-center gap-1 rounded-full p-1 text-[13px] font-medium md:flex ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <div className={`glass hidden items-center gap-1 rounded-full p-1 text-[13px] font-medium md:flex ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           {(['explore', 'monitor', 'survey'] as const).map((mode) => (
             <button
               key={mode}
@@ -157,7 +160,7 @@ export function TopBar({
         </button>
 
         <button
-          className={`glass hidden h-10 w-10 shrink-0 cursor-not-allowed items-center justify-center rounded-2xl opacity-60 transition md:flex ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
+          className={`glass hidden h-10 w-10 shrink-0 cursor-not-allowed items-center justify-center rounded-2xl opacity-60 transition md:flex ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
           aria-label="Settings"
           disabled
           title="Settings — not implemented"
@@ -169,7 +172,7 @@ export function TopBar({
       {/* Mobile mode switcher — centered pill below the header; uses same
           inset-x as header so it never overflows. */}
       <div className="absolute inset-x-3 top-[3.5rem] z-20 flex justify-center md:hidden">
-        <div className={`glass flex max-w-full items-center gap-1 overflow-x-auto rounded-full p-1 text-[12px] font-medium [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <div className={`glass flex max-w-full items-center gap-1 overflow-x-auto rounded-full p-1 text-[12px] font-medium [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           {(['explore', 'monitor', 'survey'] as const).map((mode) => (
             <button
               key={mode}

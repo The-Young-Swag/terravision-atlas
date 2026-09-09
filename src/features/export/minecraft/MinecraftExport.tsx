@@ -57,13 +57,13 @@ export function MinecraftExport() {
 
       <div className="mb-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <div className={`flex items-center gap-2 text-[12px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>
-          <MapPin className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`} />
+          <MapPin className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`} />
           Current map area
         </div>
-        <p className={`mt-1 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <p className={`mt-1 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           Center: {center[1].toFixed(4)}°N, {center[0].toFixed(4)}°E · {REGION_BLOCKS}×{REGION_BLOCKS} blocks
         </p>
-        <div className={`mt-2 flex items-center gap-2 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <div className={`mt-2 flex items-center gap-2 text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           <Layers className="h-3 w-3" />
           Real terrain + water from elevation data · no roads or buildings
         </div>
@@ -138,7 +138,7 @@ export function MinecraftExport() {
         </div>
       )}
 
-      <p className={`mt-2 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+      <p className={`mt-2 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
         Client-side only · No server · Uses local terrain data
       </p>
     </div>

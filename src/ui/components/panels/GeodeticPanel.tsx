@@ -52,14 +52,14 @@ export function GeodeticPanel() {
             <p className={`font-mono text-[12px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>
               E: {geodeticTransformed.x.toFixed(2)}
               <br />
-              N: {geodeticTransformed.y.toFixed(2)} <span className={isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}>m</span>
+              N: {geodeticTransformed.y.toFixed(2)} <span className={isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}>m</span>
             </p>
           )}
         </div>
 
         <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-500'}`}>Powered by Proj4js · 9 EPSG bundled (WGS84/UTM/NAD83/ETRS89/OSGB36/PRS92) · NTv2</p>
 
-        <p className={`mt-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-center text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+        <p className={`mt-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-center text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           Elevation profile and cut/fill volume need DEM sampling along the measured path — not built yet.
           Bearing, distance, area, datum shift, grid snap, CSV export, and session share above are the working set.
         </p>

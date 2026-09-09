@@ -161,14 +161,14 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
     >
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <span className={`font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+          <span className={`font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
             {disasterLoading ? 'updating…' : `${disasterCount} active`}
           </span>
         </div>
 
         <div className="relative mb-3">
           <Search
-            className={`absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}
+            className={`absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}`}
             aria-hidden
           />
           <input
@@ -176,7 +176,7 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
             onChange={(e) => setAlertQuery(e.target.value)}
             placeholder="Search by country, city, town…"
             aria-label="Search alerts by location"
-            className={`w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-8 pr-3 text-[12.5px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-400'}`}
+            className={`w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-8 pr-3 text-[12.5px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-300'}`}
           />
         </div>
 
@@ -242,17 +242,17 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
                 return h ? ` · ${h}` : '';
               })()}
             </p>
-            <p className={`mt-0.5 text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>town · city · province · country</p>
+            <p className={`mt-0.5 text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>town · city · province · country</p>
           </div>
         )}
 
         <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
           {disasterLoading && disasterEvents.length === 0 ? (
-            <div className={`py-8 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>Loading live data…</div>
+            <div className={`py-8 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Loading live data…</div>
           ) : disasterEvents.length === 0 ? (
-            <div className={`py-8 text-center text-[12px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>No active events</div>
+            <div className={`py-8 text-center text-[12px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>No active events</div>
           ) : filteredDisasterEvents.length === 0 ? (
-            <div className={`py-8 text-center text-[12px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>No alerts match &lsquo;{alertQuery}&rsquo;</div>
+            <div className={`py-8 text-center text-[12px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>No alerts match &lsquo;{alertQuery}&rsquo;</div>
           ) : (
             displayEvents.map((event) => {
               const cfg = severityConfig[event.severity];
@@ -268,7 +268,7 @@ export function LiveAlertsPanel({ activeMode }: LiveAlertsPanelProps) {
                   </div>
                   <p className={`text-[12.5px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-300'}`}>{event.title}</p>
                   {hierarchy && (
-                    <p className={`mt-1 flex items-center gap-1 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+                    <p className={`mt-1 flex items-center gap-1 text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                       <Navigation className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
                       <span className="truncate">{hierarchy}</span>
                     </p>

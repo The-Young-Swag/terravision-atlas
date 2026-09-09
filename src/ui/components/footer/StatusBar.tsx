@@ -29,7 +29,7 @@ export function StatusBar({ activeMode }: StatusBarProps) {
           collapsed OpenLayers/MapLibre attribution button so it stays
           tappable. Tailwind v4 arbitrary values keep this in markup. */}
       <footer
-        className={`glass absolute inset-x-3 bottom-3 z-10 flex flex-col gap-1.5 rounded-xl px-3 py-2 font-mono text-[11px] sm:flex-row sm:items-center sm:justify-between md:inset-x-auto md:bottom-4 md:left-4 md:right-auto md:w-[28rem] md:max-w-[85vw] md:rounded-2xl md:px-4 md:py-2 max-md:right-14 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}
+        className={`glass absolute inset-x-3 bottom-3 z-10 flex flex-col gap-1.5 rounded-xl px-3 py-2 font-mono text-[11px] sm:flex-row sm:items-center sm:justify-between md:inset-x-auto md:bottom-4 md:left-4 md:right-auto md:w-[28rem] md:max-w-[85vw] md:rounded-2xl md:px-4 md:py-2 max-md:right-14 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
       >
         <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3 md:gap-5">
           <span className="truncate">{centerLabel}</span>
@@ -52,7 +52,7 @@ export function StatusBar({ activeMode }: StatusBarProps) {
       </div>
 
       <div
-        className={`pointer-events-none absolute bottom-4 left-1/2 hidden -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] backdrop-blur md:flex ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}
+        className={`pointer-events-none absolute bottom-4 left-1/2 hidden -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] backdrop-blur md:flex ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
       >
         <span className="h-3 w-3 rounded-full border border-white/20" />
         {activeMode === 'monitor' ? 'Explore · Monitor · Survey' : 'Atlas engine · OpenLayers · Cesium · MapLibre'}

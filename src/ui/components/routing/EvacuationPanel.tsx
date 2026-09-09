@@ -249,8 +249,8 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
     }
   };
 
-  const labelClass = `mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`;
-  const inputClass = `w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-mono text-[12px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-400'}`;
+  const labelClass = `mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`;
+  const inputClass = `w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-mono text-[12px] outline-none focus:border-[#5500a4]/50 ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-300'}`;
   const pickStartClass = (active: boolean) =>
     `flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${active ? 'border-[#5500a4] bg-[#5500a4] text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 md:border-[#209dd7]/30 md:bg-[#209dd7]/15 md:text-[#209dd7] md:hover:bg-[#209dd7]/20 md:hover:text-[#209dd7]'}`;
   const pickDestClass = (active: boolean) =>
@@ -277,19 +277,19 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
                       ? 'bg-[#5500a4] text-white'
                       : isBrightBasemap
                         ? 'bg-black/10 text-slate-500'
-                        : 'bg-white/10 text-slate-400'
+                        : 'bg-white/10 text-slate-300'
                 }`}
               >
                 {index + 1}
               </span>
-              <span className={index === stepIndex ? (isBrightBasemap ? 'text-slate-800' : 'text-slate-100') : isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}>
+              <span className={index === stepIndex ? (isBrightBasemap ? 'text-slate-800' : 'text-slate-100') : isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}>
                 {label}
               </span>
-              {index < steps.length - 1 && <span className={isBrightBasemap ? 'text-slate-400' : 'text-slate-500'}>→</span>}
+              {index < steps.length - 1 && <span className={isBrightBasemap ? 'text-slate-300' : 'text-slate-500'}>→</span>}
             </li>
           ))}
         </ol>
-        <p className={`mb-3 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <p className={`mb-3 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           {isEvacuation || step !== 'avoid' ? EVAC_STEP_INSTRUCTIONS[step] : 'Both points set — press Find route'}
         </p>
 
@@ -409,7 +409,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
               )}
             </div>
             {avoidCircle && (
-              <p className={`mb-3 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+              <p className={`mb-3 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                 Avoid zone: {avoidCircle.radiusKm.toFixed(1)} km radius
               </p>
             )}
@@ -422,7 +422,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
               type="button"
               onClick={() => setManualOpen(!manualOpen)}
               aria-expanded={manualOpen}
-              className={`flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-[11px] transition hover:bg-white/[0.06] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
+              className={`flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-[11px] transition hover:bg-white/[0.06] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
             >
               <span>Enter coordinates manually</span>
               <span aria-hidden>{manualOpen ? '▴' : '▾'}</span>
@@ -492,7 +492,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
                 type="button"
                 onClick={() => setJogOpen(!jogOpen)}
                 aria-expanded={jogOpen}
-                className={`flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-[11px] transition hover:bg-white/[0.06] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
+                className={`flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-[11px] transition hover:bg-white/[0.06] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
               >
                 <span>Jogging loop</span>
                 <span aria-hidden>{jogOpen ? '▴' : '▾'}</span>
@@ -500,7 +500,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
             </div>
             {jogOpen && (
           <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-            <p className={`mb-2 text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+            <p className={`mb-2 text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
               Jogging loop
             </p>
             <div className="mb-2 flex items-center gap-2">
@@ -540,7 +540,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
             >
               {isJogging ? 'Planning loop…' : 'Generate loop'}
             </button>
-            <p className={`mt-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>
+            <p className={`mt-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}`}>
               Starts/ends at {start ? 'the start pin' : 'map center'} · footpaths preferred
             </p>
             {jogLoop && (
@@ -548,7 +548,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
                 <p className={`font-mono ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                   {jogLoop.distanceKm.toFixed(1)} km loop · {jogLoop.durationMinutes.toFixed(0)} min on foot
                 </p>
-                <p className={`mt-0.5 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+                <p className={`mt-0.5 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                   Target was {jogLoop.targetKm.toFixed(1)} km · {jogLoop.hilliness === 'flat' ? 'flatter' : 'hillier'} route
                 </p>
                 <button
@@ -556,7 +556,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
                     setJogLoop(null);
                     setJogError(null);
                   }}
-                  className={`mt-2 text-[11px] underline ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}
+                  className={`mt-2 text-[11px] underline ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
                 >
                   Clear loop
                 </button>
@@ -595,7 +595,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
               {result.distanceKm.toFixed(1)} km · {result.durationMinutes.toFixed(0)} min {durationNoun}
             </p>
             {trafficAdjustment && (
-              <p className={`mt-1 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+              <p className={`mt-1 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                 ≈{trafficAdjustment.adjustedMinutes.toFixed(0)} min with current traffic ({trafficAdjustment.samples.length}{' '}
                 samples)
               </p>
@@ -613,7 +613,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
                 clearEvacuationRoute();
                 setResult(null);
               }}
-              className={`mt-2 text-[11px] underline ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}
+              className={`mt-2 text-[11px] underline ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
             >
               Clear route
             </button>
@@ -626,7 +626,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
           </p>
         )}
 
-        <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           Valhalla demo server · max 1 request/sec · {isEvacuation ? 'driving' : (TRAVEL_COSTINGS.find((c) => c.id === travelMode)?.label.toLowerCase() ?? 'driving')}
         </p>
       </div>

@@ -72,7 +72,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
   return (
     <FloatingPanel id="fuel" title="Fuel efficiency calculator" icon={<Fuel className="h-3.5 w-3.5" />} initialPosition={{ x: 350, y: 80 }} onClose={onClose} bubbleLabel="Fuel calculator" className="!w-[380px] md:!w-[440px]">
       <div>
-        <div className={`mb-4 flex rounded-xl border border-white/10 bg-white/5 p-1 text-[13px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <div className={`mb-4 flex rounded-xl border border-white/10 bg-white/5 p-1 text-[13px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           <button onClick={() => setFuelState((s) => ({ ...s, unitSystem: 'metric' }))} className={`flex-1 rounded-lg py-1.5 ${fuelState.unitSystem === 'metric' ? 'bg-[#5500a4] text-white' : ''}`}>
             Metric (km, L)
           </button>
@@ -83,7 +83,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
 
         <div className="space-y-3">
           <div>
-            <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{unitLabels.distance}</label>
+            <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>{unitLabels.distance}</label>
             <GlassNumberInput
               value={fuelState.distance}
               onChange={(v) => setFuelState((s) => ({ ...s, distance: v }))}
@@ -95,7 +95,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
           </div>
 
           <div>
-            <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Fuel efficiency</label>
+            <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Fuel efficiency</label>
             <div className="flex gap-2">
                 <div className="flex-1">
                 <GlassNumberInput
@@ -126,7 +126,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
           </div>
 
           <div>
-            <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{unitLabels.price}</label>
+            <label className={`mb-1 block text-[11px] uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>{unitLabels.price}</label>
             <GlassNumberInput
               value={fuelState.price}
               onChange={(v) => setFuelState((s) => ({ ...s, price: v }))}
@@ -140,7 +140,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
 
         <div className="mt-5 border-t border-white/10 pt-4">
           <div className="mb-3">
-            <div className={`mb-1.5 flex justify-between text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+            <div className={`mb-1.5 flex justify-between text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
               <span>Thirsty</span>
               <span>Average</span>
               <span>Efficient</span>
@@ -152,23 +152,23 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-              <p className={`mb-1 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Fuel needed</p>
+              <p className={`mb-1 text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Fuel needed</p>
               <p className={`font-mono text-[16px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>
                 {fuelResult.fuelNeeded.toFixed(1)} {unitLabels.fuelSuffix}
               </p>
             </div>
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-              <p className={`mb-1 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Total cost</p>
+              <p className={`mb-1 text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Total cost</p>
               <p className="font-mono text-[16px] font-semibold text-[#00d890]">₱{fuelResult.totalCost.toFixed(2)}</p>
             </div>
             <div className="col-span-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3">
-              <span className={`text-[12px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Cost per {unitLabels.distanceSuffix}</span>
+              <span className={`text-[12px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Cost per {unitLabels.distanceSuffix}</span>
               <span className={`font-mono text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>₱{fuelResult.costPerUnit.toFixed(2)} / {unitLabels.distanceSuffix}</span>
             </div>
           </div>
 
           <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-            <p className={`mb-2 text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Breakdown</p>
+            <p className={`mb-2 text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Breakdown</p>
             <div className="space-y-3">
               <BreakdownBar
                 label="Fuel needed"
@@ -209,7 +209,7 @@ export function FuelPanel({ open, onClose }: FuelPanelProps) {
               Print / PDF
             </button>
           </div>
-          <p className={`mt-3 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>Example: 25 km · 8.5 L/100km · ₱1.60/L → 2.1 L · ₱3.40</p>
+          <p className={`mt-3 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Example: 25 km · 8.5 L/100km · ₱1.60/L → 2.1 L · ₱3.40</p>
         </div>
       </div>
     </FloatingPanel>

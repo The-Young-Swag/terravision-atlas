@@ -326,12 +326,12 @@ export function CesiumGlobe() {
               type="button"
               onClick={() => setPickedDisasterId(null)}
               aria-label="Close disaster details"
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
             >
               ×
             </button>
           </div>
-          <p className="mt-1 font-mono text-[10px] text-slate-400">
+          <p className="mt-1 font-mono text-[10px] text-slate-300">
             {pickedDisaster.type} · {pickedDisaster.severity} · {pickedDisaster.source}
           </p>
         </div>

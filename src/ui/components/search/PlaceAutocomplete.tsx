@@ -299,7 +299,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
 
   return (
     <div ref={boxRef} className="relative flex min-w-0 flex-1 items-center gap-2">
-      <Search className={`h-4 w-4 shrink-0 ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`} aria-hidden />
+      <Search className={`h-4 w-4 shrink-0 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`} aria-hidden />
       <input
         value={value}
         onChange={(e) => {
@@ -310,7 +310,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
         onFocus={() => {
           if (suggestions.length > 0) openDropdown();
         }}
-        className={`min-w-0 flex-1 bg-transparent text-[13.5px] focus:outline-none ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-400'}`}
+        className={`min-w-0 flex-1 bg-transparent text-[13.5px] focus:outline-none ${isBrightBasemap ? 'text-slate-800 placeholder:text-slate-500' : 'text-slate-200 placeholder:text-slate-300'}`}
         placeholder={placeholder ?? 'Search places'}
         aria-label={ariaLabel ?? 'Search places'}
         role="combobox"
@@ -347,13 +347,13 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
               >
                 <Navigation className="h-4 w-4 shrink-0 text-[#209dd7]" aria-hidden />
                 <span className="min-w-0 flex-1">
-                  <span className={`block font-mono text-[10px] font-semibold tracking-widest ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+                  <span className={`block font-mono text-[10px] font-semibold tracking-widest ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                     ROUTE{resolving ? ' — RESOLVING…' : ''}
                   </span>
                   <span className={`block truncate text-[13px] font-medium ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>
                     {endpointLabel(routeIntent.origin)} → {endpointLabel(routeIntent.destination)}
                   </span>
-                  <span className={`block text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+                  <span className={`block text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                     {resolving ? 'Looking up both ends…' : 'Load into Navigation'}
                   </span>
                 </span>
@@ -361,7 +361,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
             </div>
           )}
           {showRouteRow && routeIntent.kind === 'partial' && (
-            <p className={`border-b border-white/10 px-4 py-2.5 text-[12px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+            <p className={`border-b border-white/10 px-4 py-2.5 text-[12px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
               {routeIntent.originText ? (
                 <>Route? Add a destination — “{routeIntent.originText} to …”</>
               ) : (
@@ -370,7 +370,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
             </p>
           )}
           {showRouteRow && routeIntent.kind === 'unsupported' && (
-            <p className={`border-b border-white/10 px-4 py-2.5 text-[12px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+            <p className={`border-b border-white/10 px-4 py-2.5 text-[12px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
               {routeIntent.reason}
             </p>
           )}
@@ -380,7 +380,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
             </p>
           )}
           {status === 'loading' && (
-            <p className={`px-4 py-3 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>Searching…</p>
+            <p className={`px-4 py-3 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Searching…</p>
           )}
           {status === 'no-results' && (
             <p className={`px-4 py-3 text-[12px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>
@@ -410,7 +410,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
                         {suggestion.label}
                       </span>
                       {suggestion.sublabel && (
-                        <span className={`truncate font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+                        <span className={`truncate font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                           {suggestion.sublabel}
                         </span>
                       )}
@@ -424,7 +424,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
                         }}
                         title="Navigate here from my location"
                         aria-label={`Navigate to ${suggestion.label} from my location`}
-                        className={`mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'}`}
+                        className={`mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
                       >
                         <Navigation className="h-3.5 w-3.5" aria-hidden />
                       </button>
@@ -434,7 +434,7 @@ export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, aria
               ))}
             </ul>
           )}
-          <p className={`border-t border-white/10 px-4 py-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>
+          <p className={`border-t border-white/10 px-4 py-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}`}>
             Results © OpenStreetMap contributors
           </p>
         </div>

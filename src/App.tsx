@@ -123,7 +123,7 @@ export default function App() {
                   </div>
                   <button
                     onClick={() => setMinecraftOpen(false)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
                     aria-label="Close Minecraft export"
                   >
                     <X className="h-4 w-4" />

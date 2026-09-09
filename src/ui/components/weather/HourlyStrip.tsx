@@ -13,7 +13,7 @@ export function HourlyStrip({ hourly }: HourlyStripProps) {
 
   if (hourly.length === 0) {
     return (
-      <p className={`py-3 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+      <p className={`py-3 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
         No hourly data for the next 24 hours yet.
       </p>
     );
@@ -33,7 +33,7 @@ export function HourlyStrip({ hourly }: HourlyStripProps) {
             role="listitem"
             className="flex w-[64px] shrink-0 flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2"
           >
-            <span className={`font-mono text-[10px] font-medium ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+            <span className={`font-mono text-[10px] font-medium ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
               {formatHourLabel(new Date(point.time))}
             </span>
             <span className={`font-mono text-[13px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>

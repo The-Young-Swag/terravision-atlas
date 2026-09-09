@@ -335,7 +335,7 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
                   aria-hidden={!expanded}
                 >
                   <span className="truncate text-[13px] font-medium leading-tight text-slate-100">{row.label}</span>
-                  <span className="truncate text-[11.5px] leading-tight text-slate-400">{row.preview}</span>
+                  <span className="truncate text-[11.5px] leading-tight text-slate-300">{row.preview}</span>
                 </span>
                 {expanded && row.count !== null && (
                   <span className="ml-2 shrink-0 whitespace-nowrap rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-slate-300">
@@ -357,7 +357,7 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
           }}
           title={pinned ? 'Unpin — collapse on pointer leave' : 'Pin open'}
           aria-pressed={pinned}
-          className={`flex h-11 shrink-0 items-center gap-2 border-t border-white/10 px-4 text-[12px] font-medium transition-colors hover:bg-white/5 ${pinned ? 'text-[#00d890]' : 'text-slate-400'}`}
+          className={`flex h-11 shrink-0 items-center gap-2 border-t border-white/10 px-4 text-[12px] font-medium transition-colors hover:bg-white/5 ${pinned ? 'text-[#00d890]' : 'text-slate-300'}`}
         >
           {pinned ? <PinOff className="h-3.5 w-3.5" aria-hidden /> : <Pin className="h-3.5 w-3.5" aria-hidden />}
           {pinned ? 'Unpin' : 'Pin open'}

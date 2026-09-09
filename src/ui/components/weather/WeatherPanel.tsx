@@ -4,6 +4,7 @@ import { FloatingPanel } from '../common/FloatingPanel';
 import { useWeather } from '../../../hooks/useWeather';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
+import { MyLocationButton } from '../common/MyLocationButton';
 import { describeWeatherCode, selectNext24Hours } from '../../../features/weather/openMeteo';
 import { ForecastChart } from './ForecastChart';
 import { HourlyStrip } from './HourlyStrip';
@@ -43,9 +44,9 @@ export function WeatherPanel() {
   const setCenter = useMapStore((s) => s.setCenter);
   const setZoom = useMapStore((s) => s.setZoom);
 
-  const labelClass = `mb-2 block text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`;
+  const labelClass = `mb-2 block text-[11px] font-medium uppercase tracking-wide ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`;
   const valueClass = `font-mono text-[12px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`;
-  const metaClass = `font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`;
+  const metaClass = `font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`;
 
   const next24Hours = useMemo(
     () => (forecast ? selectNext24Hours(forecast.hourly) : []),
@@ -77,18 +78,6 @@ export function WeatherPanel() {
     setWeatherQuery(place.displayName.split(',')[0] ?? '');
   };
 
-  const handleMyLocation = () => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCenter([pos.coords.longitude, pos.coords.latitude]);
-        setZoom(10);
-      },
-      () => {},
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  };
-
   const requestHistorical = () => {
     if (!historyDate) return;
     const date = new Date(`${historyDate}T12:00:00Z`);
@@ -116,16 +105,7 @@ export function WeatherPanel() {
               ariaLabel="Search weather location"
             />
           </div>
-          <button
-            type="button"
-            onClick={handleMyLocation}
-            title="Center map to my location"
-            aria-label="Use my location"
-            className={`flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-medium transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
-          >
-            <MapPin className="h-4 w-4 shrink-0" aria-hidden />
-            <span className="hidden sm:inline">My location</span>
-          </button>
+          <MyLocationButton />
         </div>
 
         <div className="flex items-center justify-between">
@@ -134,7 +114,7 @@ export function WeatherPanel() {
         </div>
 
         {loading && !current && (
-          <p className={`py-4 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`py-4 text-center font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
             Loading live weather…
           </p>
         )}

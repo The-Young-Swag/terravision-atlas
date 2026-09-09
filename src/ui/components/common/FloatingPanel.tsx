@@ -113,7 +113,7 @@ export function FloatingPanel({
             {icon}
           </span>
           <span className="text-[13px] font-medium text-white">{bubbleLabel ?? title}</span>
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/70">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/85">
             <Maximize2 className="h-3.5 w-3.5" />
           </span>
         </motion.div>
@@ -138,7 +138,7 @@ export function FloatingPanel({
                 {icon}
               </span>
               <span className="text-[13px] font-medium text-white">{bubbleLabel ?? title}</span>
-              <Maximize2 className="h-3.5 w-3.5 text-white/70" />
+              <Maximize2 className="h-3.5 w-3.5 text-white/85" />
             </motion.div>
           );
         })()}
@@ -171,7 +171,7 @@ export function FloatingPanel({
             className="flex cursor-grab touch-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-4 py-3 active:cursor-grabbing"
           >
             <div className="flex items-center gap-2">
-              <Grip className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-500' : 'text-white/30'}`} aria-hidden />
+              <Grip className={`h-3.5 w-3.5 ${isBrightBasemap ? 'text-slate-500' : 'text-white/50'}`} aria-hidden />
               <span className={`flex h-6 w-6 items-center justify-center rounded-full bg-white/10 ${isBrightBasemap ? 'text-slate-700' : 'text-white'}`}>
                 {icon}
               </span>
@@ -182,7 +182,7 @@ export function FloatingPanel({
               onClick={() => setIsMinimized(true)}
               onPointerDown={(e) => e.stopPropagation()}
               title={`Minimize ${title} to a bubble`}
-              className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-white/80 hover:text-white'}`}
               aria-label={`Minimize ${title}`}
             >
               <Minimize2 className="h-3.5 w-3.5" />
@@ -192,7 +192,7 @@ export function FloatingPanel({
               onClick={() => closePanel(id)}
               onPointerDown={(e) => e.stopPropagation()}
               title={`Close ${title} — restore anytime from the top-right`}
-              className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-white/80 hover:text-white'}`}
               aria-label={`Close ${title}`}
             >
               <X className="h-3.5 w-3.5" />
@@ -204,7 +204,7 @@ export function FloatingPanel({
                   onClick={onClose}
                   onPointerDown={(e) => e.stopPropagation()}
                   title={`Remove ${title} completely`}
-                  className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'}`}
+                  className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white/10 ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-white/80 hover:text-white'}`}
                   aria-label={`Remove ${title}`}
                 >
                   <XCircle className="h-3.5 w-3.5" />

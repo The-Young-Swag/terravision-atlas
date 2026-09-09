@@ -49,7 +49,7 @@ export function ShelterPanel() {
       bubbleLabel="Shelter locator"
     >
       <div>
-        <p className={`mb-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+        <p className={`mb-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
           Shelter data is community-sourced from OpenStreetMap — coverage varies by region and is never complete.
         </p>
 
@@ -62,7 +62,7 @@ export function ShelterPanel() {
         </button>
 
         {searched && !error && (
-          <p className={`mt-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+          <p className={`mt-2 font-mono text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
             {shelters.length === 0
               ? 'No mapped shelters in this area — try a city center'
               : `${shelters.length} shelter${shelters.length === 1 ? '' : 's'} found`}
@@ -82,7 +82,7 @@ export function ShelterPanel() {
                   <span className={`block truncate text-[12px] font-medium ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>
                     {shelter.name ?? 'Unnamed shelter'}
                   </span>
-                  <span className={`block truncate font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}>
+                  <span className={`block truncate font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                     {shelter.matchedTag} · {shelter.lat.toFixed(4)}, {shelter.lon.toFixed(4)}
                   </span>
                 </span>
@@ -97,7 +97,7 @@ export function ShelterPanel() {
               clearShelters();
               setSearched(false);
             }}
-            className={`mt-2 text-[11px] underline ${isBrightBasemap ? 'text-slate-600' : 'text-slate-400'}`}
+            className={`mt-2 text-[11px] underline ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
           >
             Clear shelters
           </button>

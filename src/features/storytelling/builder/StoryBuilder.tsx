@@ -47,7 +47,7 @@ export function StoryBuilder() {
           <BookOpen className="h-4 w-4 text-[#5500a4]" />
           Storytelling
         </h3>
-        <span className={`font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{scenes.length} scenes</span>
+        <span className={`font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>{scenes.length} scenes</span>
       </div>
 
       <div className="mb-3 flex gap-2">
@@ -82,7 +82,7 @@ export function StoryBuilder() {
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <span className={`flex h-6 w-6 items-center justify-center rounded-full bg-white/10 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+                <span className={`flex h-6 w-6 items-center justify-center rounded-full bg-white/10 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                   {index + 1}
                 </span>
                 <p className={`text-[12px] font-medium ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>{scene.title}</p>
@@ -92,14 +92,14 @@ export function StoryBuilder() {
                   e.stopPropagation();
                   removeScene(scene.id);
                 }}
-                className={`hover:text-[#E63946] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}
+                className={`hover:text-[#E63946] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}
                 aria-label="Remove scene"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
-            <p className={`mt-1 text-[11px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>{scene.description}</p>
-            <p className={`mt-1 flex items-center gap-1 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+            <p className={`mt-1 text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>{scene.description}</p>
+            <p className={`mt-1 flex items-center gap-1 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
               <MapPin className="h-3 w-3" />
               {scene.center[1].toFixed(4)}, {scene.center[0].toFixed(4)} · Z{scene.zoom}
             </p>
@@ -107,7 +107,7 @@ export function StoryBuilder() {
         ))}
       </div>
 
-      <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-600' : 'text-slate-300'}`}>
+      <p className={`mt-3 text-center font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
         Scenes are saved locally · Share via link (coming soon)
       </p>
     </div>
