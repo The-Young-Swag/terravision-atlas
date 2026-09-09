@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings2, Fuel, BookOpen, Box } from 'lucide-react';
+import { Settings2, Fuel, BookOpen, Box, Menu, X, Mountain } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { MyLocationButton } from '../common/MyLocationButton';
@@ -90,15 +90,21 @@ export function TopBar({
   setMinecraftOpen,
 }: TopBarProps) {
   const isBrightBasemap = useBrightBasemap();
+  // Mobile nav dropdown (hamburger) — mobile-only state, desktop untouched.
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
     <>
       {/* Top bar — mobile-first: single row on >=640px, two rows below; every
           child can shrink (min-w-0) so nothing overflows 375px. */}
       <header className="absolute inset-x-3 top-3 z-20 flex items-center gap-1.5 md:inset-x-4 md:top-4 md:gap-3">
+        {/* Brand — icon-only badge on mobile, full logotype on desktop */}
         <div className="glass-strong flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 md:gap-2.5 md:rounded-2xl md:px-4 md:py-2.5">
-          <span className={`shrink-0 text-[13px] font-semibold tracking-tight md:text-[15px] ${isBrightBasemap ? 'text-slate-900' : 'text-slate-100'}`}>TerraVision</span>
-          <span className={`hidden shrink-0 text-[10px] font-medium tracking-widest sm:inline md:text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>ATLAS</span>
+          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#059669] md:hidden" aria-label="TerraVision home">
+            <Mountain className="h-4 w-4 text-white" aria-hidden />
+          </span>
+          <span className={`hidden shrink-0 text-[13px] font-semibold tracking-tight md:inline md:text-[15px] ${isBrightBasemap ? 'text-slate-900' : 'text-slate-100'}`}>TerraVision</span>
+          <span className={`hidden shrink-0 text-[10px] font-medium tracking-widest md:inline md:text-[11px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-300'}`}>ATLAS</span>
         </div>
 
         <div className="glass flex min-w-0 flex-1 items-center gap-1.5 rounded-xl px-2 py-2 md:gap-2 md:rounded-2xl md:px-3 md:py-2">
@@ -161,21 +167,39 @@ export function TopBar({
         >
           <Settings2 className="h-[18px] w-[18px]" />
         </button>
+
+        {/* Mobile hamburger — opens the nav dropdown; desktop keeps pills */}
+        <button
+          onClick={() => setMobileNavOpen((open) => !open)}
+          className={`glass flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition md:hidden ${isBrightBasemap ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'}`}
+          aria-label="Toggle navigation menu"
+          aria-expanded={mobileNavOpen}
+        >
+          {mobileNavOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </button>
       </header>
 
-      {/* Mobile mode switcher — centered pill below the header; uses same
-          inset-x as header so it never overflows. */}
-      <div className="absolute inset-x-3 top-[3.5rem] z-20 flex justify-center md:hidden">
-        <div className={`glass flex max-w-full items-center gap-1 overflow-x-auto rounded-full p-1 text-[12px] font-medium [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
-          {(['explore', 'monitor', 'survey'] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setActiveMode(mode)}
-              className={`shrink-0 rounded-full px-3 py-1.5 capitalize transition ${activeMode === mode ? `${getModeColor(mode)} text-white shadow` : isBrightBasemap ? 'hover:text-slate-900' : 'hover:text-white'}`}
-            >
-              {mode}
-            </button>
-          ))}
+      {/* Mobile nav dropdown — replaces the pill row (Explore/Monitor/Survey
+          live here on mobile). Dismisses on selection. Desktop untouched. */}
+      <div className="absolute inset-x-3 top-[3.5rem] z-40 md:hidden">
+        <div className={`mobile-nav-dropdown glass-strong rounded-2xl ${mobileNavOpen ? 'open' : ''}`}>
+          <div>
+            <div className="flex flex-col gap-1 p-2">
+              {(['explore', 'monitor', 'survey'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    setActiveMode(mode);
+                    setMobileNavOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium capitalize transition ${activeMode === mode ? `${getModeColor(mode)} text-white` : isBrightBasemap ? 'text-slate-700 hover:bg-white/10' : 'text-slate-300 hover:bg-white/5'}`}
+                  aria-pressed={activeMode === mode}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </>

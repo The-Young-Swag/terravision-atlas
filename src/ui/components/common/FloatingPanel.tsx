@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { motion, useDragControls } from 'framer-motion';
 import { Grip, Minimize2, Maximize2, X, XCircle } from 'lucide-react';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
@@ -50,6 +50,76 @@ export function FloatingPanel({
 }: FloatingPanelProps) {
   const [isMinimized, setIsMinimized] = useState(defaultMinimized);
   const dragControls = useDragControls();
+  // Mobile-only drag state (desktop branch below is untouched): native
+  // pointer handlers with live viewport clamping (mockup logic), so both
+  // touch and mouse/pointer input drag deterministically. Position is kept
+  // in left/top px, cascaded per panel id so open panels don't fully stack.
+  const mobilePanelRef = useRef<HTMLDivElement>(null);
+  const [mobileDragging, setMobileDragging] = useState(false);
+  const mobileCascade = (() => {
+    const order = ['layers', 'alerts', 'weather', 'evacuation', 'geodetic', 'shelters', 'fuel', 'storytelling'];
+    const idx = Math.max(0, order.indexOf(id));
+    return { x: 12 + (idx % 3) * 20, y: 108 + (idx % 4) * 30 };
+  })();
+  const [mobilePos, setMobilePos] = useState(mobileCascade);
+  const mobilePosRef = useRef(mobileCascade);
+  const mobileDragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const setMobilePosBoth = (pos: { x: number; y: number }) => {
+    mobilePosRef.current = pos;
+    setMobilePos(pos);
+  };
+  // Clamp a position inside the viewport (header above, footer below).
+  const clampMobilePos = (x: number, y: number) => {
+    const node = mobilePanelRef.current;
+    const margin = 8;
+    const width = node?.offsetWidth ?? 304;
+    const height = node?.offsetHeight ?? 400;
+    return {
+      x: Math.max(margin, Math.min(x, window.innerWidth - width - margin)),
+      y: Math.max(104, Math.min(y, window.innerHeight - height - 110)),
+    };
+  };
+  // Clamp the cascade into small viewports on mount / id change.
+  const mobileDragMove = useCallback((e: PointerEvent) => {
+    const drag = mobileDragRef.current;
+    if (!drag) return;
+    setMobilePosBoth(
+      clampMobilePos(drag.origX + (e.clientX - drag.startX), drag.origY + (e.clientY - drag.startY)),
+    );
+  }, []);
+  const mobileDragEnd = useCallback(() => {
+    mobileDragRef.current = null;
+    setMobileDragging(false);
+    window.removeEventListener('pointermove', mobileDragMove);
+  }, [mobileDragMove]);
+  useEffect(() => {
+    setMobilePosBoth(clampMobilePos(mobilePosRef.current.x, mobilePosRef.current.y));
+  }, [id]);
+  // Unmount-only listener cleanup (re-subscribed if handlers change).
+  useEffect(
+    () => () => {
+      window.removeEventListener('pointermove', mobileDragMove);
+      window.removeEventListener('pointerup', mobileDragEnd);
+      window.removeEventListener('pointercancel', mobileDragEnd);
+    },
+    [mobileDragEnd, mobileDragMove],
+  );
+  const mobileDragStart = (e: React.PointerEvent) => {
+    // Buttons inside the header (minimize/close) stop propagation, so a
+    // drag never starts from them — only from bare header surface.
+    mobileDragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: mobilePosRef.current.x,
+      origY: mobilePosRef.current.y,
+    };
+    setMobileDragging(true);
+    window.addEventListener('pointermove', mobileDragMove);
+    // Up/cancel are one-shot: no removal bookkeeping needed in the end
+    // handler, which also avoids a self-referential listener cycle.
+    window.addEventListener('pointerup', mobileDragEnd, { once: true });
+    window.addEventListener('pointercancel', mobileDragEnd, { once: true });
+  };
   // Panel-chrome text/icons follow the shared dynamic font-color utility.
   // (Minimize bubbles and the mobile sheet keep static white: their
   // backgrounds are fixed dark, so they never need adapting.)
@@ -219,11 +289,24 @@ export function FloatingPanel({
       </div>
     </motion.div>
 
-      {/* Mobile bottom sheet — inset-x-3 keeps it off the viewport edge so it
-          never overflows 375px; bottom-3 leaves the footer/attribution gap. */}
-      <div className="fixed inset-x-3 bottom-3 z-30 flex max-h-[min(65vh,calc(100dvh-7rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0D1B2A]/95 backdrop-blur-xl md:hidden">
-        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+      {/* Mobile floating panel — draggable via header (touch-none so the
+          map never pans underneath a drag), clamped live to the viewport,
+          raised above siblings while dragging. Closed panels reopen from
+          the mobile FAB bubble via the shared store. */}
+      <motion.div
+        ref={mobilePanelRef}
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.98 }}
+        style={{ left: mobilePos.x, top: mobilePos.y }}
+        className={`fixed z-30 flex w-[min(19rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0D1B2A]/95 backdrop-blur-xl md:hidden ${mobileDragging ? 'mobile-panel-dragging shadow-2xl' : 'shadow-xl'}`}
+      >
+        <div
+          onPointerDown={mobileDragStart}
+          className="flex cursor-grab touch-none items-center justify-between border-b border-white/10 px-4 py-3 active:cursor-grabbing"
+        >
           <div className="flex items-center gap-2">
+            <Grip className="h-3.5 w-3.5 text-white/50" aria-hidden />
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white">
               {icon}
             </span>
@@ -232,6 +315,7 @@ export function FloatingPanel({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setIsMinimized(true)}
+              onPointerDown={(e) => e.stopPropagation()}
               title={`Minimize ${title} to a bubble`}
               className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white"
               aria-label={`Minimize ${title}`}
@@ -240,7 +324,8 @@ export function FloatingPanel({
             </button>
             <button
               onClick={() => closePanel(id)}
-              title={`Close ${title} — restore anytime from the top-right`}
+              onPointerDown={(e) => e.stopPropagation()}
+              title={`Close ${title} — reopen from the tools bubble`}
               className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white"
               aria-label={`Close ${title}`}
             >
@@ -249,6 +334,7 @@ export function FloatingPanel({
             {onClose && (
               <button
                 onClick={onClose}
+                onPointerDown={(e) => e.stopPropagation()}
                 title={`Remove ${title} completely`}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white"
                 aria-label={`Remove ${title}`}
@@ -258,8 +344,8 @@ export function FloatingPanel({
             )}
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">{children}</div>
-      </div>
+        <div className="max-h-[min(55vh,calc(100dvh-14rem))] flex-1 overflow-y-auto p-4 custom-scrollbar">{children}</div>
+      </motion.div>
     </>
     </div>
   );

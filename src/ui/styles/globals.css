@@ -86,23 +86,139 @@ body {
   z-index: 15 !important;
 }
 
+/* ============ Mobile-only UI (≤767px) ============
+   The entire block lives inside this media query, so desktop (>768px)
+   is pixel-unchanged by construction. Motion mirrors
+   terravision_mobile_mockup.html: 260–380ms ease curves, springy FAB. */
 @media (max-width: 767px) {
-  .ol-attribution {
-    bottom: 0.5rem !important;
-    right: 0.5rem !important;
-    max-width: calc(50vw - 0.75rem);
-  }
-  .ol-attribution.ol-collapsed {
-    bottom: 3.25rem !important;
-  }
-  .maplibregl-ctrl-bottom-right {
-    bottom: 3.25rem !important;
-    right: 0.5rem !important;
-  }
-  .cesium-widget-credits {
-    bottom: 3.25rem !important;
-    right: 0.5rem !important;
-    max-width: 50vw;
+
+/* Nav dropdown open/close (height + opacity + rise) */
+.mobile-nav-dropdown {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    grid-template-rows 320ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 260ms ease,
+    transform 260ms ease;
+}
+.mobile-nav-dropdown.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+}
+.mobile-nav-dropdown > div {
+  overflow: hidden;
+}
+
+/* FAB bubble: main button rotates to ×, items fan out along an arc */
+.mobile-fab-main {
+  transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mobile-fab-open .mobile-fab-main {
+  transform: rotate(135deg);
+}
+.mobile-fab-item {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity 220ms ease,
+    transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+.mobile-fab-open .mobile-fab-item {
+  opacity: 1;
+  pointer-events: auto;
+}
+.mobile-fab-open .mobile-fab-item-0 { transform: translate(0, -70px); }
+.mobile-fab-open .mobile-fab-item-1 { transform: translate(-52px, -52px); }
+.mobile-fab-open .mobile-fab-item-2 { transform: translate(-70px, 0); }
+.mobile-fab-open .mobile-fab-item-3 { transform: translate(-52px, 52px); }
+.mobile-fab-open .mobile-fab-item-4 { transform: translate(0, 70px); }
+.mobile-fab-open .mobile-fab-item-5 { transform: translate(-70px, 52px); }
+
+/* Footer collapse: panel slides down, attribution chip takes its place.
+   Visibility is ALWAYS inverse — never both shown or both hidden. */
+.mobile-footer-panel,
+.mobile-attrib-chip {
+  transition:
+    transform 380ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 280ms ease;
+}
+body.mobile-footer-collapsed .mobile-footer-panel {
+  transform: translateY(140%);
+  opacity: 0;
+  pointer-events: none;
+}
+.mobile-attrib-chip {
+  transform: translateY(140%);
+  opacity: 0;
+  pointer-events: none;
+}
+body.mobile-footer-collapsed .mobile-attrib-chip {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Third-party attribution controls follow the same inverse rule:
+   hidden while the footer panel is expanded, fading in when collapsed. */
+.ol-attribution,
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-bottom-right,
+.cesium-widget-credits {
+  transition:
+    opacity 380ms ease,
+    transform 380ms cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 380ms;
+}
+body.mobile-footer-expanded .ol-attribution,
+body.mobile-footer-expanded .maplibregl-ctrl-attrib,
+body.mobile-footer-expanded .maplibregl-ctrl-bottom-right,
+body.mobile-footer-expanded .cesium-widget-credits {
+  opacity: 0 !important;
+  visibility: hidden;
+  transform: translateY(8px);
+  pointer-events: none !important;
+}
+
+/* Mobile floating panels: raised while dragging */
+.mobile-panel-dragging {
+  z-index: 60 !important;
+}
+
+.ol-attribution {
+  bottom: 0.5rem !important;
+  right: 0.5rem !important;
+  max-width: calc(50vw - 0.75rem);
+}
+.ol-attribution.ol-collapsed {
+  bottom: 3.25rem !important;
+}
+.maplibregl-ctrl-bottom-right {
+  bottom: 3.25rem !important;
+  right: 0.5rem !important;
+}
+.cesium-widget-credits {
+  bottom: 3.25rem !important;
+  right: 0.5rem !important;
+  max-width: 50vw;
+}
+
+} /* end mobile-only */
+
+/* Respect reduced motion (all viewports) */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav-dropdown,
+  .mobile-fab-item,
+  .mobile-fab-main,
+  .mobile-footer-panel,
+  .mobile-attrib-chip {
+    transition: none !important;
   }
 }
 

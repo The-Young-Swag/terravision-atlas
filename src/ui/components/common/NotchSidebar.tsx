@@ -232,14 +232,15 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
   return (
     <>
       {/* Snap-zone indicators while dragging. Left/right only — top and
-          bottom docking are never offered, so no zones exist for them. */}
+          bottom docking are never offered, so no zones exist for them.
+          Desktop only: mobile uses the FAB bubble instead. */}
       <div
         aria-hidden
-        className={`pointer-events-none fixed bottom-0 left-0 top-0 z-40 w-16 transition-opacity duration-150 ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'left' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
+        className={`pointer-events-none fixed bottom-0 left-0 top-0 z-40 w-16 transition-opacity duration-150 max-md:hidden ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'left' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
       />
       <div
         aria-hidden
-        className={`pointer-events-none fixed bottom-0 right-0 top-0 z-40 w-16 transition-opacity duration-150 ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'right' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
+        className={`pointer-events-none fixed bottom-0 right-0 top-0 z-40 w-16 transition-opacity duration-150 max-md:hidden ${dragging ? 'opacity-100' : 'opacity-0'} ${dragSide === 'right' ? 'bg-[#5500a4]/30' : 'bg-[#5500a4]/15'}`}
       />
     <nav
       ref={containerRef as unknown as React.RefObject<HTMLElement>}
@@ -258,7 +259,8 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
         }
       }}
       style={{ top: `calc(50% + ${yOffset}px)` }}
-      className={`glass fixed z-30 flex max-h-[70vh] -translate-y-1/2 flex-col overflow-hidden ${
+      // Desktop only (hidden below md): mobile uses the FAB bubble menu.
+      className={`glass fixed z-30 flex max-h-[70vh] -translate-y-1/2 flex-col overflow-hidden max-md:hidden ${
         expanded ? 'w-[296px] max-w-[90vw]' : 'w-[52px]'
       } ${left ? 'notch-dock-left left-0 rounded-l-none' : 'notch-dock-right right-0 rounded-r-none'} ${
         expanded ? (left ? 'rounded-r-[20px]' : 'rounded-l-[20px]') : left ? 'rounded-r-[22px]' : 'rounded-l-[22px]'

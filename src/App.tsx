@@ -20,6 +20,7 @@ import { StoryBuilder } from './features/storytelling/builder/StoryBuilder';
 import { MinecraftExport } from './features/export/minecraft/MinecraftExport';
 import { FloatingPanel } from './ui/components/common/FloatingPanel';
 import { NotchSidebar } from './ui/components/common/NotchSidebar';
+import { MobileToolFab } from './ui/components/mobile/MobileToolFab';
 
 const CesiumGlobe = lazy(() => import('./ui/components/map/CesiumGlobe').then((m) => ({ default: m.CesiumGlobe })));
 
@@ -88,6 +89,7 @@ export default function App() {
       <ModeDocks activeMode={activeMode} />
       <StatusBar activeMode={activeMode} />
       <NotchSidebar activeMode={activeMode} onModeChange={setActiveMode} />
+      <MobileToolFab activeMode={activeMode} />
 
       <FuelPanel open={fuelOpen} onClose={() => setFuelOpen(false)} />
 
