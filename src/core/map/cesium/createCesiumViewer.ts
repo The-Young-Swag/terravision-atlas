@@ -155,21 +155,10 @@ export async function createCesiumViewer(options: CreateCesiumOptions): Promise<
   const creditContainer = viewer.cesiumWidget.creditContainer as HTMLElement;
   if (creditContainer) creditContainer.style.display = 'none';
 
-  // Performance: only render when scene changes, cap FPS, reduce overdraw
-  viewer.scene.requestRenderMode = true;
-  viewer.scene.maximumRenderTimeChange = Infinity;
-  viewer.targetFrameRate = 30;
-  viewer.resolutionScale = Math.min(window.devicePixelRatio, 1.25);
   viewer.scene.globe.enableLighting = false;
-  viewer.scene.fog.enabled = false;
+  viewer.scene.fog.enabled = true;
   if (viewer.scene.skyAtmosphere) {
-    viewer.scene.skyAtmosphere.show = false;
-  }
-  // Slightly lower terrain detail for smoother interaction (2 is default, 4 is faster)
-  try {
-    viewer.scene.globe.maximumScreenSpaceError = 2.5;
-  } catch {
-    // ignore — property may be readonly in some Cesium builds
+    viewer.scene.skyAtmosphere.show = true;
   }
 
   // Fly to initial center

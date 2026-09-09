@@ -27,8 +27,7 @@ export function createBasemapLayer(
   switch (basemap) {
     case 'streets':
       return new TileLayer({
-        preload: 0,
-        source: new OSM({ cacheSize: 256 }),
+        source: new OSM(),
         properties: { basemap },
       });
 
@@ -38,13 +37,11 @@ export function createBasemapLayer(
         ? gibsTileUrlTemplate(gibsLayerMeta(satelliteSource).product, gibsBestDate())
         : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
       return new TileLayer({
-        preload: 0,
         source: new XYZ({
           url,
           maxZoom: isGibs ? GIBS_MAX_ZOOM : 19,
           attributions: satelliteAttribution(satelliteSource),
           crossOrigin,
-          cacheSize: 256,
         }),
         properties: { basemap },
       });
@@ -52,26 +49,22 @@ export function createBasemapLayer(
 
     case 'terrain':
       return new TileLayer({
-        preload: 0,
         source: new XYZ({
           url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
           maxZoom: 17,
           attributions: '© OpenTopoMap (CC-BY-SA) © OpenStreetMap contributors',
           crossOrigin,
-          cacheSize: 256,
         }),
         properties: { basemap },
       });
 
     case 'dark':
       return new TileLayer({
-        preload: 0,
         source: new XYZ({
           url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
           maxZoom: 20,
           attributions: '© Stadia Maps, © OpenMapTiles, © OpenStreetMap contributors',
           crossOrigin,
-          cacheSize: 256,
         }),
         properties: { basemap },
       });
