@@ -68,15 +68,30 @@ export function FloatingPanel({
     mobilePosRef.current = pos;
     setMobilePos(pos);
   };
-  // Clamp a position inside the viewport (header above, footer below).
+  // Viewport zones for the mobile clamp (named constants, not magic
+  // numbers): the header/nav dropdown must stay clear above, and the
+  // footer's collapse toggle must stay clear below.
+  // The panel BODY may extend past the bottom edge on short screens —
+  // only the header (grab handle) is guaranteed reachable. Clamping the
+  // whole panel above the footer locked tall panels to horizontal-only
+  // drag, since their height left zero vertical travel.
+  const MOBILE_PANEL_MARGIN_PX = 8;
+  const MOBILE_PANEL_TOP_ZONE_PX = 104;
+  const MOBILE_PANEL_HANDLE_PX = 52;
+  const MOBILE_PANEL_BOTTOM_ZONE_PX = 110;
+  // Clamp a position inside the viewport (header above, grab handle kept
+  // clear of the footer below).
   const clampMobilePos = (x: number, y: number) => {
     const node = mobilePanelRef.current;
-    const margin = 8;
+    const margin = MOBILE_PANEL_MARGIN_PX;
     const width = node?.offsetWidth ?? 304;
-    const height = node?.offsetHeight ?? 400;
+    const maxY = Math.max(
+      MOBILE_PANEL_TOP_ZONE_PX,
+      window.innerHeight - MOBILE_PANEL_BOTTOM_ZONE_PX - MOBILE_PANEL_HANDLE_PX,
+    );
     return {
       x: Math.max(margin, Math.min(x, window.innerWidth - width - margin)),
-      y: Math.max(104, Math.min(y, window.innerHeight - height - 110)),
+      y: Math.max(MOBILE_PANEL_TOP_ZONE_PX, Math.min(y, maxY)),
     };
   };
   // Clamp the cascade into small viewports on mount / id change.
