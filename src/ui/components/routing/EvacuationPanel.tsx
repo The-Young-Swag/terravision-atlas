@@ -44,6 +44,8 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
   const showTraffic = useMapStore((s) => s.showTraffic);
   const setShowTraffic = useMapStore((s) => s.setShowTraffic);
   const trafficStatus = useTrafficStore((s) => s.status);
+  const showHikingTrails = useMapStore((s) => s.showHikingTrails);
+  const setShowHikingTrails = useMapStore((s) => s.setShowHikingTrails);
   const start = useRouteStore((s) => s.start);
   const destination = useRouteStore((s) => s.destination);
   const avoidCircle = useRouteStore((s) => s.avoidCircle);
@@ -346,6 +348,15 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
             <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Live hazards</span>
             <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E63946]" />
           </label>
+          {/* Hiking trails only make sense for general navigation — never
+              shown in Evacuation Routing mode. */}
+          {!isEvacuation && (
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
+              <input type="checkbox" checked={showHikingTrails} onChange={(e) => setShowHikingTrails(e.target.checked)} className="rounded" />
+              <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Hiking trails</span>
+              <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Waymarked</span>
+            </label>
+          )}
         </div>
 
         <div className="mb-2 flex items-center gap-2">

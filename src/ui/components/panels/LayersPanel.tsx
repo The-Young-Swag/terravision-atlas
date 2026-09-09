@@ -29,7 +29,6 @@ export function LayersPanel() {
   const streetsSource = useMapStore((s) => s.streetsSource);
   const viewMode = useMapStore((s) => s.viewMode);
   const showTerrainContours = useMapStore((s) => s.showTerrainContours);
-  const showHikingTrails = useMapStore((s) => s.showHikingTrails);
   const center = useMapStore((s) => s.center);
   const zoom = useMapStore((s) => s.zoom);
   const setBasemap = useMapStore((s) => s.setBasemap);
@@ -38,7 +37,6 @@ export function LayersPanel() {
   const setViewMode = useMapStore((s) => s.setViewMode);
   const setShowHazards = useMapStore((s) => s.setShowHazards);
   const setShowTerrainContours = useMapStore((s) => s.setShowTerrainContours);
-  const setShowHikingTrails = useMapStore((s) => s.setShowHikingTrails);
 
   const isBrightBasemap = useBrightBasemap();
 
@@ -252,13 +250,6 @@ export function LayersPanel() {
         )}
 
         <div className="mb-4 space-y-1">
-          {(viewMode === '2d' || viewMode === 'vector') && (
-            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
-              <input type="checkbox" checked={showHikingTrails} onChange={(e) => setShowHikingTrails(e.target.checked)} className="rounded" />
-              <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Hiking trails</span>
-              <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Waymarked</span>
-            </label>
-          )}
           {viewMode === 'vector' && (
             <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
               <input type="checkbox" checked={showTerrainContours} onChange={(e) => setShowTerrainContours(e.target.checked)} className="rounded" />
