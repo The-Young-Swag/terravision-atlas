@@ -65,9 +65,9 @@ export const MAPLIBRE_STYLES: Record<BasemapId, StyleSpecification> = {
     17,
   ),
   dark: rasterStyle(
-    ['https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png'],
-    '© OpenStreetMap contributors, Tiles © Wikimedia',
-    18,
+    ['https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png'],
+    '© Stadia Maps, © OpenMapTiles, © OpenStreetMap contributors',
+    20,
   ),
 };
 

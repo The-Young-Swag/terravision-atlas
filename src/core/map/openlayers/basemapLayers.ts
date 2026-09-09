@@ -63,12 +63,12 @@ export function createBasemapLayer(
       });
 
     case 'dark':
-      // Grayscale OSM — dark-friendly, zero-cost, no API key (Carto now requires key)
+      // Dark — Stadia Alidade Smooth Dark, zero-cost, no API key (Carto now requires key, WMFLabs is deprecated)
       return new TileLayer({
         source: new XYZ({
-          url: 'https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png',
-          maxZoom: 18,
-          attributions: '© OpenStreetMap contributors, Tiles © Wikimedia',
+          url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
+          maxZoom: 20,
+          attributions: '© Stadia Maps, © OpenMapTiles, © OpenStreetMap contributors',
           crossOrigin,
         }),
         properties: { basemap },

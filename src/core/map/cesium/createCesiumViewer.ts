@@ -56,6 +56,8 @@ export function globeImageryCredit(basemap: BasemapId, satelliteSource: Satellit
     if (satelliteSource === 'esri') return 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics';
     return gibsLayerMeta(satelliteSource).attribution;
   }
+  if (basemap === 'terrain') return '© OpenTopoMap (CC-BY-SA) © OpenStreetMap contributors';
+  if (basemap === 'dark') return '© Stadia Maps, © OpenMapTiles, © OpenStreetMap contributors';
   return '© OpenStreetMap contributors';
 }
 
@@ -70,12 +72,23 @@ function createGlobeImagery(
         maximumLevel: 19,
       });
     }
-    // GIBS WMTS REST as a URL template (matrix order z/row/col), draped
-    // over the Ion terrain mesh. Levels 0-9; Cesium overzooms past 9.
     const meta = gibsLayerMeta(satelliteSource);
     return new Cesium.UrlTemplateImageryProvider({
       url: gibsTileUrlTemplate(meta.product, gibsBestDate()),
       maximumLevel: GIBS_MAX_ZOOM,
+    });
+  }
+  if (basemap === 'terrain') {
+    return new Cesium.UrlTemplateImageryProvider({
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      subdomains: ['a', 'b', 'c'],
+      maximumLevel: 17,
+    });
+  }
+  if (basemap === 'dark') {
+    return new Cesium.UrlTemplateImageryProvider({
+      url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png',
+      maximumLevel: 20,
     });
   }
   return new Cesium.OpenStreetMapImageryProvider({
