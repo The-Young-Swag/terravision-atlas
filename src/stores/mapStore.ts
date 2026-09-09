@@ -49,6 +49,10 @@ interface MapState {
   setMeasurePoint: (index: number, point: [number, number]) => void;
   clearMeasure: () => void;
   setShowDatumViz: (show: boolean) => void;
+  /** Last successful geolocation fix (real device position, not simulated).
+   *  Shared so every My Location control reflects the same active state. */
+  myLocation: { lon: number; lat: number } | null;
+  setMyLocation: (loc: { lon: number; lat: number } | null) => void;
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -103,4 +107,6 @@ export const useMapStore = create<MapState>((set) => ({
     }),
   clearMeasure: () => set({ measurePoints: [], measureClosed: false }),
   setShowDatumViz: (showDatumViz) => set({ showDatumViz }),
+  myLocation: null,
+  setMyLocation: (myLocation) => set({ myLocation }),
 }));
