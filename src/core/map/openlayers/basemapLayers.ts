@@ -38,8 +38,17 @@ export function createBasemapLayer(
   if (cached) return cached;
   switch (basemap) {
     case 'streets': {
+      // Esri World Street Map (keyless, CORS-enabled). Previously OSM
+      // standard tiles, which are unreachable from some networks and
+      // throttle heavy app use per the OSM tile usage policy.
       const layer = new TileLayer({
-        source: new OSM(),
+        source: new XYZ({
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+          maxZoom: 19,
+          attributions:
+            'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community',
+          crossOrigin,
+        }),
         properties: { basemap },
       });
       basemapCache.set(cacheKey, layer);

@@ -132,7 +132,7 @@ export function LayersPanel() {
               {
                 id: 'streets' as const,
                 label: 'Streets',
-                desc: 'OpenStreetMap',
+                desc: 'Esri World Street Map',
                 icon: MapIcon,
               },
               {

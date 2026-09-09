@@ -1,5 +1,5 @@
 // Reverse geocoding via OpenStreetMap Nominatim — free, open, no API key, no tier caps
-// Uses the same OpenStreetMap data that powers the Streets basemap (OpenStreetMap)
+// OpenStreetMap data also contributes to the Streets basemap (Esri World Street Map)
 // Docs: https://nominatim.org/release-docs/develop/api/Reverse/
 // Usage policy: 1 request/sec, cached aggressively to respect rate limits
 // No new npm dependency — uses browser fetch

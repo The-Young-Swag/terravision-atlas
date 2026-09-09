@@ -51,8 +51,8 @@ function satelliteStyle(source: SatelliteSourceId): StyleSpecification {
 
 export const MAPLIBRE_STYLES: Record<BasemapId, StyleSpecification> = {
   streets: rasterStyle(
-    ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
-    '© OpenStreetMap contributors',
+    ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'],
+    'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community',
   ),
   satellite: satelliteStyle('esri'),
   terrain: rasterStyle(

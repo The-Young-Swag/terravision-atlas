@@ -58,7 +58,7 @@ export function globeImageryCredit(basemap: BasemapId, satelliteSource: Satellit
   }
   if (basemap === 'terrain') return '© OpenTopoMap (CC-BY-SA) © OpenStreetMap contributors';
   if (basemap === 'dark') return '© Stadia Maps, © OpenMapTiles, © OpenStreetMap contributors';
-  return '© OpenStreetMap contributors';
+  return 'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community';
 }
 
 const globeImageryCache = new Map<string, Cesium.ImageryProvider>();
@@ -104,8 +104,9 @@ export function createGlobeImagery(
     globeImageryCache.set(cacheKey, p);
     return p;
   }
-  const p = new Cesium.OpenStreetMapImageryProvider({
-    url: 'https://a.tile.openstreetmap.org/',
+  const p = new Cesium.UrlTemplateImageryProvider({
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    maximumLevel: 19,
   });
   globeImageryCache.set(cacheKey, p);
   return p;
