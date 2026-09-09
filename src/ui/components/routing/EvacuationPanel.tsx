@@ -288,9 +288,15 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
               >
                 {index + 1}
               </span>
-              <span className={index === stepIndex ? (isBrightBasemap ? 'text-slate-800' : 'text-slate-100') : isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}>
-                {label}
-              </span>
+              {/* Single stepper implementation (3-step general / 4-step
+                  evacuation share this markup): only 'Avoid area
+                  (optional)' and 'Find route' keep text labels — 'Set
+                  start' / 'Set destination' show number + arrow only. */}
+              {label !== 'Set start' && label !== 'Set destination' && (
+                <span className={index === stepIndex ? (isBrightBasemap ? 'text-slate-800' : 'text-slate-100') : isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}>
+                  {label}
+                </span>
+              )}
               {index < steps.length - 1 && <span className={isBrightBasemap ? 'text-slate-300' : 'text-slate-500'}>→</span>}
             </li>
           ))}
