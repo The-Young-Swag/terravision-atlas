@@ -57,7 +57,7 @@ export function globeImageryCredit(basemap: BasemapId, satelliteSource: Satellit
     return gibsLayerMeta(satelliteSource).attribution;
   }
   if (basemap === 'terrain') return 'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community';
-  if (basemap === 'dark') return '© Stadia Maps, © OpenMapTiles, © OpenStreetMap contributors';
+  if (basemap === 'dark') return 'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community';
   return 'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community';
 }
 
@@ -97,8 +97,8 @@ export function createGlobeImagery(
   }
   if (basemap === 'dark') {
     const p = new Cesium.UrlTemplateImageryProvider({
-      url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png',
-      maximumLevel: 20,
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+      maximumLevel: 16,
     });
     globeImageryCache.set(cacheKey, p);
     return p;

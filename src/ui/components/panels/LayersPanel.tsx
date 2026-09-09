@@ -144,7 +144,7 @@ export function LayersPanel() {
               {
                 id: 'dark' as const,
                 label: 'Dark',
-                desc: 'Grayscale · Wikimedia',
+                desc: 'Esri Dark Gray',
                 icon: Moon,
               },
             ] as const

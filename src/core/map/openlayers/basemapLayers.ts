@@ -92,11 +92,17 @@ export function createBasemapLayer(
     }
 
     case 'dark': {
+      // Esri Dark Gray Canvas (keyless, CORS-enabled). Previously Stadia
+      // alidade_smooth_dark, which returns HTTP 401 without an API key for
+      // any non-localhost referer — Dark never loaded in production builds.
+      // Detail ends around z16 (deeper levels serve uniform tiles), so cap
+      // maxZoom at 16 and let the renderers overzoom beyond that.
       const layer = new TileLayer({
         source: new XYZ({
-          url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
-          maxZoom: 20,
-          attributions: '© Stadia Maps, © OpenMapTiles, © OpenStreetMap contributors',
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+          maxZoom: 16,
+          attributions:
+            'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community',
           crossOrigin,
         }),
         properties: { basemap },

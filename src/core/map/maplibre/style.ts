@@ -61,9 +61,9 @@ export const MAPLIBRE_STYLES: Record<BasemapId, StyleSpecification> = {
     19,
   ),
   dark: rasterStyle(
-    ['https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png'],
-    '© Stadia Maps, © OpenMapTiles, © OpenStreetMap contributors',
-    20,
+    ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'],
+    'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community',
+    16,
   ),
 };
 
