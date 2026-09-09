@@ -93,20 +93,26 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
       if (hours === 0) hours = 12;
       return `${hours} ${suffix}`;
     };
-    const labels: (string | string[])[] = hourly.map((point, index) => {
+    const labels: (string | string[])[] = hourly.map((point) => {
       const date = new Date(point.time);
       if (!multiDay) return formatHour(date);
-      const isDayBoundary = date.getHours() === 0 && (index === 0 || dayKeys[index] !== dayKeys[index - 1]);
-      if (!isDayBoundary) return '';
+      // Center labels at midday (12:00) so they sit under the day's data,
+      // not at the 00:00 edge where the gridline is. Gridlines stay at 00:00.
+      if (date.getHours() !== 12) return '';
       const month = date.toLocaleDateString(undefined, { month: 'short' });
       const day = String(date.getDate());
       return [month, day];
     });
-    // Day-boundary slot indices drive the separator gridlines below.
-    const dayBoundarySlots = new Set<number>();
-    labels.forEach((text, index) => {
+    // Gridlines at 00:00, labels at 12:00 — keeps chart vs labels justified.
+    const dayGridSlots = new Set<number>();
+    const dayLabelSlots = new Set<number>();
+    hourly.forEach((point, idx) => {
+      const d = new Date(point.time);
+      if (d.getHours() === 0) dayGridSlots.add(idx);
+    });
+    labels.forEach((text, idx) => {
       const isLabeled = Array.isArray(text) ? text.length > 0 : text !== '';
-      if (isLabeled) dayBoundarySlots.add(index);
+      if (isLabeled) dayLabelSlots.add(idx);
     });
     const tempData = hourly.map((point) => point.temperatureC);
     const precipData = hourly.map((point) => point.precipitationMm);
@@ -193,12 +199,10 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
             // boundaries groups each day's hours visually. Single-day
             // views keep a clean axis with no gridlines at all.
             grid: {
-              // Gridlines render only in multi-day views, and only at
-              // labeled day boundaries — single-day views stay clean.
               display: multiDay,
               drawTicks: false,
               color: (context: ScriptableScaleContext) =>
-                dayBoundarySlots.has(context.index ?? -1) ? gridColor : 'transparent',
+                dayGridSlots.has(context.index ?? -1) ? gridColor : 'transparent',
             },
             ticks: {
               color: tickColor,
