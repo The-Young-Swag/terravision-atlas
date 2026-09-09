@@ -56,13 +56,9 @@ export const MAPLIBRE_STYLES: Record<BasemapId, StyleSpecification> = {
   ),
   satellite: satelliteStyle('esri'),
   terrain: rasterStyle(
-    [
-      'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
-      'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
-      'https://c.tile.opentopomap.org/{z}/{x}/{y}.png',
-    ],
-    '© OpenTopoMap (CC-BY-SA) © OpenStreetMap contributors',
-    17,
+    ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],
+    'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community',
+    19,
   ),
   dark: rasterStyle(
     ['https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png'],

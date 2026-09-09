@@ -74,11 +74,15 @@ export function createBasemapLayer(
     }
 
     case 'terrain': {
+      // Esri World Topographic Map (keyless, CORS-enabled). Previously
+      // OpenTopoMap, whose single community render server is too slow for
+      // interactive use (multi-second TTFB, throttled concurrency).
       const layer = new TileLayer({
         source: new XYZ({
-          url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
-          maxZoom: 17,
-          attributions: '© OpenTopoMap (CC-BY-SA) © OpenStreetMap contributors',
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+          maxZoom: 19,
+          attributions:
+            'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community',
           crossOrigin,
         }),
         properties: { basemap },

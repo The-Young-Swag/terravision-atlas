@@ -138,7 +138,7 @@ export function LayersPanel() {
               {
                 id: 'terrain' as const,
                 label: 'Terrain',
-                desc: 'OpenTopoMap',
+                desc: 'Esri World Topo',
                 icon: Mountain,
               },
               {

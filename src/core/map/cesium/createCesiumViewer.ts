@@ -56,7 +56,7 @@ export function globeImageryCredit(basemap: BasemapId, satelliteSource: Satellit
     if (satelliteSource === 'esri') return 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics';
     return gibsLayerMeta(satelliteSource).attribution;
   }
-  if (basemap === 'terrain') return '© OpenTopoMap (CC-BY-SA) © OpenStreetMap contributors';
+  if (basemap === 'terrain') return 'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community';
   if (basemap === 'dark') return '© Stadia Maps, © OpenMapTiles, © OpenStreetMap contributors';
   return 'Tiles © Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS user community';
 }
@@ -89,9 +89,8 @@ export function createGlobeImagery(
   }
   if (basemap === 'terrain') {
     const p = new Cesium.UrlTemplateImageryProvider({
-      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      subdomains: ['a', 'b', 'c'],
-      maximumLevel: 17,
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+      maximumLevel: 19,
     });
     globeImageryCache.set(cacheKey, p);
     return p;
