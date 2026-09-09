@@ -10,6 +10,7 @@ import { buildJogLoop, type Hilliness } from '../../../features/routing/joggingL
 import { trafficAdjustedMinutes } from '../../../features/traffic/flowEta';
 import { tomtomApiKey } from '../../../features/traffic/tomtom';
 import { useTrafficStore } from '../../../stores/trafficStore';
+import { TrafficLegend } from '../panels/TrafficLegend';
 import { circleToRing, evacStep, EVAC_STEP_INSTRUCTIONS, type EvacCircle } from '../../../features/routing/avoidZone';
 import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
 import type { GeocodedPlace } from '../../../features/search/geocode';
@@ -38,6 +39,11 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
   const mapCenter = useMapStore((s) => s.center);
   const setCenter = useMapStore((s) => s.setCenter);
   const setZoom = useMapStore((s) => s.setZoom);
+  const showHazards = useMapStore((s) => s.showHazards);
+  const setShowHazards = useMapStore((s) => s.setShowHazards);
+  const showTraffic = useMapStore((s) => s.showTraffic);
+  const setShowTraffic = useMapStore((s) => s.setShowTraffic);
+  const trafficStatus = useTrafficStore((s) => s.status);
   const start = useRouteStore((s) => s.start);
   const destination = useRouteStore((s) => s.destination);
   const avoidCircle = useRouteStore((s) => s.avoidCircle);
@@ -308,6 +314,33 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
             ))}
           </div>
         )}
+
+        {/* Map overlays affecting the route view — same toggles previously
+            in the Layers panel (moved, not copied); state lives in the map
+            store so every other consumer keeps working unchanged. */}
+        <div className="mb-3 space-y-1 rounded-xl border border-white/10 bg-white/[0.03] p-1.5">
+          <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
+            <input type="checkbox" checked={showTraffic} onChange={(e) => setShowTraffic(e.target.checked)} className="rounded" />
+            <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Traffic</span>
+            <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>TomTom</span>
+          </label>
+          {showTraffic && trafficStatus === 'unavailable' && (
+            <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}`}>traffic data unavailable</p>
+          )}
+          {showTraffic && trafficStatus === 'no-key' && (
+            <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}`}>traffic unavailable — API key not configured</p>
+          )}
+          {showTraffic && trafficStatus === 'ok' && (
+            <div className="px-1.5 py-1">
+              <TrafficLegend />
+            </div>
+          )}
+          <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
+            <input type="checkbox" checked={showHazards} onChange={(e) => setShowHazards(e.target.checked)} className="rounded" />
+            <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Live hazards</span>
+            <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E63946]" />
+          </label>
+        </div>
 
         <div className="mb-2 flex items-center gap-2">
           <div className="min-w-0 flex-1">

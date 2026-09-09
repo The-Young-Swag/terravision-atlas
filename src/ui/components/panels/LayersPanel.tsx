@@ -1,10 +1,8 @@
 import { Layers, Satellite, Map as MapIcon, Mountain, Moon, Check, RotateCcw, Info, X } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
 
-import { TrafficLegend } from './TrafficLegend';
 import { useMapStore } from '../../../stores/mapStore';
 import { STREETS_SOURCES } from '../../../core/map/streets';
-import { useTrafficStore } from '../../../stores/trafficStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { GIBS_LAYERS, type SatelliteSourceId } from '../../../core/map/gibs';
 import { useTiltStore } from '../../../stores/tiltStore';
@@ -30,10 +28,8 @@ export function LayersPanel() {
   const satelliteSource = useMapStore((s) => s.satelliteSource);
   const streetsSource = useMapStore((s) => s.streetsSource);
   const viewMode = useMapStore((s) => s.viewMode);
-  const showHazards = useMapStore((s) => s.showHazards);
   const showTerrainContours = useMapStore((s) => s.showTerrainContours);
   const showHikingTrails = useMapStore((s) => s.showHikingTrails);
-  const showTraffic = useMapStore((s) => s.showTraffic);
   const center = useMapStore((s) => s.center);
   const zoom = useMapStore((s) => s.zoom);
   const setBasemap = useMapStore((s) => s.setBasemap);
@@ -43,8 +39,6 @@ export function LayersPanel() {
   const setShowHazards = useMapStore((s) => s.setShowHazards);
   const setShowTerrainContours = useMapStore((s) => s.setShowTerrainContours);
   const setShowHikingTrails = useMapStore((s) => s.setShowHikingTrails);
-  const setShowTraffic = useMapStore((s) => s.setShowTraffic);
-  const trafficStatus = useTrafficStore((s) => s.status);
 
   const isBrightBasemap = useBrightBasemap();
 
@@ -264,33 +258,6 @@ export function LayersPanel() {
               <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Hiking trails</span>
               <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>Waymarked</span>
             </label>
-          )}
-          {viewMode === '2d' && (
-            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
-              <input type="checkbox" checked={showHazards} onChange={(e) => setShowHazards(e.target.checked)} className="rounded" />
-              <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Live hazards</span>
-              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E63946]" />
-            </label>
-          )}
-          {(viewMode === '2d' || viewMode === 'vector') && (
-            <>
-              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
-                <input type="checkbox" checked={showTraffic} onChange={(e) => setShowTraffic(e.target.checked)} className="rounded" />
-                <span className={`text-[13px] ${isBrightBasemap ? 'text-slate-800' : 'text-slate-200'}`}>Traffic</span>
-                <span className={`ml-auto font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>TomTom</span>
-              </label>
-              {showTraffic && trafficStatus === 'unavailable' && (
-                <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}`}>traffic data unavailable</p>
-              )}
-              {showTraffic && trafficStatus === 'no-key' && (
-                <p className={`px-1.5 py-1 text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-300'}`}>traffic unavailable — API key not configured</p>
-              )}
-              {showTraffic && trafficStatus === 'ok' && (
-                <div className="px-1.5 py-1">
-                  <TrafficLegend />
-                </div>
-              )}
-            </>
           )}
           {viewMode === 'vector' && (
             <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-white/5">
