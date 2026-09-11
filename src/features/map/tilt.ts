@@ -8,7 +8,6 @@ import * as Cesium from 'cesium';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 
 export const TILT_MAX_DEGREES = 80;
-export const TILT_MIN_DEGREES = 0;
 
 /** Cesium: 0° tilt = top-down (camera.pitch = -90°), 80° = nearly horizon. */
 export function cesiumTiltDegrees(viewer: Cesium.Viewer | null): number {
