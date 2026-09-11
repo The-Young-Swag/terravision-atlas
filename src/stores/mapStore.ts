@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { SatelliteSourceId } from '../core/map/gibs';
+import type { SatelliteSourceId } from '../features/map/gibs';
 
 export type BasemapId = 'satellite' | 'streets' | 'terrain' | 'dark';
 /** Tile provider for the 'streets' basemap slot. 'osm' (default) is the

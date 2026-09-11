@@ -6,7 +6,7 @@ import {
   ROUTE_LINE_WIDTH,
   ROUTE_LINE_COLOR,
   ROUTE_CASING_COLOR,
-} from '../routeStyle';
+} from '../../../features/map/routeStyle';
 import { flowStatusColor } from '../../../features/traffic/flowStatus';
 
 // Evacuation route line for the Vector map (Item 15 Part A).

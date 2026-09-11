@@ -13,7 +13,7 @@ import {
   ROUTE_LINE_WIDTH,
   ROUTE_LINE_COLOR,
   ROUTE_CASING_COLOR,
-} from '../routeStyle';
+} from '../../../features/map/routeStyle';
 
 // Evacuation route overlay for the 2D map (Item 15 Part A).
 //

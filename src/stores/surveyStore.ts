@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { useMapStore } from './mapStore';
 import type { BasemapId, MapViewMode, MeasureMode } from './mapStore';
-import type { SatelliteSourceId } from '../core/map/gibs';
+import type { SatelliteSourceId } from '../features/map/gibs';
 
 export type SurveyProjection = 'WGS84' | 'UTM' | 'PRS92' | 'NAD83' | 'ETRS89' | 'OSGB36';
 

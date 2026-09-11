@@ -4,7 +4,7 @@ import Point from 'ol/geom/Point';
 import { Stroke } from 'ol/style';
 import { createRouteLayer } from './routeLayer';
 import { createAvoidLayer } from './avoidLayer';
-import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR } from '../routeStyle';
+import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR } from '../../../features/map/routeStyle';
 
 const route = {
   path: [

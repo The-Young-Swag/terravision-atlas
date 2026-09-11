@@ -2,9 +2,9 @@ import { Layers, Satellite, Map as MapIcon, Mountain, Moon, Check, RotateCcw, In
 import { FloatingPanel } from '../../ui/components/common/FloatingPanel';
 
 import { useMapStore } from '../../stores/mapStore';
-import { STREETS_SOURCES } from '../../core/map/streets';
+import { STREETS_SOURCES } from '../../features/map/streets';
 import { useBrightBasemap } from '../../hooks/useBrightBasemap';
-import { GIBS_LAYERS, type SatelliteSourceId } from '../../core/map/gibs';
+import { GIBS_LAYERS, type SatelliteSourceId } from '../../features/map/gibs';
 import { useTiltStore } from '../../stores/tiltStore';
 import { BasemapIcon } from '../../ui/components/panels/BasemapIcon';
 import {
@@ -15,7 +15,7 @@ import {
   resetMapLibreTiltToTopDown,
   setCesiumTiltDegrees,
   setMapLibreTiltDegrees,
-} from '../../core/map/tilt';
+} from '../../features/map/tilt';
 import { useEffect, useMemo, useState } from 'react';
 
 const SATELLITE_SOURCES: { id: SatelliteSourceId; label: string; desc: string }[] = [

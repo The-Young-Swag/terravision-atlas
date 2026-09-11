@@ -5,8 +5,8 @@ import { useRouteStore } from '../../../stores/routeStore';
 import { useDisasterStore } from '../../../stores/disasterStore';
 import { useTiltStore } from '../../../stores/tiltStore';
 import type { DisasterSeverity } from '../../../types';
-import { DISASTER_SEVERITY_COLORS } from '../../../core/map/disasterStyle';
-import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR, ROUTE_CASING_WIDTH, ROUTE_LINE_WIDTH } from '../../../core/map/routeStyle';
+import { DISASTER_SEVERITY_COLORS } from '../../../features/map/disasterStyle';
+import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR, ROUTE_CASING_WIDTH, ROUTE_LINE_WIDTH } from '../../../features/map/routeStyle';
 import { routeStatusSegments } from '../../../features/traffic/flowStatus';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import {
@@ -15,7 +15,7 @@ import {
   flyToCesium,
   globeImageryCredit,
   type TerrainStatus,
-} from '../../../core/map/cesium/createCesiumViewer';
+} from '../../../features/map/cesium/createCesiumViewer';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 

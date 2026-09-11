@@ -4,7 +4,7 @@ import { useRouteStore } from '../../../stores/routeStore';
 import { reverseNominatim } from '../../../features/search/geocode';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
 import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../stores/mapStore';
-import { maplibreStyleFor } from '../../../core/map/maplibre/style';
+import { maplibreStyleFor } from '../../../features/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { setTrailsVisible } from '../../../core/map/maplibre/trails';
 import { useTiltStore } from '../../../stores/tiltStore';
@@ -20,7 +20,7 @@ import { useDisasterStore } from '../../../stores/disasterStore';
 import { useWeatherStore } from '../../../stores/weatherStore';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import { TRAFFIC_LAYER_ID } from '../../../core/map/maplibre/traffic';
-import { TRAFFIC_FLOW_OPACITY_ML } from '../../../core/map/routeStyle';
+import { TRAFFIC_FLOW_OPACITY_ML } from '../../../features/map/routeStyle';
 import { setSearchMarkerVisible } from '../../../core/map/maplibre/search';
 import { useSearchStore } from '../../../stores/searchStore';
 import {

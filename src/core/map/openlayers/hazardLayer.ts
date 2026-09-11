@@ -4,7 +4,7 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import { fromLonLat } from 'ol/proj';
 import { Style, Circle, Fill, Stroke } from 'ol/style';
-import { DISASTER_SEVERITY_COLORS } from '../disasterStyle';
+import { DISASTER_SEVERITY_COLORS } from '../../../features/map/disasterStyle';
 
 export interface HazardFeature {
   id: string;
