@@ -11,6 +11,7 @@ import { Style, Stroke, Fill, Circle } from 'ol/style';
 import { useRouteStore } from '../store';
 import type { EvacRoute, EvacRoutePoint, EvacCircle } from '../store';
 import { circleToRing, previewCircle, MIN_AVOID_RADIUS_KM } from '../avoidZone';
+import { AVOID_DRAW_TOOLTIP_CSS, avoidDrawTooltipText } from './drawTooltip';
 import type { FlowSample } from '../../traffic';
 import { flowStatusColor } from '../../traffic';
 import {
@@ -125,10 +126,7 @@ export function attachAvoidDraw(map: Map): () => void {
   // The live radius comes from turf; release finalizes the same circle
   // object the Valhalla request will use.
   const drawTooltip = document.createElement('div');
-  drawTooltip.style.cssText =
-    'position:absolute;display:none;pointer-events:none;background:rgba(13,27,42,.92);' +
-    'border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 8px;' +
-    'font:11px monospace;color:#f8fafc;white-space:nowrap;z-index:30;';
+  drawTooltip.style.cssText = AVOID_DRAW_TOOLTIP_CSS;
   map.getTargetElement().appendChild(drawTooltip);
 
   let drawCenter: [number, number] | null = null;
@@ -164,9 +162,7 @@ export function attachAvoidDraw(map: Map): () => void {
     const preview = createAvoidLayer(circleToRing(circle));
     map.addLayer(preview);
     drawPreviewLayer = preview;
-    drawTooltip.textContent = atCap
-      ? `${circle.radiusKm.toFixed(1)} km (max) — release to set`
-      : `${circle.radiusKm.toFixed(1)} km — release to set`;
+    drawTooltip.textContent = avoidDrawTooltipText(circle, atCap);
     drawTooltip.style.display = 'block';
     drawTooltip.style.left = `${pixel[0] + 14}px`;
     drawTooltip.style.top = `${pixel[1] - 10}px`;

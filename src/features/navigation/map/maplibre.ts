@@ -3,6 +3,7 @@ import { circlePolygon } from '../avoidZone';
 import type { EvacCircle } from '../store';
 import { useRouteStore } from '../store';
 import { previewCircle, MIN_AVOID_RADIUS_KM } from '../avoidZone';
+import { AVOID_DRAW_TOOLTIP_CSS, avoidDrawTooltipText } from './drawTooltip';
 import type { EvacRoute } from '../store';
 import type { FlowSample } from '../../traffic';
 import {
@@ -202,10 +203,7 @@ export function removeRouteLayers(map: MapLibreMap): void {
 // tooltip, and preview management are unchanged, including its cleanup).
 export function attachAvoidDraw(map: MapLibreMap): () => void {
   const drawTooltip = document.createElement('div');
-  drawTooltip.style.cssText =
-    'position:absolute;display:none;pointer-events:none;background:rgba(13,27,42,.92);' +
-    'border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 8px;' +
-    'font:11px monospace;color:#f8fafc;white-space:nowrap;z-index:30;';
+  drawTooltip.style.cssText = AVOID_DRAW_TOOLTIP_CSS;
   map.getCanvasContainer().appendChild(drawTooltip);
 
   let drawCenter: { lon: number; lat: number } | null = null;
@@ -227,9 +225,7 @@ export function attachAvoidDraw(map: MapLibreMap): () => void {
     const { circle, atCap } = previewCircle(drawCenter.lon, drawCenter.lat, event.lngLat.lng, event.lngLat.lat);
     setAvoidPreview(map, circle);
     const point = map.project(event.lngLat);
-    drawTooltip.textContent = atCap
-      ? `${circle.radiusKm.toFixed(1)} km (max) — release to set`
-      : `${circle.radiusKm.toFixed(1)} km — release to set`;
+    drawTooltip.textContent = avoidDrawTooltipText(circle, atCap);
     drawTooltip.style.display = 'block';
     drawTooltip.style.left = `${point.x + 14}px`;
     drawTooltip.style.top = `${point.y - 10}px`;
