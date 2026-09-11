@@ -10,7 +10,7 @@ import { ForecastChart } from './ForecastChart';
 import { HourlyStrip } from './HourlyStrip';
 import { WeatherVisual } from './WeatherVisual';
 import { PlaceAutocomplete } from '../../../shared/components/PlaceAutocomplete';
-import { reverseGeocode, type GeocodedPlace } from '../../../features/search';
+import { reverseGeocode, shortPlaceLabel, type GeocodedPlace } from '../../../features/search';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -87,7 +87,7 @@ export function WeatherPanel() {
   const handleWeatherSelect = (place: GeocodedPlace) => {
     setCenter([place.lon, place.lat]);
     setZoom(10);
-    setWeatherQuery(place.displayName.split(',')[0] ?? '');
+    setWeatherQuery(shortPlaceLabel(place.displayName));
   };
 
   const requestHistorical = () => {

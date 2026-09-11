@@ -23,7 +23,7 @@ import { createEvacPinLayer } from '../../../features/navigation';
 import Translate from 'ol/interaction/Translate';
 import { createShelterLayer, useShelterStore, shelterPopupHtml } from '../../../features/shelters';
 import '../../../features/shelters/shelterPopup.css';
-import { createSearchMarkerLayer, useSearchStore } from '../../../features/search';
+import { createSearchMarkerLayer, useSearchStore, shortPlaceLabel } from '../../../features/search';
 import { reverseNominatim } from '../../../features/search';
 import {
   niceMeterStep,
@@ -339,7 +339,7 @@ export function OpenLayersMap() {
       void (async () => {
         const place = await reverseNominatim(lat, lon).catch(() => null);
         const live = useRouteStore.getState();
-        const pin = { lon, lat, label: place?.displayName.split(',')[0] ?? 'Pinned location' };
+        const pin = { lon, lat, label: shortPlaceLabel(place?.displayName, 'Pinned location') };
         if (live.pickMode === 'start') {
           live.setStart(pin);
           live.setPickMode(live.destination ? null : 'destination');
@@ -526,7 +526,7 @@ export function OpenLayersMap() {
       if ((role !== 'start' && role !== 'destination') || !(geometry instanceof Point)) return;
       const [lon, lat] = toLonLat(geometry.getCoordinates());
       void reverseNominatim(lat, lon)
-        .then((place) => ({ lon, lat, label: place?.displayName.split(',')[0] ?? 'Pinned location' }))
+        .then((place) => ({ lon, lat, label: shortPlaceLabel(place?.displayName, 'Pinned location') }))
         .then((pin) => {
           const live = useRouteStore.getState();
           if (role === 'start') live.setStart(pin);

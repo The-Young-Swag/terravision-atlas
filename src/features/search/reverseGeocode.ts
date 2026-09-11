@@ -7,6 +7,7 @@
 // Concurrent lookups for the same point share one in-flight request.
 // No new npm dependency — uses browser fetch
 import { respectNominatimRateLimit } from './geocode';
+import { shortPlaceLabel } from './placeLabel';
 
 export interface LocationHierarchy {
   // raw fields
@@ -74,7 +75,7 @@ function buildHierarchy(address: Record<string, string>, displayName: string): L
 
   // Fallback to displayName first component if nothing parsed
   if (parts.length === 0 && displayName) {
-    const first = displayName.split(',')[0]?.trim();
+    const first = shortPlaceLabel(displayName);
     if (first) parts.push(first);
     if (country) parts.push(country);
   }

@@ -16,7 +16,7 @@ import {
 import { circleToRing, evacStep, EVAC_STEP_INSTRUCTIONS } from '../avoidZone';
 import type { EvacCircle } from '../store';
 import { PlaceAutocomplete } from '../../../shared/components/PlaceAutocomplete';
-import type { GeocodedPlace } from '../../../features/search';
+import { shortPlaceLabel, type GeocodedPlace } from '../../../features/search';
 
 function parseCoordinate(text: string, label: string, min: number, max: number): number {
   const value = Number(text.trim());
@@ -186,12 +186,12 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
   };
 
   const handleSelectStart = (place: GeocodedPlace) => {
-    setStart({ lon: place.lon, lat: place.lat, label: place.displayName.split(',')[0] });
+    setStart({ lon: place.lon, lat: place.lat, label: shortPlaceLabel(place.displayName) });
     flyToPin(place.lon, place.lat);
   };
 
   const handleSelectDestination = (place: GeocodedPlace) => {
-    setDestination({ lon: place.lon, lat: place.lat, label: place.displayName.split(',')[0] });
+    setDestination({ lon: place.lon, lat: place.lat, label: shortPlaceLabel(place.displayName) });
     flyToPin(place.lon, place.lat);
   };
 

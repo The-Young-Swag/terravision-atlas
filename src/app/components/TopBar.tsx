@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useBrightBasemap } from '../../shared/hooks/useBrightBasemap';
 import { MyLocationButton } from '../../shared/components/MyLocationButton';
 import { useMapStore } from '../../features/map';
-import { useSearchStore } from '../../features/search';
+import { useSearchStore, shortPlaceLabel } from '../../features/search';
 import { useRouteStore } from '../../features/navigation';
 import { useUiPanelStore } from '../../shared/stores/uiPanelStore';
 import { PlaceAutocomplete } from '../../shared/components/PlaceAutocomplete';
@@ -32,8 +32,8 @@ function PlaceSearchBox() {
   // to explore first because Navigation is the explore-only context; this
   // matches the same explore/monitor condition the EvacuationPanel uses.
   const handleRouteResolved = (start: GeocodedPlace, destination: GeocodedPlace) => {
-    setStart({ lon: start.lon, lat: start.lat, label: start.displayName.split(',')[0] });
-    setDestination({ lon: destination.lon, lat: destination.lat, label: destination.displayName.split(',')[0] });
+    setStart({ lon: start.lon, lat: start.lat, label: shortPlaceLabel(start.displayName) });
+    setDestination({ lon: destination.lon, lat: destination.lat, label: shortPlaceLabel(destination.displayName) });
     // Surface the Navigation panel in the active viewport. Reopen is
     // idempotent: a panel that is already visible stays visible.
     reopenPanel('evacuation');
@@ -49,7 +49,7 @@ function PlaceSearchBox() {
         if (text.trim().length === 0) clearMarker();
       }}
       onSelect={(place) => {
-        setQuery(place.displayName.split(',')[0]);
+        setQuery(shortPlaceLabel(place.displayName));
         handleSelect(place);
       }}
       enableRouteParsing

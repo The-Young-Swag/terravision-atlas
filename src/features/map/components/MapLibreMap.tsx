@@ -40,7 +40,7 @@ import {
 } from '../../../features/traffic';
 import '../../../features/traffic/incidentPopup.css';
 import { TRAFFIC_FLOW_OPACITY_ML } from '../../../features/map/routeStyle';
-import { setSearchMarkerVisible, useSearchStore } from '../../../features/search';
+import { setSearchMarkerVisible, useSearchStore, shortPlaceLabel } from '../../../features/search';
 import { useMapOverlayContrast } from '../../../features/map/hooks/useMapOverlayContrast';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -164,7 +164,7 @@ export function MapLibreMap() {
       if (!routeState.pickMode) return;
       const { lng, lat } = event.lngLat;
       void reverseNominatim(lat, lng)
-        .then((place) => ({ lon: lng, lat, label: place?.displayName.split(',')[0] ?? 'Pinned location' }))
+        .then((place) => ({ lon: lng, lat, label: shortPlaceLabel(place?.displayName, 'Pinned location') }))
         .then((pin) => {
           const live = useRouteStore.getState();
           if (live.pickMode === 'start') {
@@ -495,7 +495,7 @@ export function MapLibreMap() {
         marker.on('dragend', () => {
           const { lng, lat } = marker.getLngLat();
           void reverseNominatim(lat, lng)
-            .then((place) => ({ lon: lng, lat, label: place?.displayName.split(',')[0] ?? 'Pinned location' }))
+        .then((place) => ({ lon: lng, lat, label: shortPlaceLabel(place?.displayName, 'Pinned location') }))
             .then((moved) => {
               const live = useRouteStore.getState();
               if (role === 'start') live.setStart(moved);
