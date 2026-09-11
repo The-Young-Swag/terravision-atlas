@@ -19,23 +19,23 @@ import '../../../features/weather/popup.css';
 import { useDisasterStore } from '../../../stores/disasterStore';
 import { useWeatherStore } from '../../../stores/weatherStore';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
-import { TRAFFIC_LAYER_ID } from '../../../core/map/maplibre/traffic';
-import { TRAFFIC_FLOW_OPACITY_ML } from '../../../features/map/routeStyle';
-import { setSearchMarkerVisible } from '../../../core/map/maplibre/search';
-import { useSearchStore } from '../../../stores/searchStore';
 import {
+  TRAFFIC_LAYER_ID,
   TRAFFIC_INCIDENT_LAYER_ID,
   addIncidentLayers,
   removeIncidentLayers,
   setTrafficVisible,
-} from '../../../core/map/maplibre/traffic';
+  useTrafficStore,
+  tomtomApiKey,
+  refreshTraffic,
+  incidentPopupHtml,
+} from '../../../features/traffic';
+import '../../../features/traffic/incidentPopup.css';
+import { TRAFFIC_FLOW_OPACITY_ML } from '../../../features/map/routeStyle';
+import { setSearchMarkerVisible } from '../../../core/map/maplibre/search';
+import { useSearchStore } from '../../../stores/searchStore';
 import { setAvoidPreview, setAvoidVisible } from '../../../core/map/maplibre/avoid';
 import { MIN_AVOID_RADIUS_KM, previewCircle } from '../../../features/routing/avoidZone';
-import { useTrafficStore } from '../../../stores/trafficStore';
-import { tomtomApiKey } from '../../../features/traffic/tomtom';
-import { refreshTraffic } from '../../../features/traffic/refresh';
-import { incidentPopupHtml } from '../../../features/traffic/incidentPopup';
-import '../../../features/traffic/incidentPopup.css';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'maplibre-gl/dist/maplibre-gl.css';
 

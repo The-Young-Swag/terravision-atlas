@@ -7,10 +7,12 @@ import { useRouteStore } from '../../../stores/routeStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { TRAVEL_COSTINGS, routeWithOptions, type TravelCosting } from '../../../features/routing/valhalla';
 import { buildJogLoop, type Hilliness } from '../../../features/routing/joggingLoop';
-import { trafficAdjustedMinutes } from '../../../features/traffic/flowEta';
-import { tomtomApiKey } from '../../../features/traffic/tomtom';
-import { useTrafficStore } from '../../../stores/trafficStore';
-import { TrafficLegend } from '../panels/TrafficLegend';
+import {
+  trafficAdjustedMinutes,
+  tomtomApiKey,
+  useTrafficStore,
+  TrafficLegend,
+} from '../../../features/traffic';
 import { circleToRing, evacStep, EVAC_STEP_INSTRUCTIONS, type EvacCircle } from '../../../features/routing/avoidZone';
 import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
 import type { GeocodedPlace } from '../../../features/search';

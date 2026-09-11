@@ -7,7 +7,7 @@ import { useTiltStore } from '../../../stores/tiltStore';
 import type { DisasterSeverity } from '../../../types';
 import { DISASTER_SEVERITY_COLORS } from '../../../features/map/disasterStyle';
 import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR, ROUTE_CASING_WIDTH, ROUTE_LINE_WIDTH } from '../../../features/map/routeStyle';
-import { routeStatusSegments } from '../../../features/traffic/flowStatus';
+import { routeStatusSegments } from '../../../features/traffic';
 import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import {
   createCesiumViewer,

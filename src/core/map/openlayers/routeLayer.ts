@@ -6,8 +6,8 @@ import LineString from 'ol/geom/LineString';
 import { fromLonLat } from 'ol/proj';
 import { Style, Stroke, Fill, Circle } from 'ol/style';
 import type { EvacRoute } from '../../../stores/routeStore';
-import type { FlowSample } from '../../../features/traffic/flowEta';
-import { flowStatusColor } from '../../../features/traffic/flowStatus';
+import type { FlowSample } from '../../../features/traffic';
+import { flowStatusColor } from '../../../features/traffic';
 import {
   ROUTE_CASING_WIDTH,
   ROUTE_LINE_WIDTH,

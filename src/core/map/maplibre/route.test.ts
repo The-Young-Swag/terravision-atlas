@@ -8,7 +8,7 @@ import {
 } from './route';
 import { ROUTE_LINE_COLOR } from '../../../features/map/routeStyle';
 import type { EvacRoute } from '../../../stores/routeStore';
-import type { FlowSample } from '../../../features/traffic/flowEta';
+import type { FlowSample } from '../../../features/traffic';
 
 function fakeMap() {
   const sources = new Map<string, unknown>();

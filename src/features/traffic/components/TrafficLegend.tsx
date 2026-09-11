@@ -1,5 +1,5 @@
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { FLOW_BANDS } from '../../../features/traffic/flowStatus';
+import { FLOW_BANDS } from '../flowStatus';
 
 // Legend for the TomTom Traffic Flow overlay. This app requests the
 // `absolute` tile style, whose colors reflect measured absolute speed —

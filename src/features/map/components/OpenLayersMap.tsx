@@ -27,13 +27,16 @@ import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
 import { createMeasureLayer } from '../../../core/map/openlayers/measureLayer';
 import { geodesicKilometers, formatDistanceKilometers } from '../../../core/geodetic/measurements/distance';
 import { geodesicAreaSqMeters, formatAreaSqMeters } from '../../../core/geodetic/measurements/area';
-import { createTrafficFlowLayer, createTrafficIncidentLayer } from '../../../core/map/openlayers/trafficLayer';
-import { TRAFFIC_FLOW_OPACITY } from '../../../features/map/routeStyle';
-import { useTrafficStore } from '../../../stores/trafficStore';
-import { tomtomApiKey } from '../../../features/traffic/tomtom';
-import { refreshTraffic } from '../../../features/traffic/refresh';
-import { incidentPopupHtml } from '../../../features/traffic/incidentPopup';
+import {
+  createTrafficFlowLayer,
+  createTrafficIncidentLayer,
+  useTrafficStore,
+  tomtomApiKey,
+  refreshTraffic,
+  incidentPopupHtml,
+} from '../../../features/traffic';
 import '../../../features/traffic/incidentPopup.css';
+import { TRAFFIC_FLOW_OPACITY } from '../../../features/map/routeStyle';
 import { createWeatherLayer } from '../../../core/map/openlayers/weatherLayer';
 import { weatherPopupHtml } from '../../../features/weather/popup';
 import '../../../features/weather/popup.css';

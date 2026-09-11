@@ -1,13 +1,13 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { EvacRoute } from '../../../stores/routeStore';
-import type { FlowSample } from '../../../features/traffic/flowEta';
+import type { FlowSample } from '../../../features/traffic';
 import {
   ROUTE_CASING_WIDTH,
   ROUTE_LINE_WIDTH,
   ROUTE_LINE_COLOR,
   ROUTE_CASING_COLOR,
 } from '../../../features/map/routeStyle';
-import { flowStatusColor } from '../../../features/traffic/flowStatus';
+import { flowStatusColor } from '../../../features/traffic';
 
 // Evacuation route line for the Vector map (Item 15 Part A).
 //

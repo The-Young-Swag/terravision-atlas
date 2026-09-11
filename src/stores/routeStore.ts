@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { EvacCircle } from '../features/routing/avoidZone';
 import type { TravelCosting } from '../features/routing/valhalla';
-import type { FlowSample } from '../features/traffic/flowEta';
+import type { FlowSample } from '../features/traffic';
 
 export interface EvacRoutePoint {
   lon: number;

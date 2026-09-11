@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { TrafficIncident, TrafficStatus } from '../features/traffic/tomtom';
+import type { TrafficIncident, TrafficStatus } from './tomtom';
 
 interface TrafficState {
   status: TrafficStatus;

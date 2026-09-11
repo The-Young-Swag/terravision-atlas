@@ -1,4 +1,4 @@
-import { useTrafficStore } from '../../stores/trafficStore';
+import { useTrafficStore } from './store';
 import { fetchTrafficIncidents, tomtomApiKey, type TrafficBBox } from './tomtom';
 
 // Single entry point for (re)loading traffic state: incidents for a bounding
