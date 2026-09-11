@@ -72,7 +72,13 @@ const centerYAxisTitlePlugin: Plugin<'bar'> = {
 // Series colors live as named constants next to the datasets that use
 // them (same convention as the temp line below) — the legend swatches
 // reference the same constants, never a second copy of the hex.
-export const PRECIPITATION_BLUE = '#7DF9FF';
+// Single source of truth for the precipitation series color: the chart
+// bars and the legend swatch below both derive from this constant, so
+// they always match exactly. Reuses the panel's established rain blue
+// (#38bdf8 — same value as the rain glyph in WeatherVisual, the rain
+// text/dot in HourlyStrip, and the weather accent in the sidebar/FAB),
+// keeping all rain-related elements in one coherent color.
+export const PRECIPITATION_BLUE = '#38bdf8';
 const TEMPERATURE_ORANGE = '#FF9F1C';
 export function ForecastChart({ hourly, label }: ForecastChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -312,7 +318,9 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
           Temperature
         </span>
         <span className={`flex items-center gap-1.5 font-mono text-[10px] ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
-          <span className="inline-block h-2.5 w-2.5 rounded-[3px] bg-[#7DF9FF]/70" />
+          {/* Same computed value as the chart bars (`${PRECIPITATION_BLUE}B3`)
+              so the swatch and series match exactly, never a second copy. */}
+          <span className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ backgroundColor: `${PRECIPITATION_BLUE}B3` }} />
           Precipitation
         </span>
       </div>
