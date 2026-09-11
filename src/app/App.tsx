@@ -4,7 +4,7 @@ import { Globe, Box, BookOpen, X } from 'lucide-react';
 import type { AppMode } from '../types';
 import { OpenLayersMap } from '../features/map/components/OpenLayersMap';
 import { MapLibreMap } from '../features/map/components/MapLibreMap';
-import { useMapStore } from '../stores/mapStore';
+import { useMapStore } from '../features/map/store';
 import { useSurveyStore } from '../stores/surveyStore';
 import { TopBar } from './components/TopBar';
 import { LayersPanel } from './components/LayersPanel';

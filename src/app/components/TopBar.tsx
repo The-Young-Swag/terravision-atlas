@@ -3,7 +3,7 @@ import { Settings2, Fuel, BookOpen, Box, Menu, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useBrightBasemap } from '../../hooks/useBrightBasemap';
 import { MyLocationButton } from '../../ui/components/common/MyLocationButton';
-import { useMapStore } from '../../stores/mapStore';
+import { useMapStore } from '../../features/map/store';
 import { useSearchStore } from '../../stores/searchStore';
 import { useRouteStore } from '../../stores/routeStore';
 import { useUiPanelStore } from '../../stores/uiPanelStore';

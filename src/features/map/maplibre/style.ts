@@ -6,7 +6,7 @@
 // or a NASA GIBS layer); GIBS serves levels 0-9 so maxzoom 9 overzooms.
 
 import type { StyleSpecification } from 'maplibre-gl';
-import type { BasemapId, StreetsSourceId } from '../../../stores/mapStore';
+import type { BasemapId, StreetsSourceId } from '../store';
 import { darkTileSource } from '../stadia';
 import { streetsSourceMeta } from '../streets';
 import {

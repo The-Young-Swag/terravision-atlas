@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigation, Search } from 'lucide-react';
-import { useMapStore } from '../../../stores/mapStore';
+import { useMapStore } from '../../../features/map/store';
 import { useSurveyStore } from '../../../stores/surveyStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { geocodeNominatim, searchPhoton, type GeocodedPlace, type PlaceSuggestion } from '../../../features/search/geocode';

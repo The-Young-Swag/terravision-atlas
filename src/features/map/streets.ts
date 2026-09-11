@@ -6,7 +6,7 @@
 //   prefetch — compliant with the OSM tile usage policy.
 // - 'esri': Esri World Street Map alternate on Esri's CDN.
 
-import type { StreetsSourceId } from '../../stores/mapStore';
+import type { StreetsSourceId } from './store';
 
 export interface StreetsSourceMeta {
   id: StreetsSourceId;

@@ -1,5 +1,5 @@
 import * as Cesium from 'cesium';
-import type { BasemapId, StreetsSourceId } from '../../../stores/mapStore';
+import type { BasemapId, StreetsSourceId } from '../store';
 import { darkTileSource } from '../stadia';
 import { streetsSourceMeta } from '../streets';
 import {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { useDisasterStore } from '../stores/disasterStore';
-import { useMapStore } from '../stores/mapStore';
+import { useMapStore } from '../features/map/store';
 import { fetchUsgsEarthquakes } from '../core/data/fetchers/usgsFetcher';
 import { fetchEonetEvents } from '../core/data/fetchers/eonetFetcher';
 import { fetchFirmsHotspots } from '../core/data/fetchers/firmsFetcher';

@@ -2,7 +2,7 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import { fromLonLat } from 'ol/proj';
 import { createBasemapLayer } from '../../../features/map/openlayers/basemapLayers';
-import type { BasemapId, StreetsSourceId } from '../../../stores/mapStore';
+import type { BasemapId, StreetsSourceId } from '../../../features/map/store';
 import type { SatelliteSourceId } from '../../../features/map/gibs';
 
 // Large-format map export: re-renders the current 2D view offscreen at A0

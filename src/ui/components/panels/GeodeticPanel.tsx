@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Ruler } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
-import { useMapStore } from '../../../stores/mapStore';
+import { useMapStore } from '../../../features/map/store';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { transformCoordinate, getEpsgList } from '../../../core/geodetic/projections/epsg';
 

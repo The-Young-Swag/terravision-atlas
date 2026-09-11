@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
-import { useMapStore } from '../../../stores/mapStore';
+import { useMapStore } from '../../../features/map/store';
 import { useRouteStore } from '../../../stores/routeStore';
 import { useDisasterStore } from '../../../stores/disasterStore';
 import { useTiltStore } from '../../../stores/tiltStore';

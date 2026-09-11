@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Grid2x2, Ruler, X, Move3d, Printer, Satellite, Link2, Copy, MapPin, ChevronsLeft, ChevronsRight, Telescope } from 'lucide-react';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { useMapStore } from '../../../stores/mapStore';
+import { useMapStore } from '../../../features/map/store';
 import { downloadA0Png, exportA0Png } from '../../../features/export/print/a0Export';
 import { bearingDegrees, formatBearing, formatDistanceKilometers, geodesicKilometers } from '../../../core/geodetic/measurements/distance';
 import { formatAreaSqMeters, geodesicAreaSqMeters } from '../../../core/geodetic/measurements/area';

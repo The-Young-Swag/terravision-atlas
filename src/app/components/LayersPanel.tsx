@@ -1,7 +1,7 @@
 import { Layers, Satellite, Map as MapIcon, Mountain, Moon, Check, RotateCcw, Info, X } from 'lucide-react';
 import { FloatingPanel } from '../../ui/components/common/FloatingPanel';
 
-import { useMapStore } from '../../stores/mapStore';
+import { useMapStore } from '../../features/map/store';
 import { STREETS_SOURCES } from '../../features/map/streets';
 import { useBrightBasemap } from '../../hooks/useBrightBasemap';
 import { GIBS_LAYERS, type SatelliteSourceId } from '../../features/map/gibs';

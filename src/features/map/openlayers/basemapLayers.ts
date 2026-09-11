@@ -2,7 +2,7 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import OSM from 'ol/source/OSM';
 import StadiaMaps from 'ol/source/StadiaMaps';
-import type { BasemapId, StreetsSourceId } from '../../../stores/mapStore';
+import type { BasemapId, StreetsSourceId } from '../store';
 import { darkTileSource, stadiaApiKey } from '../stadia';
 import { streetsSourceMeta } from '../streets';
 import {

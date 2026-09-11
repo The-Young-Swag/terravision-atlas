@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useMapStore } from '../../stores/mapStore';
+import { useMapStore } from '../../features/map/store';
 import { useBrightBasemap } from '../../hooks/useBrightBasemap';
 import { useDisaster } from '../../hooks/useDisaster';
 import type { AppMode } from '../../types';

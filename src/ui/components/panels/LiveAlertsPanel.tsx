@@ -3,7 +3,7 @@ import { Search, AlertTriangle, Navigation, ShieldAlert, Globe, MapPin } from 'l
 import { FloatingPanel } from '../common/FloatingPanel';
 import { useDisaster } from '../../../hooks/useDisaster';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { useMapStore } from '../../../stores/mapStore';
+import { useMapStore } from '../../../features/map/store';
 import { useRouteStore } from '../../../stores/routeStore';
 import {
   reverseGeocode,

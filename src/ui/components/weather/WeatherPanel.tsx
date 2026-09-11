@@ -3,7 +3,7 @@ import { CloudSun, MapPin, RefreshCw } from 'lucide-react';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { useWeather } from '../../../hooks/useWeather';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { useMapStore } from '../../../stores/mapStore';
+import { useMapStore } from '../../../features/map/store';
 import { MyLocationButton } from '../common/MyLocationButton';
 import { describeWeatherCode, selectNext24Hours, weatherColorForCode } from '../../../features/weather/openMeteo';
 import { ForecastChart } from './ForecastChart';

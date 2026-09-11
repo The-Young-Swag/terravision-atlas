@@ -3,7 +3,7 @@ import { Map as MapLibre, Marker, NavigationControl, AttributionControl, Popup, 
 import { useRouteStore } from '../../../stores/routeStore';
 import { reverseNominatim } from '../../../features/search/geocode';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
-import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../stores/mapStore';
+import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../features/map/store';
 import { maplibreStyleFor } from '../../../features/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { setTrailsVisible } from '../../../core/map/maplibre/trails';

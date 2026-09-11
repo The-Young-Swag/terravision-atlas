@@ -5,7 +5,7 @@ import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { fromLonLat, toLonLat } from 'ol/proj';
-import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../stores/mapStore';
+import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../features/map/store';
 import { useDisasterStore } from '../../../stores/disasterStore';
 import { createMap, updateBasemap } from '../../../features/map/openlayers/createMap';
 import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';

@@ -3,7 +3,7 @@ import View from 'ol/View';
 import Attribution from 'ol/control/Attribution';
 import { fromLonLat } from 'ol/proj';
 import { createBasemapLayer } from './basemapLayers';
-import type { BasemapId, StreetsSourceId } from '../../../stores/mapStore';
+import type { BasemapId, StreetsSourceId } from '../store';
 import type { SatelliteSourceId } from '../gibs';
 
 export interface CreateMapOptions {
