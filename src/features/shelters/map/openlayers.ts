@@ -4,7 +4,7 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import { fromLonLat } from 'ol/proj';
 import { Style, Circle, Fill, Stroke } from 'ol/style';
-import type { Shelter } from '../../../features/shelters/overpass';
+import type { Shelter } from '../overpass';
 
 // Shelter markers: green discs with a light stroke (same contrast treatment
 // as the hazard pins) so they read on any basemap.

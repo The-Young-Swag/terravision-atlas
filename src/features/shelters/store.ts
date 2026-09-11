@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Shelter } from '../features/shelters/overpass';
+import type { Shelter } from './overpass';
 
 interface ShelterState {
   shelters: Shelter[];

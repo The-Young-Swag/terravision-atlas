@@ -14,7 +14,7 @@ import { LiveAlertsPanel } from '../ui/components/panels/LiveAlertsPanel';
 import { FuelPanel } from '../features/fuel';
 import { ModeDocks } from '../ui/components/docks/ModeDocks';
 import { EvacuationPanel } from '../ui/components/routing/EvacuationPanel';
-import { ShelterPanel } from '../ui/components/shelters/ShelterPanel';
+import { ShelterPanel } from '../features/shelters';
 import { WeatherPanel } from '../ui/components/weather/WeatherPanel';
 import { StatusBar } from './components/StatusBar';
 import { StoryBuilder } from '../features/storytelling';

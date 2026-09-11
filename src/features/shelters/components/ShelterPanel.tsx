@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { HousePlus, MapPin } from 'lucide-react';
-import { FloatingPanel } from '../common/FloatingPanel';
+import { FloatingPanel } from '../../../ui/components/common/FloatingPanel';
 import { useMapStore } from '../../../features/map/store';
-import { useShelterStore } from '../../../stores/shelterStore';
+import { useShelterStore } from '../store';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { fetchShelters } from '../../../features/shelters/overpass';
+import { fetchShelters } from '../overpass';
 
 // Search half-size in degrees (~5.5 km) around the map center.
 const SEARCH_HALF_DEGREES = 0.05;
