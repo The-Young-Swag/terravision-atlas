@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-// Read-only view of the active map instance (Item 17). The map components
+// Read-only view of the active map instance. The map components
 // publish themselves here; the Layers panel slider reads from the same
 // store to stay in sync with the middle-click-drag gesture. Writes are
 // gated to the map components (they know their own dispose/refresh rules).

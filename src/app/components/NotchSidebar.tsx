@@ -48,7 +48,7 @@ function readPinned(): boolean {
   }
 }
 
-// Panel inventory, verified against the codebase (Item 12B §2):
+// Panel inventory, verified against the codebase:
 // - layers → LayersPanel, always mounted, FloatingPanel id "layers"
 // - alerts → LiveAlertsPanel, always mounted, id "alerts"
 // - weather → WeatherPanel (explore/monitor only), id "weather"

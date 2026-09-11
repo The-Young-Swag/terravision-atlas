@@ -39,7 +39,7 @@ export function createAvoidLayer(ring: EvacRoutePoint[]): VectorLayer<VectorSour
   });
 }
 
-// Evacuation route overlay for the 2D map (Item 15 Part A).
+// Evacuation route overlay for the 2D map.
 //
 // The route is a SINGLE LineString rendered as TWO layers per segment:
 //   - Core line (bottom): ALWAYS solid brand-blue (#209dd7), width 4

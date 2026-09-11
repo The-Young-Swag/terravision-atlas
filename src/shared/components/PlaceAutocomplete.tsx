@@ -13,7 +13,7 @@ interface PlaceAutocompleteProps {
   placeholder?: string;
   ariaLabel?: string;
   /**
-   * Main-search route parsing (Item 13): recognizes "A to B" style queries
+   * Main-search route parsing: recognizes "A to B" style queries
    * and offers a route suggestion that populates Navigation on explicit
    * accept only. Leave off for Start/Destination fields so they never
    * reinterpret their own input as a route.
@@ -33,7 +33,7 @@ let autocompleteInstanceSeq = 0;
 
 /**
  * Shared place autocomplete: Photon suggestions while typing, Nominatim
- * final geocode on select/Enter. Used by the TopBar search and (Item 4) the
+ * final geocode on select/Enter. Used by the TopBar search and the
  * evacuation Start/Destination fields — one component, one behavior.
  */
 export function PlaceAutocomplete({ value, onChange, onSelect, placeholder, ariaLabel, enableRouteParsing = false, onRouteResolved }: PlaceAutocompleteProps) {

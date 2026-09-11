@@ -113,7 +113,7 @@ export function removeAvoidLayers(map: MapLibreMap): void {
   }
 }
 
-// Evacuation route line for the Vector map (Item 15 Part A).
+// Evacuation route line for the Vector map.
 //
 // The route is a SINGLE LineString with TWO layers:
 //   - Core line (bottom): ALWAYS solid brand-blue (#209dd7), width 4

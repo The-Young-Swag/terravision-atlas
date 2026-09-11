@@ -15,7 +15,7 @@ interface FuelState {
   unitSystem: UnitSystem;
 }
 
-// Item 18 fixed ceilings: the breakdown bars are scaled against these
+// Fixed ceilings: the breakdown bars are scaled against these
 // named constants, not against the other value and not auto-scaled to
 // the value itself. Tank capacity is a typical passenger-vehicle 60 L;
 // trip-cost ceiling is a plausible upper ₱5,000. Values are documented

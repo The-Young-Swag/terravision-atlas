@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Traffic-aware ETA and per-segment route coloring (Item 15 Part A).
+// Traffic-aware ETA and per-segment route coloring.
 // Both the duration adjustment and the route outline coloring use the same
 // TomTom Flow Segment Data endpoint — one HTTP path, one cache, one
 // request per route, no double-counting. Each segment of the route is

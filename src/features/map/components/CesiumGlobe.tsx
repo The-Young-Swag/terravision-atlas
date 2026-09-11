@@ -31,7 +31,7 @@ export function CesiumGlobe() {
   const setCesiumTiltInstance = useTiltStore((s) => s.setCesium);
 
   // Publish the live Cesium viewer to the tilt store so the Layers panel
-  // slider (Item 17) can read/write the same camera. Cleared on dispose.
+  // slider can read/write the same camera. Cleared on dispose.
   useEffect(() => {
     if (viewerRef.current && !viewerRef.current.isDestroyed()) {
       setCesiumTiltInstance(viewerRef.current);

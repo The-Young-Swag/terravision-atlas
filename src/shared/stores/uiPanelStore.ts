@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-// Session-scoped visibility for floating bubble panels (Item 12).
+// Session-scoped visibility for floating bubble panels.
 // Close hides the panel for the session WITHOUT unmounting its content —
 // FloatingPanel keeps children mounted under a `hidden` wrapper, so user
 // inputs and selections survive a close/restore cycle. No data or panel

@@ -84,7 +84,7 @@ export function tomtomApiKey(): string | null {
 /** Raster flow-tile URL template for OpenLayers XYZ and MapLibre raster.
  * The `thickness` parameter is the canonical TomTom thickness control
  * (1..20, default 10). Set to 5 for a thinner, less-cluttered overlay at
- * normal zoom — the visual density change is documented in Item 15 Part B.
+ * normal zoom.
  * Confirmed against TomTom's Raster Flow Tiles docs: thickness is accepted
  * for `absolute`, `relative`, `relative-delay`, and `reduced-sensitivity`
  * styles (the four styles the app uses). */

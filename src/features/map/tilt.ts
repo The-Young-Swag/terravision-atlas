@@ -1,4 +1,4 @@
-// Camera tilt control surface for the Layers panel "View" section (Item 17).
+// Camera tilt control surface for the Layers panel "View" section.
 // Reusable hooks that read the current pitch from whichever map instance is
 // active and write it back via the same flyTo/lookAt path the existing
 // middle-click-drag gesture already exercises, so the slider stays in
