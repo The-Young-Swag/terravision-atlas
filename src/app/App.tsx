@@ -15,7 +15,7 @@ import { ShelterPanel } from '../features/shelters';
 import { WeatherPanel } from '../features/weather';
 import { StatusBar } from './components/StatusBar';
 import { StoryBuilder } from '../features/storytelling';
-import { MinecraftExport } from '../features/export/minecraft/MinecraftExport';
+import { MinecraftExport } from '../features/export-minecraft';
 import { FloatingPanel } from '../ui/components/common/FloatingPanel';
 import { NotchSidebar } from './components/NotchSidebar';
 import { MobileToolFab } from './components/MobileToolFab';

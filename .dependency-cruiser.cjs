@@ -34,7 +34,9 @@ function indexOnlyRules() {
         severity: 'warn',
         comment:
           'Rules 3 + 5: a feature may be consumed only through its public index.ts, never its internals.',
-        from: { path: `^src/${consumer}` },
+        // Trailing slashes keep sibling prefixes distinct (export/ must
+        // not match export-minecraft/ or export-print/).
+        from: { path: `^src/${consumer}/` },
         to: {
           path: `^src/features/${target}/.+`,
           pathNot: [`^src/features/${target}/index\\.ts$`],
