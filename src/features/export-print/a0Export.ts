@@ -1,9 +1,9 @@
 import Map from 'ol/Map';
 import View from 'ol/View';
 import { fromLonLat } from 'ol/proj';
-import { createBasemapLayer } from '../../../features/map/openlayers/basemapLayers';
-import type { BasemapId, StreetsSourceId } from '../../../features/map/store';
-import type { SatelliteSourceId } from '../../../features/map/gibs';
+import { createBasemapLayer } from '../map/openlayers/basemapLayers';
+import type { BasemapId, StreetsSourceId } from '../map/store';
+import type { SatelliteSourceId } from '../map/gibs';
 
 // Large-format map export: re-renders the current 2D view offscreen at A0
 // portrait size (150 dpi) with real map tiles — not an upscale of the
