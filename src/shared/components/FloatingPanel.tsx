@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, useDragControls } from 'framer-motion';
 import { Grip, Minimize2, Maximize2, X, XCircle } from 'lucide-react';
 import { useBrightBasemap } from '../hooks/useBrightBasemap';
-import { useUiPanelStore } from '../../stores/uiPanelStore';
+import { useUiPanelStore } from '../stores/uiPanelStore';
 
 interface FloatingPanelProps {
   id: string;

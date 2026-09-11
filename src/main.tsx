@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './app/App';
-import './ui/styles/tailwind.css';
-import './ui/styles/globals.css';
+import './shared/styles/tailwind.css';
+import './shared/styles/globals.css';
 
 const rootElement = document.getElementById('root');
 

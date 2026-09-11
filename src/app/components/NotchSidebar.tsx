@@ -15,7 +15,7 @@ import { useDisasterStore } from '../../features/disasters';
 import { useWeatherStore } from '../../features/weather';
 import { useRouteStore } from '../../features/navigation';
 import { useShelterStore } from '../../features/shelters';
-import { useUiPanelStore } from '../../stores/uiPanelStore';
+import { useUiPanelStore } from '../../shared/stores/uiPanelStore';
 import { useSurveyStore } from '../../features/survey';
 import { describeWeatherCode, weatherColorForCode } from '../../features/weather';
 import { useEdgeDock } from '../../shared/hooks/useEdgeDock';
