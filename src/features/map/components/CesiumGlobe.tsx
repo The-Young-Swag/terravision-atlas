@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
 import { useMapStore } from '../../../features/map/store';
 import { useRouteStore, jogLoopAsEvacRoute } from '../../../features/navigation';
-import { useDisasterStore } from '../../../stores/disasterStore';
+import { useDisasterStore } from '../../../features/disasters';
 import { useTiltStore } from '../../../stores/tiltStore';
 import type { DisasterSeverity } from '../../../types';
 import { DISASTER_SEVERITY_COLORS } from '../../../features/map/disasterStyle';

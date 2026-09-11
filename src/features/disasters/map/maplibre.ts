@@ -1,7 +1,7 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { GeoJSONSource } from 'maplibre-gl';
 import type { DisasterEvent } from '../../../types';
-import { DISASTER_SEVERITY_COLORS } from '../../../features/map/disasterStyle';
+import { DISASTER_SEVERITY_COLORS } from '../../map/disasterStyle';
 
 // Live disaster pins for the Vector (MapLibre) map — the 2D map already
 // renders these via the OpenLayers hazard layer, so Vector needs its own

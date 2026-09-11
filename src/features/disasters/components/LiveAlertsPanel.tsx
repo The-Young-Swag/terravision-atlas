@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, AlertTriangle, Navigation, ShieldAlert, Globe, MapPin } from 'lucide-react';
-import { FloatingPanel } from '../common/FloatingPanel';
-import { useDisaster } from '../../../hooks/useDisaster';
+import { FloatingPanel } from '../../../ui/components/common/FloatingPanel';
+import { useDisaster } from '../hooks/useDisaster';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../features/map/store';
 import { useRouteStore } from '../../../features/navigation/store';

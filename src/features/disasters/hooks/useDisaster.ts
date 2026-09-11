@@ -1,11 +1,11 @@
 import { useCallback, useEffect } from 'react';
-import { useDisasterStore } from '../stores/disasterStore';
-import { useMapStore } from '../features/map/store';
-import { fetchUsgsEarthquakes } from '../core/data/fetchers/usgsFetcher';
-import { fetchEonetEvents } from '../core/data/fetchers/eonetFetcher';
-import { fetchFirmsHotspots } from '../core/data/fetchers/firmsFetcher';
-import { cacheDisasterEvents, getCachedDisasterEvents } from '../core/data/cache/disasterCache';
-import type { DisasterEvent } from '../types';
+import { useDisasterStore } from '../store';
+import { useMapStore } from '../../map/store';
+import { fetchUsgsEarthquakes } from '../fetchers/usgsFetcher';
+import { fetchEonetEvents } from '../fetchers/eonetFetcher';
+import { fetchFirmsHotspots } from '../fetchers/firmsFetcher';
+import { cacheDisasterEvents, getCachedDisasterEvents } from '../cache';
+import type { DisasterEvent } from '../../../types';
 
 // Aggregates USGS + EONET + FIRMS hotspots, caches to IndexedDB, shows real
 // data only. FIRMS is view-centered (map center bbox) and key-gated —

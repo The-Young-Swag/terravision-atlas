@@ -1,5 +1,5 @@
-import { getAppDb, DISASTER_STORE } from './db';
-import type { DisasterEvent } from '../../../types';
+import { getAppDb, DISASTER_STORE } from '../../core/data/cache/db';
+import type { DisasterEvent } from '../../types';
 
 export async function cacheDisasterEvents(events: DisasterEvent[]): Promise<void> {
   const db = await getAppDb();

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { DisasterEvent } from '../types';
+import type { DisasterEvent } from '../../types';
 
 interface DisasterState {
   events: DisasterEvent[];

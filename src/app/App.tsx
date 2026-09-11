@@ -10,7 +10,7 @@ import { TopBar } from './components/TopBar';
 import { LayersPanel } from './components/LayersPanel';
 import { GeodeticPanel } from '../ui/components/panels/GeodeticPanel';
 import { CoordinatePanel } from '../ui/components/geodetic/CoordinatePanel';
-import { LiveAlertsPanel } from '../ui/components/panels/LiveAlertsPanel';
+import { LiveAlertsPanel } from '../features/disasters';
 import { FuelPanel } from '../features/fuel';
 import { ModeDocks } from '../ui/components/docks/ModeDocks';
 import { EvacuationPanel } from '../features/navigation';

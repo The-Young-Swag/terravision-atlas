@@ -6,9 +6,9 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../features/map/store';
-import { useDisasterStore } from '../../../stores/disasterStore';
+import { useDisasterStore } from '../../../features/disasters';
 import { createMap, updateBasemap } from '../../../features/map/openlayers/createMap';
-import { createHazardLayer } from '../../../core/map/openlayers/hazardLayer';
+import { createHazardLayer } from '../../../features/disasters';
 import { createHikingTrailsLayer } from '../../../core/map/openlayers/trailsLayer';
 import {
   createRouteLayer,

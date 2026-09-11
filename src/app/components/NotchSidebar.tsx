@@ -11,7 +11,7 @@ import {
   Ruler,
 } from 'lucide-react';
 import { useMapStore } from '../../features/map/store';
-import { useDisasterStore } from '../../stores/disasterStore';
+import { useDisasterStore } from '../../features/disasters';
 import { useWeatherStore } from '../../features/weather';
 import { useRouteStore } from '../../features/navigation';
 import { useShelterStore } from '../../features/shelters';
