@@ -18,8 +18,7 @@ import { useShelterStore } from '../../../stores/shelterStore';
 import { useUiPanelStore } from '../../../stores/uiPanelStore';
 import { describeWeatherCode, weatherColorForCode } from '../../../features/weather/openMeteo';
 import { useEdgeDock } from '../../../hooks/useEdgeDock';
-
-type AppMode = 'explore' | 'monitor' | 'survey';
+import type { AppMode } from '../../../types';
 
 interface NotchSidebarProps {
   activeMode: AppMode;

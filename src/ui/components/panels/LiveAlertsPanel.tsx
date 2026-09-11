@@ -14,10 +14,9 @@ import {
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import * as turf from '@turf/turf';
+import type { AppMode } from '../../../types';
 
 dayjs.extend(relativeTime);
-
-type AppMode = 'explore' | 'monitor' | 'survey';
 
 const severityConfig = {
   high: { label: 'HIGH', color: '#E63946' },

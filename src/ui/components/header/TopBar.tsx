@@ -9,6 +9,7 @@ import { useRouteStore } from '../../../stores/routeStore';
 import { useUiPanelStore } from '../../../stores/uiPanelStore';
 import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
 import type { GeocodedPlace } from '../../../features/search/geocode';
+import type { AppMode } from '../../../types';
 
 function PlaceSearchBox() {
   const [query, setQuery] = useState('');
@@ -58,8 +59,6 @@ function PlaceSearchBox() {
     />
   );
 }
-
-type AppMode = 'explore' | 'monitor' | 'survey';
 
 function getModeColor(mode: AppMode): string {
   switch (mode) {
