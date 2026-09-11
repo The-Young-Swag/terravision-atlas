@@ -15,36 +15,11 @@ import {
 } from 'lucide-react';
 import type { CurrentConditions } from '../../../features/weather/openMeteo';
 import {
-  CLEAR_CODES,
-  PARTLY_CLOUDY_CODES,
-  OVERCAST_CODES,
-  FOG_CODES,
-  RAIN_CODES,
-  SNOW_CODES,
-  STORM_CODES,
+  WEATHER_CATEGORY_COLORS,
+  categorizeWeatherCode,
   describeWeatherCode,
+  type WeatherCategory,
 } from '../../../features/weather/openMeteo';
-
-type WeatherCategory =
-  | 'clear'
-  | 'partly'
-  | 'overcast'
-  | 'fog'
-  | 'rain'
-  | 'snow'
-  | 'storm'
-  | 'unknown';
-
-function categorizeWeatherCode(code: number): WeatherCategory {
-  if (CLEAR_CODES.includes(code)) return 'clear';
-  if (PARTLY_CLOUDY_CODES.includes(code)) return 'partly';
-  if (OVERCAST_CODES.includes(code)) return 'overcast';
-  if (FOG_CODES.includes(code)) return 'fog';
-  if (RAIN_CODES.includes(code)) return 'rain';
-  if (SNOW_CODES.includes(code)) return 'snow';
-  if (STORM_CODES.includes(code)) return 'storm';
-  return 'unknown';
-}
 
 interface WeatherVisualProps {
   current: CurrentConditions | null;
@@ -60,14 +35,14 @@ interface WeatherVisualProps {
 // with a night-dimmed tint. No animation — the glyph swaps once when
 // the condition changes.
 const GLYPH: Record<WeatherCategory, { day: LucideIcon; night: LucideIcon; color: string; tint: string }> = {
-  clear: { day: Sun, night: Moon, color: '#FFB020', tint: 'rgba(255, 176, 32, 0.14)' },
-  partly: { day: CloudSun, night: CloudMoon, color: '#E8B34B', tint: 'rgba(232, 179, 75, 0.14)' },
-  overcast: { day: Cloudy, night: Cloudy, color: '#94A3B8', tint: 'rgba(148, 163, 184, 0.14)' },
-  fog: { day: CloudFog, night: CloudFog, color: '#A8B3C5', tint: 'rgba(168, 179, 197, 0.14)' },
-  rain: { day: CloudSunRain, night: CloudMoonRain, color: '#38bdf8', tint: 'rgba(56, 189, 248, 0.14)' },
-  snow: { day: SunSnow, night: CloudSnow, color: '#BFE3FF', tint: 'rgba(191, 227, 255, 0.14)' },
-  storm: { day: CloudLightning, night: CloudLightning, color: '#F5C542', tint: 'rgba(245, 197, 66, 0.14)' },
-  unknown: { day: CloudOff, night: CloudOff, color: '#64748B', tint: 'rgba(100, 116, 139, 0.14)' },
+  clear: { day: Sun, night: Moon, color: WEATHER_CATEGORY_COLORS.clear, tint: 'rgba(255, 176, 32, 0.14)' },
+  partly: { day: CloudSun, night: CloudMoon, color: WEATHER_CATEGORY_COLORS.partly, tint: 'rgba(232, 179, 75, 0.14)' },
+  overcast: { day: Cloudy, night: Cloudy, color: WEATHER_CATEGORY_COLORS.overcast, tint: 'rgba(148, 163, 184, 0.14)' },
+  fog: { day: CloudFog, night: CloudFog, color: WEATHER_CATEGORY_COLORS.fog, tint: 'rgba(168, 179, 197, 0.14)' },
+  rain: { day: CloudSunRain, night: CloudMoonRain, color: WEATHER_CATEGORY_COLORS.rain, tint: 'rgba(56, 189, 248, 0.14)' },
+  snow: { day: SunSnow, night: CloudSnow, color: WEATHER_CATEGORY_COLORS.snow, tint: 'rgba(191, 227, 255, 0.14)' },
+  storm: { day: CloudLightning, night: CloudLightning, color: WEATHER_CATEGORY_COLORS.storm, tint: 'rgba(245, 197, 66, 0.14)' },
+  unknown: { day: CloudOff, night: CloudOff, color: WEATHER_CATEGORY_COLORS.unknown, tint: 'rgba(100, 116, 139, 0.14)' },
 };
 
 export function WeatherVisual({ current, size = 64 }: WeatherVisualProps) {

@@ -53,6 +53,51 @@ export function describeWeatherCode(code: number): string {
   return 'Unknown';
 }
 
+// Condition categories shared by everything that colors by condition —
+// the weather icon set (WeatherVisual), condition label text
+// (WeatherPanel, map popups, sidebar preview), and any future use.
+// One mapping, no per-site duplicates.
+export type WeatherCategory =
+  | 'clear'
+  | 'partly'
+  | 'overcast'
+  | 'fog'
+  | 'rain'
+  | 'snow'
+  | 'storm'
+  | 'unknown';
+
+export function categorizeWeatherCode(code: number): WeatherCategory {
+  if (CLEAR_CODES.includes(code)) return 'clear';
+  if (PARTLY_CLOUDY_CODES.includes(code)) return 'partly';
+  if (OVERCAST_CODES.includes(code)) return 'overcast';
+  if (FOG_CODES.includes(code)) return 'fog';
+  if (RAIN_CODES.includes(code)) return 'rain';
+  if (SNOW_CODES.includes(code)) return 'snow';
+  if (STORM_CODES.includes(code)) return 'storm';
+  return 'unknown';
+}
+
+/** The single condition-color scheme: label text and icons share these. */
+export const WEATHER_CATEGORY_COLORS: Record<WeatherCategory, string> = {
+  clear: '#FFB020',
+  partly: '#E8B34B',
+  overcast: '#94A3B8',
+  fog: '#A8B3C5',
+  rain: '#38bdf8',
+  snow: '#BFE3FF',
+  storm: '#F5C542',
+  unknown: '#64748B',
+};
+
+/**
+ * Text/icon color for a WMO weather code. Unmapped codes fall back to
+ * the neutral unknown color — never a guessed condition color.
+ */
+export function weatherColorForCode(code: number): string {
+  return WEATHER_CATEGORY_COLORS[categorizeWeatherCode(code)];
+}
+
 interface CurrentResponse {
   current_weather?: {
     temperature?: number;

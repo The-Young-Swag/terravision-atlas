@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeWeatherCode, formatHourLabel, parseCurrentConditions, parseHourlyForecast, selectNext24Hours, type HourlyPoint } from './openMeteo';
+import { categorizeWeatherCode, describeWeatherCode, formatHourLabel, parseCurrentConditions, parseHourlyForecast, selectNext24Hours, WEATHER_CATEGORY_COLORS, weatherColorForCode, type HourlyPoint } from './openMeteo';
 
 describe('parseCurrentConditions', () => {
   it('extracts conditions from a valid response', () => {
@@ -64,6 +64,23 @@ describe('describeWeatherCode', () => {
     expect(describeWeatherCode(3)).toBe('Overcast');
     expect(describeWeatherCode(45)).toBe('Fog');
     expect(describeWeatherCode(48)).toBe('Fog');
+  });
+});
+
+describe('weatherColorForCode', () => {
+  it('maps each condition group to its shared scheme color', () => {
+    expect(weatherColorForCode(0)).toBe(WEATHER_CATEGORY_COLORS.clear);
+    expect(weatherColorForCode(2)).toBe(WEATHER_CATEGORY_COLORS.partly);
+    expect(weatherColorForCode(3)).toBe(WEATHER_CATEGORY_COLORS.overcast);
+    expect(weatherColorForCode(45)).toBe(WEATHER_CATEGORY_COLORS.fog);
+    expect(weatherColorForCode(63)).toBe(WEATHER_CATEGORY_COLORS.rain);
+    expect(weatherColorForCode(73)).toBe(WEATHER_CATEGORY_COLORS.snow);
+    expect(weatherColorForCode(95)).toBe(WEATHER_CATEGORY_COLORS.storm);
+  });
+
+  it('falls back to the neutral color for unmapped codes, never a guess', () => {
+    expect(categorizeWeatherCode(999)).toBe('unknown');
+    expect(weatherColorForCode(999)).toBe(WEATHER_CATEGORY_COLORS.unknown);
   });
 });
 

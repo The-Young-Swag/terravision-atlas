@@ -5,7 +5,7 @@ import { useWeather } from '../../../hooks/useWeather';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../stores/mapStore';
 import { MyLocationButton } from '../common/MyLocationButton';
-import { describeWeatherCode, selectNext24Hours } from '../../../features/weather/openMeteo';
+import { describeWeatherCode, selectNext24Hours, weatherColorForCode } from '../../../features/weather/openMeteo';
 import { ForecastChart } from './ForecastChart';
 import { HourlyStrip } from './HourlyStrip';
 import { WeatherVisual } from './WeatherVisual';
@@ -135,7 +135,10 @@ export function WeatherPanel() {
                     </p>
                   )}
                   <p className={`mt-1.5 truncate text-[15px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>
-                    {current.temperatureC.toFixed(1)}°C · {describeWeatherCode(current.weatherCode)}
+                    {current.temperatureC.toFixed(1)}°C ·{' '}
+                    <span style={{ color: weatherColorForCode(current.weatherCode) }}>
+                      {describeWeatherCode(current.weatherCode)}
+                    </span>
                   </p>
                   <p className={`mt-0.5 ${valueClass}`}>Wind {current.windSpeedKmh.toFixed(0)} km/h · {current.isDay ? 'Day' : 'Night'}</p>
                 </div>

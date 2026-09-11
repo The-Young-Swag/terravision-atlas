@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
@@ -16,7 +16,7 @@ import { useWeatherStore } from '../../../stores/weatherStore';
 import { useRouteStore } from '../../../stores/routeStore';
 import { useShelterStore } from '../../../stores/shelterStore';
 import { useUiPanelStore } from '../../../stores/uiPanelStore';
-import { describeWeatherCode } from '../../../features/weather/openMeteo';
+import { describeWeatherCode, weatherColorForCode } from '../../../features/weather/openMeteo';
 import { useEdgeDock } from '../../../hooks/useEdgeDock';
 
 type AppMode = 'explore' | 'monitor' | 'survey';
@@ -64,7 +64,9 @@ interface NotchRow {
   accent: string;
   /** 'all' = core set, always present; otherwise removed outside these modes. */
   modes: AppMode[] | 'all';
-  preview: string;
+  /** Plain strings everywhere except the weather row, whose condition
+      label reuses the shared condition-color mapping. */
+  preview: ReactNode;
   count: number | null;
   dot: boolean;
 }
@@ -158,7 +160,14 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
       accent: '#38bdf8',
       modes: ['explore', 'monitor'],
       preview: weatherCurrent
-        ? `${weatherCurrent.temperatureC.toFixed(0)}°C · ${describeWeatherCode(weatherCurrent.weatherCode)}`
+        ? (
+          <>
+            {weatherCurrent.temperatureC.toFixed(0)}°C ·{' '}
+            <span style={{ color: weatherColorForCode(weatherCurrent.weatherCode) }}>
+              {describeWeatherCode(weatherCurrent.weatherCode)}
+            </span>
+          </>
+        )
         : weatherLoading
           ? 'Loading…'
           : weatherLocation
