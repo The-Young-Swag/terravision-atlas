@@ -17,7 +17,7 @@ import { EvacuationPanel } from '../ui/components/routing/EvacuationPanel';
 import { ShelterPanel } from '../ui/components/shelters/ShelterPanel';
 import { WeatherPanel } from '../ui/components/weather/WeatherPanel';
 import { StatusBar } from './components/StatusBar';
-import { StoryBuilder } from '../features/storytelling/builder/StoryBuilder';
+import { StoryBuilder } from '../features/storytelling';
 import { MinecraftExport } from '../features/export/minecraft/MinecraftExport';
 import { FloatingPanel } from '../ui/components/common/FloatingPanel';
 import { NotchSidebar } from './components/NotchSidebar';
