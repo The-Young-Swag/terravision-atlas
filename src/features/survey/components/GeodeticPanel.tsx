@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Ruler } from 'lucide-react';
-import { FloatingPanel } from '../common/FloatingPanel';
+import { FloatingPanel } from '../../../ui/components/common/FloatingPanel';
 import { useMapStore } from '../../../features/map/store';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { transformCoordinate, getEpsgList } from '../../../core/geodetic/projections/epsg';
+import { transformCoordinate, getEpsgList } from '../geodetic/projections/epsg';
 
 export function GeodeticPanel() {
   const { center } = useMapStore();

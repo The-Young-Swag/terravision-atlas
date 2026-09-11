@@ -17,8 +17,13 @@ import { maplibreStyleFor } from '../../../features/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { setTrailsVisible } from '../../../core/map/maplibre/trails';
 import { useTiltStore } from '../../../stores/tiltStore';
-import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
-import { MEASURE_POINT_LAYER_ID, removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
+import {
+  niceMeterStep,
+  snapToUtmGrid,
+  MEASURE_POINT_LAYER_ID,
+  removeMeasureLayers,
+  setMeasureVisible,
+} from '../../../features/survey';
 import { setDisastersVisible, DISASTER_LAYER_ID, disasterPopupHtml, useDisasterStore } from '../../../features/disasters';
 import { setWeatherVisible, WEATHER_LAYER_ID, weatherPopupHtml, useWeatherStore } from '../../../features/weather';
 import '../../../features/weather/popup.css';

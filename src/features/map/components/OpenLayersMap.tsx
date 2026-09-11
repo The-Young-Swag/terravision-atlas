@@ -26,10 +26,15 @@ import '../../../features/shelters/shelterPopup.css';
 import { createSearchMarkerLayer } from '../../../core/map/openlayers/searchLayer';
 import { useSearchStore } from '../../../stores/searchStore';
 import { reverseNominatim } from '../../../features/search';
-import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
-import { createMeasureLayer } from '../../../core/map/openlayers/measureLayer';
-import { geodesicKilometers, formatDistanceKilometers } from '../../../core/geodetic/measurements/distance';
-import { geodesicAreaSqMeters, formatAreaSqMeters } from '../../../core/geodetic/measurements/area';
+import {
+  niceMeterStep,
+  snapToUtmGrid,
+  createMeasureLayer,
+  geodesicKilometers,
+  formatDistanceKilometers,
+  geodesicAreaSqMeters,
+  formatAreaSqMeters,
+} from '../../../features/survey';
 import {
   createTrafficFlowLayer,
   createTrafficIncidentLayer,
