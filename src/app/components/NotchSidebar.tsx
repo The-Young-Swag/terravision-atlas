@@ -13,7 +13,7 @@ import {
 import { useMapStore } from '../../features/map/store';
 import { useDisasterStore } from '../../stores/disasterStore';
 import { useWeatherStore } from '../../stores/weatherStore';
-import { useRouteStore } from '../../stores/routeStore';
+import { useRouteStore } from '../../features/navigation';
 import { useShelterStore } from '../../features/shelters';
 import { useUiPanelStore } from '../../stores/uiPanelStore';
 import { describeWeatherCode, weatherColorForCode } from '../../features/weather/openMeteo';

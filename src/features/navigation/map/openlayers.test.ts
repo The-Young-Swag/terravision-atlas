@@ -2,9 +2,8 @@ import { describe, expect, it } from 'vitest';
 import LineString from 'ol/geom/LineString';
 import Point from 'ol/geom/Point';
 import { Stroke } from 'ol/style';
-import { createRouteLayer } from './routeLayer';
-import { createAvoidLayer } from './avoidLayer';
-import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR } from '../../../features/map/routeStyle';
+import { createRouteLayer, createAvoidLayer } from './openlayers';
+import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR } from '../../map/routeStyle';
 
 const route = {
   path: [

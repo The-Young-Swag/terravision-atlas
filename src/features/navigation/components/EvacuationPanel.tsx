@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Navigation, ShieldAlert, MapPin, X, Check, TriangleAlert } from 'lucide-react';
 import * as turf from '@turf/turf';
-import { FloatingPanel } from '../common/FloatingPanel';
+import { FloatingPanel } from '../../../ui/components/common/FloatingPanel';
 import { useMapStore } from '../../../features/map/store';
-import { useRouteStore } from '../../../stores/routeStore';
+import { useRouteStore } from '../store';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { TRAVEL_COSTINGS, routeWithOptions, type TravelCosting } from '../../../features/routing/valhalla';
-import { buildJogLoop, type Hilliness } from '../../../features/routing/joggingLoop';
+import { TRAVEL_COSTINGS, routeWithOptions, type TravelCosting } from '../valhalla';
+import { buildJogLoop, type Hilliness } from '../joggingLoop';
 import {
   trafficAdjustedMinutes,
   tomtomApiKey,
   useTrafficStore,
   TrafficLegend,
 } from '../../../features/traffic';
-import { circleToRing, evacStep, EVAC_STEP_INSTRUCTIONS, type EvacCircle } from '../../../features/routing/avoidZone';
-import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
+import { circleToRing, evacStep, EVAC_STEP_INSTRUCTIONS } from '../avoidZone';
+import type { EvacCircle } from '../store';
+import { PlaceAutocomplete } from '../../../ui/components/search/PlaceAutocomplete';
 import type { GeocodedPlace } from '../../../features/search';
 
 function parseCoordinate(text: string, label: string, min: number, max: number): number {

@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
 import { useMapStore } from '../../../features/map/store';
-import { useRouteStore } from '../../../stores/routeStore';
+import { useRouteStore, jogLoopAsEvacRoute } from '../../../features/navigation';
 import { useDisasterStore } from '../../../stores/disasterStore';
 import { useTiltStore } from '../../../stores/tiltStore';
 import type { DisasterSeverity } from '../../../types';
 import { DISASTER_SEVERITY_COLORS } from '../../../features/map/disasterStyle';
 import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR, ROUTE_CASING_WIDTH, ROUTE_LINE_WIDTH } from '../../../features/map/routeStyle';
 import { routeStatusSegments } from '../../../features/traffic';
-import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import {
   createCesiumViewer,
   createGlobeImagery,

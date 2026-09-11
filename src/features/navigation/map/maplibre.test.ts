@@ -5,10 +5,10 @@ import {
   ROUTE_SOURCE_ID,
   removeRouteLayers,
   setRouteVisible,
-} from './route';
-import { ROUTE_LINE_COLOR } from '../../../features/map/routeStyle';
-import type { EvacRoute } from '../../../stores/routeStore';
-import type { FlowSample } from '../../../features/traffic';
+} from './maplibre';
+import { ROUTE_LINE_COLOR } from '../../map/routeStyle';
+import type { EvacRoute } from '../store';
+import type { FlowSample } from '../../traffic';
 
 function fakeMap() {
   const sources = new Map<string, unknown>();

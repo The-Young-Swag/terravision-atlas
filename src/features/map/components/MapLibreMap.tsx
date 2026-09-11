@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Map as MapLibre, Marker, NavigationControl, AttributionControl, Popup, setWorkerUrl } from 'maplibre-gl';
-import { useRouteStore } from '../../../stores/routeStore';
+import {
+  useRouteStore,
+  setRouteVisible,
+  ROUTE_CASING_LAYER_ID,
+  ROUTE_LINE_LAYER_ID,
+  jogLoopAsEvacRoute,
+  setAvoidPreview,
+  setAvoidVisible,
+  MIN_AVOID_RADIUS_KM,
+  previewCircle,
+} from '../../../features/navigation';
 import { reverseNominatim } from '../../../features/search';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
 import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../features/map/store';
@@ -10,7 +20,6 @@ import { setTrailsVisible } from '../../../core/map/maplibre/trails';
 import { useTiltStore } from '../../../stores/tiltStore';
 import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
 import { MEASURE_POINT_LAYER_ID, removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
-import { setRouteVisible, ROUTE_CASING_LAYER_ID, ROUTE_LINE_LAYER_ID } from '../../../core/map/maplibre/route';
 import { setDisastersVisible, DISASTER_LAYER_ID } from '../../../core/map/maplibre/disasters';
 import { setWeatherVisible, WEATHER_LAYER_ID } from '../../../core/map/maplibre/weather';
 import { disasterPopupHtml } from '../../../features/disasters/popup';
@@ -18,7 +27,6 @@ import { weatherPopupHtml } from '../../../features/weather/popup';
 import '../../../features/weather/popup.css';
 import { useDisasterStore } from '../../../stores/disasterStore';
 import { useWeatherStore } from '../../../stores/weatherStore';
-import { jogLoopAsEvacRoute } from '../../../features/routing/joggingLoop';
 import {
   TRAFFIC_LAYER_ID,
   TRAFFIC_INCIDENT_LAYER_ID,
@@ -34,8 +42,6 @@ import '../../../features/traffic/incidentPopup.css';
 import { TRAFFIC_FLOW_OPACITY_ML } from '../../../features/map/routeStyle';
 import { setSearchMarkerVisible } from '../../../core/map/maplibre/search';
 import { useSearchStore } from '../../../stores/searchStore';
-import { setAvoidPreview, setAvoidVisible } from '../../../core/map/maplibre/avoid';
-import { MIN_AVOID_RADIUS_KM, previewCircle } from '../../../features/routing/avoidZone';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'maplibre-gl/dist/maplibre-gl.css';
 

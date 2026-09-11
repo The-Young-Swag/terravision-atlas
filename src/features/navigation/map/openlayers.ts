@@ -3,17 +3,37 @@ import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import LineString from 'ol/geom/LineString';
+import Polygon from 'ol/geom/Polygon';
 import { fromLonLat } from 'ol/proj';
 import { Style, Stroke, Fill, Circle } from 'ol/style';
-import type { EvacRoute } from '../../../stores/routeStore';
-import type { FlowSample } from '../../../features/traffic';
-import { flowStatusColor } from '../../../features/traffic';
+import type { EvacRoute, EvacRoutePoint } from '../store';
+import type { FlowSample } from '../../traffic';
+import { flowStatusColor } from '../../traffic';
 import {
   ROUTE_CASING_WIDTH,
   ROUTE_LINE_WIDTH,
   ROUTE_LINE_COLOR,
   ROUTE_CASING_COLOR,
-} from '../../../features/map/routeStyle';
+} from '../../map/routeStyle';
+
+// Standalone avoid-zone overlay: red dashed outline with translucent fill.
+// Renders whenever an avoid circle exists, with or without a route.
+export function createAvoidLayer(ring: EvacRoutePoint[]): VectorLayer<VectorSource> {
+  const feature = new Feature({
+    geometry: new Polygon([ring.map((point) => fromLonLat([point.lon, point.lat]))]),
+  });
+  feature.setStyle(
+    new Style({
+      stroke: new Stroke({ color: '#E63946', width: 2, lineDash: [6, 4] }),
+      fill: new Fill({ color: 'rgba(230, 57, 70, 0.12)' }),
+    }),
+  );
+
+  return new VectorLayer({
+    source: new VectorSource({ features: [feature] }),
+    properties: { layerId: 'evac-avoid' },
+  });
+}
 
 // Evacuation route overlay for the 2D map (Item 15 Part A).
 //

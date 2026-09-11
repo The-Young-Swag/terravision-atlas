@@ -5,7 +5,7 @@ import { useBrightBasemap } from '../../hooks/useBrightBasemap';
 import { MyLocationButton } from '../../ui/components/common/MyLocationButton';
 import { useMapStore } from '../../features/map/store';
 import { useSearchStore } from '../../stores/searchStore';
-import { useRouteStore } from '../../stores/routeStore';
+import { useRouteStore } from '../../features/navigation';
 import { useUiPanelStore } from '../../stores/uiPanelStore';
 import { PlaceAutocomplete } from '../../ui/components/search/PlaceAutocomplete';
 import type { GeocodedPlace } from '../../features/search';

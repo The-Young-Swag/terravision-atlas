@@ -1,11 +1,19 @@
 import { create } from 'zustand';
-import type { EvacCircle } from '../features/routing/avoidZone';
-import type { TravelCosting } from '../features/routing/valhalla';
-import type { FlowSample } from '../features/traffic';
+import type { TravelCosting } from './valhalla';
+import type { FlowSample } from '../traffic';
 
 export interface EvacRoutePoint {
   lon: number;
   lat: number;
+}
+
+/** The avoid zone is a single circle {center, radiusKm} everywhere in the
+ *  app. Defined alongside the store that owns it (avoids an
+ *  avoidZone<->store import cycle); geometry helpers stay in avoidZone. */
+export interface EvacCircle {
+  lon: number;
+  lat: number;
+  radiusKm: number;
 }
 
 export interface EvacPin extends EvacRoutePoint {

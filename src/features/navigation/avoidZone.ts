@@ -1,16 +1,10 @@
 import * as turf from '@turf/turf';
-import type { EvacRoutePoint } from '../../stores/routeStore';
+import type { EvacRoutePoint, EvacCircle } from './store';
 
 // The avoid zone is a single circle {center, radiusKm} everywhere in the
 // app. Its turf.circle polygon is the single source of truth: the same
 // object is drawn on screen (both maps) and handed to Valhalla's
 // exclude_polygons — never a separate visual/request copy.
-export interface EvacCircle {
-  lon: number;
-  lat: number;
-  radiusKm: number;
-}
-
 export const AVOID_CIRCLE_STEPS = 32;
 
 export function circlePolygon(circle: EvacCircle): GeoJSON.Feature<GeoJSON.Polygon> {
