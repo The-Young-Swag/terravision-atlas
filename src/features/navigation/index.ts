@@ -14,7 +14,13 @@ export {
   EVAC_STEP_INSTRUCTIONS,
   MIN_AVOID_RADIUS_KM,
 } from './avoidZone';
-export { createRouteLayer, createAvoidLayer } from './map/openlayers';
+export {
+  createRouteLayer,
+  createAvoidLayer,
+  attachAvoidDraw as attachAvoidDrawOpenLayers,
+  renderAvoidCircle as renderAvoidCircleOpenLayers,
+  applyAvoidCursor as applyAvoidCursorOpenLayers,
+} from './map/openlayers';
 export {
   setRouteVisible,
   removeRouteLayers,
@@ -23,4 +29,6 @@ export {
   ROUTE_LINE_LAYER_ID,
   setAvoidVisible,
   setAvoidPreview,
+  attachAvoidDraw as attachAvoidDrawMapLibre,
+  applyAvoidCursor as applyAvoidCursorMapLibre,
 } from './map/maplibre';

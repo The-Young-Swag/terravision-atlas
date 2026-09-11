@@ -1,6 +1,8 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { circlePolygon } from '../avoidZone';
 import type { EvacCircle } from '../store';
+import { useRouteStore } from '../store';
+import { previewCircle, MIN_AVOID_RADIUS_KM } from '../avoidZone';
 import type { EvacRoute } from '../store';
 import type { FlowSample } from '../../traffic';
 import {
@@ -192,5 +194,96 @@ export function removeRouteLayers(map: MapLibreMap): void {
   }
   if (map.getSource(ROUTE_SOURCE_ID)) {
     map.removeSource(ROUTE_SOURCE_ID);
+  }
+}
+
+// Avoid-zone draw tool: press-drag-release sketches a circle while armed.
+// Extracted verbatim from the Vector view's map-creation effect (handlers,
+// tooltip, and preview management are unchanged, including its cleanup).
+export function attachAvoidDraw(map: MapLibreMap): () => void {
+  const drawTooltip = document.createElement('div');
+  drawTooltip.style.cssText =
+    'position:absolute;display:none;pointer-events:none;background:rgba(13,27,42,.92);' +
+    'border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 8px;' +
+    'font:11px monospace;color:#f8fafc;white-space:nowrap;z-index:30;';
+  map.getCanvasContainer().appendChild(drawTooltip);
+
+  let drawCenter: { lon: number; lat: number } | null = null;
+
+  const onDrawDown = (event: { lngLat: { lng: number; lat: number }; originalEvent: MouseEvent }) => {
+    if (!useRouteStore.getState().drawAvoidArmed || event.originalEvent.button !== 0) {
+      // Not drawing: clear any leftover preview (e.g. after Escape).
+      drawCenter = null;
+      drawTooltip.style.display = 'none';
+      setAvoidPreview(map, null);
+      return;
+    }
+    event.originalEvent.preventDefault();
+    drawCenter = { lon: event.lngLat.lng, lat: event.lngLat.lat };
+    map.dragPan.disable();
+  };
+  const onDrawMove = (event: { lngLat: { lng: number; lat: number } }) => {
+    if (!drawCenter || !useRouteStore.getState().drawAvoidArmed) return;
+    const { circle, atCap } = previewCircle(drawCenter.lon, drawCenter.lat, event.lngLat.lng, event.lngLat.lat);
+    setAvoidPreview(map, circle);
+    const point = map.project(event.lngLat);
+    drawTooltip.textContent = atCap
+      ? `${circle.radiusKm.toFixed(1)} km (max) — release to set`
+      : `${circle.radiusKm.toFixed(1)} km — release to set`;
+    drawTooltip.style.display = 'block';
+    drawTooltip.style.left = `${point.x + 14}px`;
+    drawTooltip.style.top = `${point.y - 10}px`;
+  };
+  const onDrawUp = (event: { lngLat: { lng: number; lat: number } }) => {
+    const center = drawCenter;
+    drawCenter = null;
+    map.dragPan.enable();
+    if (!center || !useRouteStore.getState().drawAvoidArmed) {
+      setAvoidPreview(map, null);
+      drawTooltip.style.display = 'none';
+      return;
+    }
+    const { circle } = previewCircle(center.lon, center.lat, event.lngLat.lng, event.lngLat.lat);
+    const store = useRouteStore.getState();
+    setAvoidPreview(map, null);
+    drawTooltip.style.display = 'none';
+    if (circle.radiusKm >= MIN_AVOID_RADIUS_KM) {
+      store.setAvoidCircle(circle);
+    }
+    store.setDrawAvoidArmed(false);
+  };
+  map.on('mousedown', onDrawDown);
+  map.on('mousemove', onDrawMove);
+  map.on('mouseup', onDrawUp);
+
+  // Escape cancels an in-progress draw immediately (clears the preview,
+  // disarms the tool, restores panning).
+  const onDrawKey = (event: KeyboardEvent) => {
+    if (event.key !== 'Escape' || !useRouteStore.getState().drawAvoidArmed) return;
+    drawCenter = null;
+    drawTooltip.style.display = 'none';
+    setAvoidPreview(map, null);
+    map.dragPan.enable();
+    useRouteStore.getState().setDrawAvoidArmed(false);
+  };
+  window.addEventListener('keydown', onDrawKey);
+
+  return () => {
+    map.off('mousedown', onDrawDown);
+    map.off('mousemove', onDrawMove);
+    map.off('mouseup', onDrawUp);
+    window.removeEventListener('keydown', onDrawKey);
+    drawTooltip.remove();
+  };
+}
+
+// Avoid-draw arming: crosshair cursor and pan-drag state. Stale previews
+// are discarded lazily by the next pointer-down (see onDrawDown).
+// Extracted verbatim from the Vector view's drawAvoidArmed effect, which
+// intentionally has no cleanup.
+export function applyAvoidCursor(map: MapLibreMap, armed: boolean): void {
+  map.getCanvas().style.cursor = armed ? 'crosshair' : '';
+  if (!armed) {
+    map.dragPan.enable();
   }
 }

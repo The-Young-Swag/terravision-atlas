@@ -13,10 +13,9 @@ import { createHikingTrailsLayer } from '../../../core/map/openlayers/trailsLaye
 import {
   createRouteLayer,
   jogLoopAsEvacRoute,
-  createAvoidLayer,
-  circleToRing,
-  previewCircle,
-  MIN_AVOID_RADIUS_KM,
+  attachAvoidDrawOpenLayers,
+  renderAvoidCircleOpenLayers,
+  applyAvoidCursorOpenLayers,
   useRouteStore,
 } from '../../../features/navigation';
 import DragPan from 'ol/interaction/DragPan';
@@ -82,9 +81,7 @@ export function OpenLayersMap() {
   const routeTraffic = useRouteStore((s) => s.trafficAdjustment);
   const routeTrafficSamples = useMemo(() => routeTraffic?.samples ?? [], [routeTraffic]);
   const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
-  const avoidLayerRef = useRef<ReturnType<typeof createAvoidLayer> | null>(null);
-  const drawPreviewLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
-  const drawCenterRef = useRef<[number, number] | null>(null);
+  const avoidLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const evacStart = useRouteStore((s) => s.start);
   const evacDestination = useRouteStore((s) => s.destination);
   const pinLayerRef = useRef<ReturnType<typeof createEvacPinLayer> | null>(null);
@@ -434,93 +431,9 @@ export function OpenLayersMap() {
       })();
     });
 
-    // Avoid-zone draw tool: press-drag-release sketches a circle while
-    // armed. The live radius comes from turf; release finalizes the same
-    // circle object the Valhalla request will use.
-    const drawTooltip = document.createElement('div');
-    drawTooltip.style.cssText =
-      'position:absolute;display:none;pointer-events:none;background:rgba(13,27,42,.92);' +
-      'border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 8px;' +
-      'font:11px monospace;color:#f8fafc;white-space:nowrap;z-index:30;';
-    map.getTargetElement().appendChild(drawTooltip);
-
-    const hideDrawPreview = () => {
-      if (drawPreviewLayerRef.current) {
-        map.removeLayer(drawPreviewLayerRef.current);
-        drawPreviewLayerRef.current = null;
-      }
-      drawCenterRef.current = null;
-      drawTooltip.style.display = 'none';
-    };
-
-    const onDrawDown = (event: MouseEvent) => {
-      if (!useRouteStore.getState().drawAvoidArmed || event.button !== 0) {
-        // Not drawing: clear any leftover preview (e.g. after Escape).
-        drawCenterRef.current = null;
-        drawTooltip.style.display = 'none';
-        if (drawPreviewLayerRef.current) {
-          map.removeLayer(drawPreviewLayerRef.current);
-          drawPreviewLayerRef.current = null;
-        }
-        return;
-      }
-      const pixel = map.getEventPixel(event);
-      const [lon, lat] = toLonLat(map.getCoordinateFromPixel(pixel));
-      drawCenterRef.current = [lon, lat];
-    };
-    const onDrawMove = (event: MouseEvent) => {
-      const center = drawCenterRef.current;
-      if (!center || !useRouteStore.getState().drawAvoidArmed) return;
-      const pixel = map.getEventPixel(event);
-      const [lon, lat] = toLonLat(map.getCoordinateFromPixel(pixel));
-      const { circle, atCap } = previewCircle(center[0], center[1], lon, lat);
-      if (drawPreviewLayerRef.current) {
-        map.removeLayer(drawPreviewLayerRef.current);
-      }
-      const preview = createAvoidLayer(circleToRing(circle));
-      map.addLayer(preview);
-      drawPreviewLayerRef.current = preview;
-      drawTooltip.textContent = atCap
-        ? `${circle.radiusKm.toFixed(1)} km (max) — release to set`
-        : `${circle.radiusKm.toFixed(1)} km — release to set`;
-      drawTooltip.style.display = 'block';
-      drawTooltip.style.left = `${pixel[0] + 14}px`;
-      drawTooltip.style.top = `${pixel[1] - 10}px`;
-    };
-    const onDrawUp = (event: MouseEvent) => {
-      const center = drawCenterRef.current;
-      drawCenterRef.current = null;
-      if (!center || !useRouteStore.getState().drawAvoidArmed) {
-        hideDrawPreview();
-        return;
-      }
-      const pixel = map.getEventPixel(event);
-      const [lon, lat] = toLonLat(map.getCoordinateFromPixel(pixel));
-      const { circle } = previewCircle(center[0], center[1], lon, lat);
-      const store = useRouteStore.getState();
-      hideDrawPreview();
-      if (circle.radiusKm >= MIN_AVOID_RADIUS_KM) {
-        store.setAvoidCircle(circle);
-      }
-      store.setDrawAvoidArmed(false);
-    };
-    const viewport = map.getViewport();
-    viewport.addEventListener('mousedown', onDrawDown);
-    viewport.addEventListener('mousemove', onDrawMove);
-    viewport.addEventListener('mouseup', onDrawUp);
-
-    // Escape cancels an in-progress draw immediately.
-    const onDrawKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || !useRouteStore.getState().drawAvoidArmed) return;
-      drawCenterRef.current = null;
-      drawTooltip.style.display = 'none';
-      if (drawPreviewLayerRef.current) {
-        map.removeLayer(drawPreviewLayerRef.current);
-        drawPreviewLayerRef.current = null;
-      }
-      useRouteStore.getState().setDrawAvoidArmed(false);
-    };
-    window.addEventListener('keydown', onDrawKey);
+    // Avoid-zone draw tool lives in features/navigation (press-drag-release
+    // sketches a circle while armed; see attachAvoidDrawOpenLayers).
+    const detachAvoidDraw = attachAvoidDrawOpenLayers(map);
     (mapRef.current as unknown as { __olmap?: Map }).__olmap = map;
     mapInstanceRef.current = map;
 
@@ -531,14 +444,10 @@ export function OpenLayersMap() {
     return () => {
       resizeObserver.disconnect();
       map.getViewport()?.removeEventListener('contextmenu', handleContextMenu);
-      viewport.removeEventListener('mousedown', onDrawDown);
-      viewport.removeEventListener('mousemove', onDrawMove);
-      viewport.removeEventListener('mouseup', onDrawUp);
+      detachAvoidDraw();
       measureViewport.removeEventListener('pointerdown', onMeasurePointerDown);
       measureViewport.removeEventListener('pointermove', onMeasurePointerMove);
       measureViewport.removeEventListener('pointerup', onMeasurePointerUp);
-      window.removeEventListener('keydown', onDrawKey);
-      drawTooltip.remove();
       map.setTarget(undefined);
       mapInstanceRef.current = null;
     };
@@ -622,18 +531,7 @@ export function OpenLayersMap() {
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
-
-    if (avoidLayerRef.current) {
-      map.removeLayer(avoidLayerRef.current);
-      avoidLayerRef.current = null;
-    }
-
-    if (avoidCircle) {
-      const layer = createAvoidLayer(circleToRing(avoidCircle));
-      layer.setZIndex(9);
-      map.addLayer(layer);
-      avoidLayerRef.current = layer;
-    }
+    renderAvoidCircleOpenLayers(map, avoidLayerRef, avoidCircle);
   }, [avoidCircle]);
 
   // Measure overlay — line, markers and distance label for picked points
@@ -728,16 +626,7 @@ export function OpenLayersMap() {
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return undefined;
-    const viewport = map.getViewport();
-    viewport.style.cursor = drawAvoidArmed ? 'crosshair' : '';
-    const pan = map
-      .getInteractions()
-      .getArray()
-      .find((interaction): interaction is DragPan => interaction instanceof DragPan);
-    if (pan) pan.setActive(!drawAvoidArmed);
-    return () => {
-      if (pan) pan.setActive(true);
-    };
+    return applyAvoidCursorOpenLayers(map, drawAvoidArmed);
   }, [drawAvoidArmed]);
 
   // Shelter markers — rebuilt whenever the shelter list changes

@@ -4,9 +4,13 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import LineString from 'ol/geom/LineString';
 import Polygon from 'ol/geom/Polygon';
-import { fromLonLat } from 'ol/proj';
+import type Map from 'ol/Map';
+import DragPan from 'ol/interaction/DragPan';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import { Style, Stroke, Fill, Circle } from 'ol/style';
-import type { EvacRoute, EvacRoutePoint } from '../store';
+import { useRouteStore } from '../store';
+import type { EvacRoute, EvacRoutePoint, EvacCircle } from '../store';
+import { circleToRing, previewCircle, MIN_AVOID_RADIUS_KM } from '../avoidZone';
 import type { FlowSample } from '../../traffic';
 import { flowStatusColor } from '../../traffic';
 import {
@@ -111,4 +115,135 @@ export function createRouteLayer(route: EvacRoute, samples: FlowSample[] = []): 
     source: new VectorSource({ features }),
     properties: { layerId: 'evac-route' },
   });
+}
+
+// Avoid-zone draw tool: press-drag-release sketches a circle while armed.
+// Extracted verbatim from the 2D view's map-creation effect (handlers,
+// tooltip, and preview management are unchanged); the only difference is
+// that teardown is now a returned cleanup instead of inline effect code.
+export function attachAvoidDraw(map: Map): () => void {
+  // The live radius comes from turf; release finalizes the same circle
+  // object the Valhalla request will use.
+  const drawTooltip = document.createElement('div');
+  drawTooltip.style.cssText =
+    'position:absolute;display:none;pointer-events:none;background:rgba(13,27,42,.92);' +
+    'border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 8px;' +
+    'font:11px monospace;color:#f8fafc;white-space:nowrap;z-index:30;';
+  map.getTargetElement().appendChild(drawTooltip);
+
+  let drawCenter: [number, number] | null = null;
+  let drawPreviewLayer: VectorLayer<VectorSource> | null = null;
+
+  const hideDrawPreview = () => {
+    if (drawPreviewLayer) {
+      map.removeLayer(drawPreviewLayer);
+      drawPreviewLayer = null;
+    }
+    drawCenter = null;
+    drawTooltip.style.display = 'none';
+  };
+
+  const onDrawDown = (event: MouseEvent) => {
+    if (!useRouteStore.getState().drawAvoidArmed || event.button !== 0) {
+      // Not drawing: clear any leftover preview (e.g. after Escape).
+      hideDrawPreview();
+      return;
+    }
+    const pixel = map.getEventPixel(event);
+    const [lon, lat] = toLonLat(map.getCoordinateFromPixel(pixel));
+    drawCenter = [lon, lat];
+  };
+  const onDrawMove = (event: MouseEvent) => {
+    if (!drawCenter || !useRouteStore.getState().drawAvoidArmed) return;
+    const pixel = map.getEventPixel(event);
+    const [lon, lat] = toLonLat(map.getCoordinateFromPixel(pixel));
+    const { circle, atCap } = previewCircle(drawCenter[0], drawCenter[1], lon, lat);
+    if (drawPreviewLayer) {
+      map.removeLayer(drawPreviewLayer);
+    }
+    const preview = createAvoidLayer(circleToRing(circle));
+    map.addLayer(preview);
+    drawPreviewLayer = preview;
+    drawTooltip.textContent = atCap
+      ? `${circle.radiusKm.toFixed(1)} km (max) — release to set`
+      : `${circle.radiusKm.toFixed(1)} km — release to set`;
+    drawTooltip.style.display = 'block';
+    drawTooltip.style.left = `${pixel[0] + 14}px`;
+    drawTooltip.style.top = `${pixel[1] - 10}px`;
+  };
+  const onDrawUp = (event: MouseEvent) => {
+    const center = drawCenter;
+    drawCenter = null;
+    if (!center || !useRouteStore.getState().drawAvoidArmed) {
+      hideDrawPreview();
+      return;
+    }
+    const pixel = map.getEventPixel(event);
+    const [lon, lat] = toLonLat(map.getCoordinateFromPixel(pixel));
+    const { circle } = previewCircle(center[0], center[1], lon, lat);
+    const store = useRouteStore.getState();
+    hideDrawPreview();
+    if (circle.radiusKm >= MIN_AVOID_RADIUS_KM) {
+      store.setAvoidCircle(circle);
+    }
+    store.setDrawAvoidArmed(false);
+  };
+  const viewport = map.getViewport();
+  viewport.addEventListener('mousedown', onDrawDown);
+  viewport.addEventListener('mousemove', onDrawMove);
+  viewport.addEventListener('mouseup', onDrawUp);
+
+  // Escape cancels an in-progress draw immediately.
+  const onDrawKey = (event: KeyboardEvent) => {
+    if (event.key !== 'Escape' || !useRouteStore.getState().drawAvoidArmed) return;
+    hideDrawPreview();
+    useRouteStore.getState().setDrawAvoidArmed(false);
+  };
+  window.addEventListener('keydown', onDrawKey);
+
+  return () => {
+    viewport.removeEventListener('mousedown', onDrawDown);
+    viewport.removeEventListener('mousemove', onDrawMove);
+    viewport.removeEventListener('mouseup', onDrawUp);
+    window.removeEventListener('keydown', onDrawKey);
+    drawTooltip.remove();
+  };
+}
+
+/** Finalized avoid-zone layer sync: red dashed overlay whenever a circle
+ * exists, with or without a route. Extracted verbatim from the 2D view's
+ * avoidCircle effect; the caller keeps the layer holder + subscription. */
+export function renderAvoidCircle(
+  map: Map,
+  holder: { current: VectorLayer<VectorSource> | null },
+  circle: EvacCircle | null,
+): void {
+  if (holder.current) {
+    map.removeLayer(holder.current);
+    holder.current = null;
+  }
+
+  if (circle) {
+    const layer = createAvoidLayer(circleToRing(circle));
+    layer.setZIndex(9);
+    map.addLayer(layer);
+    holder.current = layer;
+  }
+}
+
+// Avoid-draw arming: crosshair cursor and pan-drag state. Stale previews
+// are discarded lazily by the next pointer-down (see onDrawDown).
+// Extracted verbatim from the 2D view's drawAvoidArmed effect, including
+// its cleanup, which re-enables pan.
+export function applyAvoidCursor(map: Map, armed: boolean): () => void {
+  const viewport = map.getViewport();
+  viewport.style.cursor = armed ? 'crosshair' : '';
+  const pan = map
+    .getInteractions()
+    .getArray()
+    .find((interaction): interaction is DragPan => interaction instanceof DragPan);
+  if (pan) pan.setActive(!armed);
+  return () => {
+    if (pan) pan.setActive(true);
+  };
 }
