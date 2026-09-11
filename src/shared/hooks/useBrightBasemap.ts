@@ -1,4 +1,4 @@
-import { useMapStore } from '../../features/map/store';
+import { useMapStore } from '../../features/map';
 
 // THE shared dynamic font-color utility for every floating/modal panel in
 // the app (Layers, Live Alerts, Traffic legend, Navigation/Evacuation incl.

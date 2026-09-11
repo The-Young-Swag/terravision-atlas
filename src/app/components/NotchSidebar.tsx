@@ -10,7 +10,7 @@ import {
   PinOff,
   Ruler,
 } from 'lucide-react';
-import { useMapStore } from '../../features/map/store';
+import { useMapStore } from '../../features/map';
 import { useDisasterStore } from '../../features/disasters';
 import { useWeatherStore } from '../../features/weather';
 import { useRouteStore } from '../../features/navigation';

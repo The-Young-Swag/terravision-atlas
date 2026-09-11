@@ -21,7 +21,7 @@ const FEATURES = [
   'weather',
 ];
 
-const CONSUMERS = ['app', 'shared', ...FEATURES.map((f) => `features/${f}`)];
+const CONSUMERS = ['shared', ...FEATURES.map((f) => `features/${f}`)];
 
 function indexOnlyRules() {
   const rules = [];
@@ -39,7 +39,9 @@ function indexOnlyRules() {
         from: { path: `^src/${consumer}/` },
         to: {
           path: `^src/features/${target}/.+`,
-          pathNot: [`^src/features/${target}/index\\.ts$`],
+          // CSS side-effect imports are style, not API surface, and cannot
+          // go through a TS index — exclude them from this rule.
+          pathNot: [`^src/features/${target}/index\\.ts$`, '\\.css$'],
         },
       });
     }

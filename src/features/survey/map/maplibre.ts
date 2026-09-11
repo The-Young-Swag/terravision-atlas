@@ -1,6 +1,6 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { useSurveyStore, MEASURE_CLOSE_TOLERANCE_PX } from '../store';
-import { useMapStore } from '../../map/store';
+import { useMapStore } from '../../../features/map';
 import { niceMeterStep, snapToUtmGrid } from '../geodetic/grid/snap';
 
 // Geodesic measurement overlay for the Vector map: path line plus vertex

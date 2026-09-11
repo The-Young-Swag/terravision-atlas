@@ -51,10 +51,12 @@ rendering code), `store.ts` (if it owns state), `types.ts`, `index.ts`
 
 ## Dependency rules
 
-1. `app` may import from `features` and `shared`.
+1. `app` may import from `features` and `shared` (no index required —
+   it is the composer, and it lazy-loads the map views directly so the
+   globe keeps its own code-split chunk).
 2. A feature may import from `shared`.
-3. A feature may consume another feature only through that feature's
-   `index.ts` — never its internals.
+3. A feature (or `shared`) may consume another feature only through
+   that feature's `index.ts` — never its internals.
 4. `shared` may consume a feature only through that feature's `index.ts`
    (same as rule 3) — never its internals, and never `app`.
 5. Feature internals must never be imported from outside their feature.

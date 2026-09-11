@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigation, ShieldAlert, MapPin, X, Check, TriangleAlert } from 'lucide-react';
 import * as turf from '@turf/turf';
 import { FloatingPanel } from '../../../shared/components/FloatingPanel';
-import { useMapStore } from '../../../features/map/store';
+import { useMapStore } from '../../../features/map';
 import { useRouteStore } from '../store';
 import { useBrightBasemap } from '../../../shared/hooks/useBrightBasemap';
 import { TRAVEL_COSTINGS, routeWithOptions, type TravelCosting } from '../valhalla';

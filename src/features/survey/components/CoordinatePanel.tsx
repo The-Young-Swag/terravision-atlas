@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useMapStore } from '../../../features/map/store';
+import { useMapStore } from '../../../features/map';
 import { datumShiftMeters, transformCoordinate, getEpsgList } from '../geodetic/projections/epsg';
 import { ntv2ShiftMeters, parseNTv2, type NTv2Grid } from '../geodetic/ntv2/NTv2Grid';
 import { Upload, SlidersHorizontal } from 'lucide-react';

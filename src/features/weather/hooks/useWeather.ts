@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useWeatherStore } from '../store';
-import { useMapStore } from '../../map/store';
+import { useMapStore } from '../../map';
 import { fetchCurrentWeather, fetchForecast, fetchHistoricalWeather } from '../openMeteo';
 import { cacheWeather, getCachedWeather } from '../cache';
 

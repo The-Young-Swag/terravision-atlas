@@ -6,7 +6,7 @@ import {
   removeRouteLayers,
   setRouteVisible,
 } from './maplibre';
-import { ROUTE_LINE_COLOR } from '../../map/routeStyle';
+import { ROUTE_LINE_COLOR } from '../../../features/map';
 import type { EvacRoute } from '../store';
 import type { FlowSample } from '../../traffic';
 

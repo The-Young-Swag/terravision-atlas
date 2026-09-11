@@ -18,7 +18,7 @@ import {
   ROUTE_LINE_WIDTH,
   ROUTE_LINE_COLOR,
   ROUTE_CASING_COLOR,
-} from '../../map/routeStyle';
+} from '../../../features/map';
 
 // Standalone avoid-zone overlay: red dashed outline with translucent fill.
 // Renders whenever an avoid circle exists, with or without a route.

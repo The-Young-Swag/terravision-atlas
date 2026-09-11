@@ -10,7 +10,7 @@ import {
   ROUTE_LINE_WIDTH,
   ROUTE_LINE_COLOR,
   ROUTE_CASING_COLOR,
-} from '../../map/routeStyle';
+} from '../../../features/map';
 import { flowStatusColor } from '../../traffic';
 
 // Standalone avoid-zone overlay for the Vector map: hatched red fill plus

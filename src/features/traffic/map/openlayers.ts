@@ -8,7 +8,7 @@ import { fromLonLat } from 'ol/proj';
 import { Style, Circle, Fill, Stroke } from 'ol/style';
 import { flowTileUrl } from '../tomtom';
 import type { TrafficIncident } from '../tomtom';
-import { TRAFFIC_FLOW_OPACITY } from '../../../features/map/routeStyle';
+import { TRAFFIC_FLOW_OPACITY } from '../../../features/map';
 
 // TomTom traffic flow raster overlay (2D map). Tile requests are cached by
 // OpenLayers' tile cache and the browser HTTP cache — the same area is not

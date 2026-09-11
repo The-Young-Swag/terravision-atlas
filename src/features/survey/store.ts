@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { useMapStore } from '../map/store';
-import type { BasemapId, MapViewMode } from '../map/store';
-import type { SatelliteSourceId } from '../map/gibs';
+import { useMapStore } from '../map';
+import type { BasemapId, MapViewMode } from '../map';
+import type { SatelliteSourceId } from '../map';
 
 export type SurveyProjection = 'WGS84' | 'UTM' | 'PRS92' | 'NAD83' | 'ETRS89' | 'OSGB36';
 export type MeasureMode = 'distance' | 'area';

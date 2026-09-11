@@ -1,6 +1,6 @@
 import { MapPin } from 'lucide-react';
 import * as turf from '@turf/turf';
-import { useMapStore } from '../../features/map/store';
+import { useMapStore } from '../../features/map';
 import { useBrightBasemap } from '../hooks/useBrightBasemap';
 import { useState } from 'react';
 

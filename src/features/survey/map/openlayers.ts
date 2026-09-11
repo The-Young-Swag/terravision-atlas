@@ -10,7 +10,7 @@ import DragPan from 'ol/interaction/DragPan';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { Style, Stroke, Fill, Circle, Text } from 'ol/style';
 import { useSurveyStore, MEASURE_CLOSE_TOLERANCE_PX } from '../store';
-import { useMapStore } from '../../map/store';
+import { useMapStore } from '../../../features/map';
 import { niceMeterStep, snapToUtmGrid } from '../geodetic/grid/snap';
 
 // Geodesic measurement overlay: path line through all picked points with

@@ -5,8 +5,8 @@ import { useRouteStore, jogLoopAsEvacRoute } from '../../../features/navigation'
 import { useDisasterStore } from '../../../features/disasters';
 import { useTiltStore } from '../../../features/map/tiltStore';
 import type { DisasterSeverity } from '../../../shared/types';
-import { DISASTER_SEVERITY_COLORS } from '../../../features/map/disasterStyle';
-import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR, ROUTE_CASING_WIDTH, ROUTE_LINE_WIDTH } from '../../../features/map/routeStyle';
+import { DISASTER_SEVERITY_COLORS } from '../../../features/map';
+import { ROUTE_LINE_COLOR, ROUTE_CASING_COLOR, ROUTE_CASING_WIDTH, ROUTE_LINE_WIDTH } from '../../../features/map';
 import { routeStatusSegments } from '../../../features/traffic';
 import {
   createCesiumViewer,

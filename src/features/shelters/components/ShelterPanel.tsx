@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { HousePlus, MapPin } from 'lucide-react';
 import { FloatingPanel } from '../../../shared/components/FloatingPanel';
-import { useMapStore } from '../../../features/map/store';
+import { useMapStore } from '../../../features/map';
 import { useShelterStore } from '../store';
 import { useBrightBasemap } from '../../../shared/hooks/useBrightBasemap';
 import { fetchShelters } from '../overpass';

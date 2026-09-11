@@ -1,13 +1,13 @@
 import { Layers, Satellite, Map as MapIcon, Mountain, Moon, Check, RotateCcw, Info, X } from 'lucide-react';
 import { FloatingPanel } from '../../shared/components/FloatingPanel';
 
-import { useMapStore } from '../../features/map/store';
-import { STREETS_SOURCES } from '../../features/map/streets';
+import { useMapStore } from '../../features/map';
+import { STREETS_SOURCES } from '../../features/map';
 import { useBrightBasemap } from '../../shared/hooks/useBrightBasemap';
-import { GIBS_LAYERS, type SatelliteSourceId } from '../../features/map/gibs';
-import { useTiltStore } from '../../features/map/tiltStore';
+import { GIBS_LAYERS, type SatelliteSourceId } from '../../features/map';
 import { BasemapIcon } from './BasemapIcon';
 import {
+  useTiltStore,
   TILT_MAX_DEGREES,
   cesiumTiltDegrees,
   maplibreTiltDegrees,
@@ -15,7 +15,7 @@ import {
   resetMapLibreTiltToTopDown,
   setCesiumTiltDegrees,
   setMapLibreTiltDegrees,
-} from '../../features/map/tilt';
+} from '../../features/map';
 import { useEffect, useMemo, useState } from 'react';
 
 const SATELLITE_SOURCES: { id: SatelliteSourceId; label: string; desc: string }[] = [
