@@ -163,6 +163,54 @@ export function selectNext24Hours(hourly: HourlyPoint[], now: Date = new Date())
   return hourly.slice(startIndex, startIndex + NEXT_24_HOURS_COUNT);
 }
 
+export interface HourlyDayGroup {
+  /** Stable local-calendar-day key (yyyy-m-d) for React keys. */
+  key: string;
+  /** "Today", "Tomorrow", or a formatted date for anything further out. */
+  label: string;
+  /** "Sep 11" style date shown under Today/Tomorrow; null otherwise. */
+  sublabel: string | null;
+  points: HourlyPoint[];
+}
+
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+/** "Sep 11" style short date — shared by the hourly day dividers. */
+export function formatShortDate(date: Date): string {
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+/**
+ * Groups hourly points by local calendar day, preserving order. The group
+ * containing `now` reads "Today"; the next calendar day reads "Tomorrow"
+ * (with its date); anything further out falls back to its formatted date
+ * so a DST-lengthened window never renders a blank label.
+ */
+export function groupHourlyByDay(hourly: HourlyPoint[], now: Date = new Date()): HourlyDayGroup[] {
+  const todayStart = startOfLocalDay(now).getTime();
+  const groups = new Map<string, HourlyDayGroup>();
+  for (const point of hourly) {
+    const date = new Date(point.time);
+    if (Number.isNaN(date.getTime())) continue;
+    const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    let group = groups.get(key);
+    if (!group) {
+      const dayOffset = Math.round((startOfLocalDay(date).getTime() - todayStart) / 86400000);
+      group = {
+        key,
+        label: dayOffset === 0 ? 'Today' : dayOffset === 1 ? 'Tomorrow' : formatShortDate(date),
+        sublabel: dayOffset <= 1 ? formatShortDate(date) : null,
+        points: [],
+      };
+      groups.set(key, group);
+    }
+    group.points.push(point);
+  }
+  return [...groups.values()];
+}
+
 /** Pure response transform, exported for unit tests. */
 export function parseHourlyForecast(data: HourlyResponse): HourlyPoint[] {
   const hourly = data.hourly;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { categorizeWeatherCode, describeWeatherCode, formatHourLabel, parseCurrentConditions, parseHourlyForecast, selectNext24Hours, WEATHER_CATEGORY_COLORS, weatherColorForCode, type HourlyPoint } from './openMeteo';
+import { categorizeWeatherCode, describeWeatherCode, formatHourLabel, groupHourlyByDay, parseCurrentConditions, parseHourlyForecast, selectNext24Hours, WEATHER_CATEGORY_COLORS, weatherColorForCode, type HourlyPoint } from './openMeteo';
 
 describe('parseCurrentConditions', () => {
   it('extracts conditions from a valid response', () => {
@@ -122,5 +122,38 @@ describe('selectNext24Hours', () => {
     const hourly = hourlyFixture(0, 5);
     const now = new Date(2026, 8, 8, 0, 0, 0);
     expect(selectNext24Hours(hourly, now)).toEqual([]);
+  });
+});
+
+describe('groupHourlyByDay', () => {
+  it('labels the current day Today and the next Tomorrow with its date', () => {
+    const hourly = hourlyFixture(20, 8); // Sep 7 20:00 → Sep 8 03:00
+    const now = new Date(2026, 8, 7, 21, 0, 0);
+    const groups = groupHourlyByDay(hourly, now);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].label).toBe('Today');
+    expect(groups[0].sublabel).toBe('Sep 7');
+    expect(groups[0].points).toHaveLength(4);
+    expect(groups[1].label).toBe('Tomorrow');
+    expect(groups[1].sublabel).toBe('Sep 8');
+    expect(groups[1].points).toHaveLength(4);
+  });
+
+  it('keeps a single Today group when nothing crosses midnight', () => {
+    const hourly = hourlyFixture(6, 6);
+    const now = new Date(2026, 8, 7, 5, 0, 0);
+    const groups = groupHourlyByDay(hourly, now);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].label).toBe('Today');
+  });
+
+  it('skips unparseable times instead of creating a blank group', () => {
+    const hourly: HourlyPoint[] = [
+      { time: 'not-a-time', temperatureC: 20, precipitationMm: 0 },
+      ...hourlyFixture(6, 2),
+    ];
+    const groups = groupHourlyByDay(hourly, new Date(2026, 8, 7, 5, 0, 0));
+    expect(groups).toHaveLength(1);
+    expect(groups[0].points).toHaveLength(2);
   });
 });

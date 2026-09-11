@@ -52,6 +52,19 @@ export function WeatherPanel() {
     [forecast],
   );
 
+  // Observation date + time for the Now block ("Friday, September 11" +
+  // a distinctive time). Null when unparseable — the line is skipped
+  // rather than rendering "Invalid Date".
+  const observed = useMemo(() => {
+    if (!current) return null;
+    const at = new Date(current.observedAt);
+    if (Number.isNaN(at.getTime())) return null;
+    return {
+      date: at.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }),
+      time: at.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }),
+    };
+  }, [current]);
+
   useEffect(() => {
     if (!location) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- sync reset for null location is intentional and cheap
@@ -131,6 +144,14 @@ export function WeatherPanel() {
                   {location && placeName && placeName !== location.label && (
                     <p className={`mt-0.5 truncate font-mono text-[10px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>
                       {location.label}
+                    </p>
+                  )}
+                  {observed && (
+                    <p className={`mt-1 truncate text-[11px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {observed.date} ·{' '}
+                      <span className={`text-[12px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>
+                        {observed.time}
+                      </span>
                     </p>
                   )}
                   <p className={`mt-1.5 truncate text-[15px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>
