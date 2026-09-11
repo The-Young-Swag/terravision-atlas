@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useMapStore } from '../../../stores/mapStore';
-import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { useDisaster } from '../../../hooks/useDisaster';
-import type { AppMode } from '../../../types';
+import { useMapStore } from '../../stores/mapStore';
+import { useBrightBasemap } from '../../hooks/useBrightBasemap';
+import { useDisaster } from '../../hooks/useDisaster';
+import type { AppMode } from '../../types';
 
 interface StatusBarProps {
   activeMode: AppMode;

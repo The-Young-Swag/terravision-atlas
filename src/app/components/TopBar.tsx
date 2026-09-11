@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Settings2, Fuel, BookOpen, Box, Menu, X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { MyLocationButton } from '../common/MyLocationButton';
-import { useMapStore } from '../../../stores/mapStore';
-import { useSearchStore } from '../../../stores/searchStore';
-import { useRouteStore } from '../../../stores/routeStore';
-import { useUiPanelStore } from '../../../stores/uiPanelStore';
-import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
-import type { GeocodedPlace } from '../../../features/search/geocode';
-import type { AppMode } from '../../../types';
+import { useBrightBasemap } from '../../hooks/useBrightBasemap';
+import { MyLocationButton } from '../../ui/components/common/MyLocationButton';
+import { useMapStore } from '../../stores/mapStore';
+import { useSearchStore } from '../../stores/searchStore';
+import { useRouteStore } from '../../stores/routeStore';
+import { useUiPanelStore } from '../../stores/uiPanelStore';
+import { PlaceAutocomplete } from '../../ui/components/search/PlaceAutocomplete';
+import type { GeocodedPlace } from '../../features/search/geocode';
+import type { AppMode } from '../../types';
 
 function PlaceSearchBox() {
   const [query, setQuery] = useState('');
