@@ -65,8 +65,8 @@ rendering code), `store.ts` (if it owns state), `types.ts`, `index.ts`
 7. No circular dependencies between features.
 
 Rules 1–5 and 7 are enforced by `.dependency-cruiser.cjs`
-(`npm run lint:boundaries`); rule 6 is a process check. Severity is
-`warn` during migration, `error` once complete.
+(`npm run lint:boundaries`, severity `error` — violations fail the
+check); rule 6 is a process check.
 
 ## Known, deliberate state: Cesium coverage gap
 

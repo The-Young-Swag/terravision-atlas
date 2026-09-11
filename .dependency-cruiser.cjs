@@ -31,7 +31,7 @@ function indexOnlyRules() {
       if (target === consumerFeature) continue; // own internals are fine
       rules.push({
         name: `no-internals:${consumer}>${target}`,
-        severity: 'warn',
+        severity: 'error',
         comment:
           'Rules 3 + 5: a feature may be consumed only through its public index.ts, never its internals.',
         // Trailing slashes keep sibling prefixes distinct (export/ must
@@ -56,7 +56,7 @@ module.exports = {
     {
       // Rule 1 (inverse): a feature may import from shared, never from app.
       name: 'no-feature-to-app',
-      severity: 'warn',
+      severity: 'error',
       from: { path: '^src/features' },
       to: { path: '^src/app' },
     },
@@ -64,7 +64,7 @@ module.exports = {
       // Rule 7: no circular dependencies between features (scoped to the
       // new structure; legacy cycles are out of scope for this migration).
       name: 'no-circular',
-      severity: 'warn',
+      severity: 'error',
       from: { path: '^src/(app|features|shared)' },
       to: { circular: true, path: '^src/(app|features|shared)' },
     },
