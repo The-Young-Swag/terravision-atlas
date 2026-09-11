@@ -10,8 +10,7 @@ import { ForecastChart } from './ForecastChart';
 import { HourlyStrip } from './HourlyStrip';
 import { WeatherVisual } from './WeatherVisual';
 import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
-import type { GeocodedPlace } from '../../../features/search/geocode';
-import { reverseGeocode } from '../../../core/data/geocode/reverseGeocode';
+import { reverseGeocode, type GeocodedPlace } from '../../../features/search';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 

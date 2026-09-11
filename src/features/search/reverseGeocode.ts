@@ -6,7 +6,7 @@
 // forward search-box geocoding never overlap and throttle each other.
 // Concurrent lookups for the same point share one in-flight request.
 // No new npm dependency — uses browser fetch
-import { respectNominatimRateLimit } from '../../../features/search/geocode';
+import { respectNominatimRateLimit } from './geocode';
 
 export interface LocationHierarchy {
   // raw fields

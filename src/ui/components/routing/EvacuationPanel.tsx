@@ -13,7 +13,7 @@ import { useTrafficStore } from '../../../stores/trafficStore';
 import { TrafficLegend } from '../panels/TrafficLegend';
 import { circleToRing, evacStep, EVAC_STEP_INSTRUCTIONS, type EvacCircle } from '../../../features/routing/avoidZone';
 import { PlaceAutocomplete } from '../search/PlaceAutocomplete';
-import type { GeocodedPlace } from '../../../features/search/geocode';
+import type { GeocodedPlace } from '../../../features/search';
 
 function parseCoordinate(text: string, label: string, min: number, max: number): number {
   const value = Number(text.trim());

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Map as MapLibre, Marker, NavigationControl, AttributionControl, Popup, setWorkerUrl } from 'maplibre-gl';
 import { useRouteStore } from '../../../stores/routeStore';
-import { reverseNominatim } from '../../../features/search/geocode';
+import { reverseNominatim } from '../../../features/search';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
 import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../features/map/store';
 import { maplibreStyleFor } from '../../../features/map/maplibre/style';

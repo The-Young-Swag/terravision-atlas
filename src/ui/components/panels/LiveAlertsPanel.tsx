@@ -10,7 +10,7 @@ import {
   getCachedHierarchy,
   deriveHierarchyFromTitle,
   type LocationHierarchy,
-} from '../../../core/data/geocode/reverseGeocode';
+} from '../../../features/search';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import * as turf from '@turf/turf';

@@ -8,7 +8,7 @@ import { useSearchStore } from '../../stores/searchStore';
 import { useRouteStore } from '../../stores/routeStore';
 import { useUiPanelStore } from '../../stores/uiPanelStore';
 import { PlaceAutocomplete } from '../../ui/components/search/PlaceAutocomplete';
-import type { GeocodedPlace } from '../../features/search/geocode';
+import type { GeocodedPlace } from '../../features/search';
 import type { AppMode } from '../../types';
 
 function PlaceSearchBox() {

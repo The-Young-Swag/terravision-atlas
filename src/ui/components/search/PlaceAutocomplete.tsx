@@ -3,8 +3,8 @@ import { Navigation, Search } from 'lucide-react';
 import { useMapStore } from '../../../features/map/store';
 import { useSurveyStore } from '../../../stores/surveyStore';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { geocodeNominatim, searchPhoton, type GeocodedPlace, type PlaceSuggestion } from '../../../features/search/geocode';
-import { endpointLabel, getCurrentPositionOnce, parseRouteQuery, type RouteEndpoint } from '../../../features/search/routeQuery';
+import { geocodeNominatim, searchPhoton, type GeocodedPlace, type PlaceSuggestion } from '../../../features/search';
+import { endpointLabel, getCurrentPositionOnce, parseRouteQuery, type RouteEndpoint } from '../../../features/search';
 
 interface PlaceAutocompleteProps {
   value: string;
