@@ -4,7 +4,7 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import { fromLonLat } from 'ol/proj';
 import { Style, Circle, Fill, Stroke } from 'ol/style';
-import type { SearchMarker } from '../../../stores/searchStore';
+import type { SearchMarker } from '../store';
 
 // Temporary search-result pin (2D map). Replaced on every new search and
 // cleared with the query — it never pretends to be saved data.

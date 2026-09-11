@@ -8,7 +8,7 @@ import { bearingDegrees, formatBearing, formatDistanceKilometers, geodesicKilome
 import { formatAreaSqMeters, geodesicAreaSqMeters } from '../geodetic/measurements/area';
 import { useSurveyStore } from '../store';
 import { useEdgeDock } from '../../../shared/hooks/useEdgeDock';
-import type { AppMode } from '../../../types';
+import type { AppMode } from '../../../shared/types';
 
 const SURVEY_DOCK_KEY = 'terravision.survey-toolbar.dock';
 const SURVEY_COLLAPSED_KEY = 'terravision.survey-toolbar.collapsed';

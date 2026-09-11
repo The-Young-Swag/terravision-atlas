@@ -17,7 +17,7 @@ import {
   Ruler,
 } from 'lucide-react';
 import { useUiPanelStore } from '../../stores/uiPanelStore';
-import type { AppMode } from '../../types';
+import type { AppMode } from '../../shared/types';
 
 interface FabItem {
   panelId: string;

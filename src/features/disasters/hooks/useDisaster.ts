@@ -5,7 +5,7 @@ import { fetchUsgsEarthquakes } from '../fetchers/usgsFetcher';
 import { fetchEonetEvents } from '../fetchers/eonetFetcher';
 import { fetchFirmsHotspots } from '../fetchers/firmsFetcher';
 import { cacheDisasterEvents, getCachedDisasterEvents } from '../cache';
-import type { DisasterEvent } from '../../../types';
+import type { DisasterEvent } from '../../../shared/types';
 
 // Aggregates USGS + EONET + FIRMS hotspots, caches to IndexedDB, shows real
 // data only. FIRMS is view-centered (map center bbox) and key-gated —

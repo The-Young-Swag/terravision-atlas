@@ -14,7 +14,7 @@ import {
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import * as turf from '@turf/turf';
-import type { AppMode } from '../../../types';
+import type { AppMode } from '../../../shared/types';
 
 dayjs.extend(relativeTime);
 

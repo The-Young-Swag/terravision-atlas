@@ -15,9 +15,9 @@ import type { MapLayerMouseEvent } from 'maplibre-gl';
 import { useMapStore } from '../../../features/map/store';
 import { useSurveyStore, attachMeasureMapLibre } from '../../../features/survey';
 import { maplibreStyleFor } from '../../../features/map/maplibre/style';
-import { setContoursVisible } from '../../../core/map/maplibre/contours';
-import { setTrailsVisible } from '../../../core/map/maplibre/trails';
-import { useTiltStore } from '../../../stores/tiltStore';
+import { setContoursVisible } from '../../../features/map/contours';
+import { setTrailsVisible } from '../../../features/navigation';
+import { useTiltStore } from '../../../features/map/tiltStore';
 import {
   niceMeterStep,
   snapToUtmGrid,
@@ -40,8 +40,7 @@ import {
 } from '../../../features/traffic';
 import '../../../features/traffic/incidentPopup.css';
 import { TRAFFIC_FLOW_OPACITY_ML } from '../../../features/map/routeStyle';
-import { setSearchMarkerVisible } from '../../../core/map/maplibre/search';
-import { useSearchStore } from '../../../stores/searchStore';
+import { setSearchMarkerVisible, useSearchStore } from '../../../features/search';
 import { useMapOverlayContrast } from '../../../features/map/hooks/useMapOverlayContrast';
 import 'maplibre-gl/dist/maplibre-gl.css';
 

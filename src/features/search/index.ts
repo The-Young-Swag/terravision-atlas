@@ -23,3 +23,6 @@ export {
   getCurrentPositionOnce,
   type RouteEndpoint,
 } from './routeQuery';
+export { useSearchStore, type SearchMarker } from './store';
+export { createSearchMarkerLayer } from './map/openlayers';
+export { setSearchMarkerVisible } from './map/maplibre';

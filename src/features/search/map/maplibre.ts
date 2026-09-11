@@ -1,5 +1,5 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import type { SearchMarker } from '../../../stores/searchStore';
+import type { SearchMarker } from '../store';
 
 export const SEARCH_SOURCE_ID = 'place-search-marker';
 export const SEARCH_LAYER_ID = 'place-search-marker-layer';

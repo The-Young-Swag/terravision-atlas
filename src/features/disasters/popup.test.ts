@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { disasterPopupHtml } from './popup';
-import type { DisasterEvent } from '../../types';
+import type { DisasterEvent } from '../../shared/types';
 
 const EVENT: DisasterEvent = {
   id: 'usgs-1',

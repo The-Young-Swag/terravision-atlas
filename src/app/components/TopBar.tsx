@@ -4,12 +4,12 @@ import { motion } from 'framer-motion';
 import { useBrightBasemap } from '../../shared/hooks/useBrightBasemap';
 import { MyLocationButton } from '../../shared/components/MyLocationButton';
 import { useMapStore } from '../../features/map/store';
-import { useSearchStore } from '../../stores/searchStore';
+import { useSearchStore } from '../../features/search';
 import { useRouteStore } from '../../features/navigation';
 import { useUiPanelStore } from '../../stores/uiPanelStore';
 import { PlaceAutocomplete } from '../../shared/components/PlaceAutocomplete';
 import type { GeocodedPlace } from '../../features/search';
-import type { AppMode } from '../../types';
+import type { AppMode } from '../../shared/types';
 
 function PlaceSearchBox() {
   const [query, setQuery] = useState('');

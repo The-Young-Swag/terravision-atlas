@@ -21,6 +21,9 @@ export {
   renderAvoidCircle as renderAvoidCircleOpenLayers,
   applyAvoidCursor as applyAvoidCursorOpenLayers,
 } from './map/openlayers';
+export { createEvacPinLayer } from './map/pins';
+export { createHikingTrailsLayer } from './map/trails-openlayers';
+export { setTrailsVisible } from './map/trails-maplibre';
 export {
   setRouteVisible,
   removeRouteLayers,

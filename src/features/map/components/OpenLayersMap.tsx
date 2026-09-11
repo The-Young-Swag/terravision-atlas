@@ -10,7 +10,7 @@ import { useSurveyStore, attachMeasureOpenLayers } from '../../../features/surve
 import { useDisasterStore } from '../../../features/disasters';
 import { createMap, updateBasemap } from '../../../features/map/openlayers/createMap';
 import { createHazardLayer } from '../../../features/disasters';
-import { createHikingTrailsLayer } from '../../../core/map/openlayers/trailsLayer';
+import { createHikingTrailsLayer } from '../../../features/navigation';
 import {
   createRouteLayer,
   jogLoopAsEvacRoute,
@@ -19,12 +19,11 @@ import {
   applyAvoidCursorOpenLayers,
   useRouteStore,
 } from '../../../features/navigation';
-import { createEvacPinLayer } from '../../../core/map/openlayers/pinLayer';
+import { createEvacPinLayer } from '../../../features/navigation';
 import Translate from 'ol/interaction/Translate';
 import { createShelterLayer, useShelterStore, shelterPopupHtml } from '../../../features/shelters';
 import '../../../features/shelters/shelterPopup.css';
-import { createSearchMarkerLayer } from '../../../core/map/openlayers/searchLayer';
-import { useSearchStore } from '../../../stores/searchStore';
+import { createSearchMarkerLayer, useSearchStore } from '../../../features/search';
 import { reverseNominatim } from '../../../features/search';
 import {
   niceMeterStep,

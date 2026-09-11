@@ -4,7 +4,7 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import { fromLonLat } from 'ol/proj';
 import { Style, Circle, Fill, Stroke } from 'ol/style';
-import type { EvacPin } from '../../../features/navigation';
+import type { EvacPin } from '../store';
 
 // Evacuation pins: green start, red destination (standard Maps convention).
 // Features carry pinRole so the drag handler knows which pin moved.

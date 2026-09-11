@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMapStore } from '../../features/map/store';
 import { useBrightBasemap } from '../../shared/hooks/useBrightBasemap';
 import { useDisaster } from '../../features/disasters';
-import type { AppMode } from '../../types';
+import type { AppMode } from '../../shared/types';
 
 interface StatusBarProps {
   activeMode: AppMode;

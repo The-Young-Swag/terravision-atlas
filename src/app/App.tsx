@@ -1,7 +1,7 @@
 import { useState, lazy, Suspense, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, Box, BookOpen, X } from 'lucide-react';
-import type { AppMode } from '../types';
+import type { AppMode } from '../shared/types';
 import { OpenLayersMap } from '../features/map/components/OpenLayersMap';
 import { MapLibreMap } from '../features/map/components/MapLibreMap';
 import { useMapStore } from '../features/map/store';

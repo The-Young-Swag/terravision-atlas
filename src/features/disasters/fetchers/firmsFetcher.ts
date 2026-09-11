@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { DisasterEvent } from '../../../types';
+import type { DisasterEvent } from '../../../shared/types';
 
 // NASA FIRMS active-fire hotspots — direct near-real-time detections.
 // Docs: https://www.earthdata.nasa.gov/faq/firms-faq (API area/csv path)

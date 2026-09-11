@@ -1,4 +1,4 @@
-import type { DisasterSeverity } from '../../types';
+import type { DisasterSeverity } from '../../shared/types';
 
 // Severity meaning shared by every disaster pin surface (2D hazard pins,
 // Vector circles, 3D entities): high red, medium amber, low teal. Sizes

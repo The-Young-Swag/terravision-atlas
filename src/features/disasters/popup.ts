@@ -1,4 +1,4 @@
-import type { DisasterEvent } from '../../types';
+import type { DisasterEvent } from '../../shared/types';
 
 // Popup content for a disaster marker (Vector map). Same outside-JSX
 // HTML-string pattern as the other popups; reuses the weather popup CSS

@@ -19,7 +19,7 @@ import { useUiPanelStore } from '../../stores/uiPanelStore';
 import { useSurveyStore } from '../../features/survey';
 import { describeWeatherCode, weatherColorForCode } from '../../features/weather';
 import { useEdgeDock } from '../../shared/hooks/useEdgeDock';
-import type { AppMode } from '../../types';
+import type { AppMode } from '../../shared/types';
 
 interface NotchSidebarProps {
   activeMode: AppMode;

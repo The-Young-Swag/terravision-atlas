@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { DisasterEvent } from '../../../types';
+import type { DisasterEvent } from '../../../shared/types';
 
 // NASA EONET — open, no key, global disaster events
 // Docs: https://eonet.gsfc.nasa.gov/docs/v3

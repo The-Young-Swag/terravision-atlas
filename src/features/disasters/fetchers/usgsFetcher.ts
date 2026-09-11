@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { DisasterEvent } from '../../../types';
+import type { DisasterEvent } from '../../../shared/types';
 
 // USGS Earthquake feed — public, no key, real-time
 // Docs: https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php

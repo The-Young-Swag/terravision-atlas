@@ -5,7 +5,7 @@ import { useMapStore } from '../../features/map/store';
 import { STREETS_SOURCES } from '../../features/map/streets';
 import { useBrightBasemap } from '../../shared/hooks/useBrightBasemap';
 import { GIBS_LAYERS, type SatelliteSourceId } from '../../features/map/gibs';
-import { useTiltStore } from '../../stores/tiltStore';
+import { useTiltStore } from '../../features/map/tiltStore';
 import { BasemapIcon } from './BasemapIcon';
 import {
   TILT_MAX_DEGREES,
