@@ -1,5 +1,5 @@
-import { getAppDb, WEATHER_STORE } from './db';
-import type { CurrentConditions, Forecast } from '../../../features/weather/openMeteo';
+import { getAppDb, WEATHER_STORE } from '../../core/data/cache/db';
+import type { CurrentConditions, Forecast } from './openMeteo';
 
 export interface CachedWeather {
   id: string;

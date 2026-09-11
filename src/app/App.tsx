@@ -15,7 +15,7 @@ import { FuelPanel } from '../features/fuel';
 import { ModeDocks } from '../ui/components/docks/ModeDocks';
 import { EvacuationPanel } from '../features/navigation';
 import { ShelterPanel } from '../features/shelters';
-import { WeatherPanel } from '../ui/components/weather/WeatherPanel';
+import { WeatherPanel } from '../features/weather';
 import { StatusBar } from './components/StatusBar';
 import { StoryBuilder } from '../features/storytelling';
 import { MinecraftExport } from '../features/export/minecraft/MinecraftExport';

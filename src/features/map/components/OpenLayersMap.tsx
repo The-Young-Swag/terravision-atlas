@@ -40,10 +40,8 @@ import {
 } from '../../../features/traffic';
 import '../../../features/traffic/incidentPopup.css';
 import { TRAFFIC_FLOW_OPACITY } from '../../../features/map/routeStyle';
-import { createWeatherLayer } from '../../../core/map/openlayers/weatherLayer';
-import { weatherPopupHtml } from '../../../features/weather/popup';
+import { createWeatherLayer, weatherPopupHtml, useWeatherStore } from '../../../features/weather';
 import '../../../features/weather/popup.css';
-import { useWeatherStore } from '../../../stores/weatherStore';
 import Overlay from 'ol/Overlay';
 import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
 import 'ol/ol.css';

@@ -1,5 +1,5 @@
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { formatHourLabel, type HourlyPoint } from '../../../features/weather/openMeteo';
+import { formatHourLabel, type HourlyPoint } from '../openMeteo';
 
 interface HourlyStripProps {
   hourly: HourlyPoint[];

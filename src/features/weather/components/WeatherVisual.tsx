@@ -13,13 +13,13 @@ import {
   SunSnow,
   type LucideIcon,
 } from 'lucide-react';
-import type { CurrentConditions } from '../../../features/weather/openMeteo';
+import type { CurrentConditions } from '../openMeteo';
 import {
   WEATHER_CATEGORY_COLORS,
   categorizeWeatherCode,
   describeWeatherCode,
   type WeatherCategory,
-} from '../../../features/weather/openMeteo';
+} from '../openMeteo';
 
 interface WeatherVisualProps {
   current: CurrentConditions | null;

@@ -12,11 +12,11 @@ import {
 } from 'lucide-react';
 import { useMapStore } from '../../features/map/store';
 import { useDisasterStore } from '../../stores/disasterStore';
-import { useWeatherStore } from '../../stores/weatherStore';
+import { useWeatherStore } from '../../features/weather';
 import { useRouteStore } from '../../features/navigation';
 import { useShelterStore } from '../../features/shelters';
 import { useUiPanelStore } from '../../stores/uiPanelStore';
-import { describeWeatherCode, weatherColorForCode } from '../../features/weather/openMeteo';
+import { describeWeatherCode, weatherColorForCode } from '../../features/weather';
 import { useEdgeDock } from '../../hooks/useEdgeDock';
 import type { AppMode } from '../../types';
 

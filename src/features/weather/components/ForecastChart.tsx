@@ -8,8 +8,8 @@ import {
   ScriptableScaleContext,
 } from 'chart.js';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
-import { temperatureColorFor } from '../../../features/weather/temperatureScale';
-import type { HourlyPoint } from '../../../features/weather/openMeteo';
+import { temperatureColorFor } from '../temperatureScale';
+import type { HourlyPoint } from '../openMeteo';
 
 Chart.register(...registerables);
 

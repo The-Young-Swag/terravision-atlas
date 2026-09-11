@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { CurrentConditions, Forecast } from '../features/weather/openMeteo';
+import type { CurrentConditions, Forecast } from './openMeteo';
 
 export interface WeatherLocation {
   lat: number;

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useWeatherStore } from '../stores/weatherStore';
-import { useMapStore } from '../features/map/store';
-import { fetchCurrentWeather, fetchForecast, fetchHistoricalWeather } from '../features/weather/openMeteo';
-import { cacheWeather, getCachedWeather } from '../core/data/cache/weatherCache';
+import { useWeatherStore } from '../store';
+import { useMapStore } from '../../map/store';
+import { fetchCurrentWeather, fetchForecast, fetchHistoricalWeather } from '../openMeteo';
+import { cacheWeather, getCachedWeather } from '../cache';
 
 // Open-Meteo weather with IndexedDB caching. Cache-first: cached data shows
 // immediately with a stale flag, then the network refreshes. Offline or

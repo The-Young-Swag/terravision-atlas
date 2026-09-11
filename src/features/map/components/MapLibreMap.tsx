@@ -20,12 +20,10 @@ import { useTiltStore } from '../../../stores/tiltStore';
 import { niceMeterStep, snapToUtmGrid } from '../../../core/geodetic/grid/snap';
 import { MEASURE_POINT_LAYER_ID, removeMeasureLayers, setMeasureVisible } from '../../../core/map/maplibre/measure';
 import { setDisastersVisible, DISASTER_LAYER_ID } from '../../../core/map/maplibre/disasters';
-import { setWeatherVisible, WEATHER_LAYER_ID } from '../../../core/map/maplibre/weather';
+import { setWeatherVisible, WEATHER_LAYER_ID, weatherPopupHtml, useWeatherStore } from '../../../features/weather';
 import { disasterPopupHtml } from '../../../features/disasters/popup';
-import { weatherPopupHtml } from '../../../features/weather/popup';
 import '../../../features/weather/popup.css';
 import { useDisasterStore } from '../../../stores/disasterStore';
-import { useWeatherStore } from '../../../stores/weatherStore';
 import {
   TRAFFIC_LAYER_ID,
   TRAFFIC_INCIDENT_LAYER_ID,
