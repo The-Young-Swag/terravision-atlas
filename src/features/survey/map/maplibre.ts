@@ -1,4 +1,7 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
+import { useSurveyStore, MEASURE_CLOSE_TOLERANCE_PX } from '../store';
+import { useMapStore } from '../../map/store';
+import { niceMeterStep, snapToUtmGrid } from '../geodetic/grid/snap';
 
 // Geodesic measurement overlay for the Vector map: path line plus vertex
 // dots for the picked points, or a filled polygon once an area measurement
@@ -93,4 +96,79 @@ export function removeMeasureLayers(map: MapLibreMap): void {
   if (map.getSource(MEASURE_SOURCE_ID)) {
     map.removeSource(MEASURE_SOURCE_ID);
   }
+}
+
+// Geodesic measure tool: picks points while armed, with vertex dragging.
+// Extracted verbatim from the Vector view's map-creation effect — click,
+// mousedown/mousemove/mouseup handlers and snap logic are unchanged
+// (including the anonymous map.on handlers, which the original never
+// unregistered); store reads target the survey store, which now owns
+// measure state.
+export function attachMeasureInteraction(map: MapLibreMap): void {
+  let dragState: { index: number; startPoint: { x: number; y: number } } | null = null;
+  let dragSuppress = false;
+
+  // Picks points while armed. With snap-to-grid armed, vertices land on
+  // the same UTM grid as the reported center.
+  map.on('click', (event) => {
+    if (dragSuppress) {
+      dragSuppress = false;
+      return;
+    }
+    const state = useSurveyStore.getState();
+    if (!state.measureActive) return;
+    const z = map.getZoom();
+    const center = map.getCenter();
+    const resolution = (156543.03392804097 * Math.cos((center.lat * Math.PI) / 180)) / 2 ** z;
+    const snapped = useMapStore.getState().snapToGrid
+      ? snapToUtmGrid(event.lngLat.lng, event.lngLat.lat, niceMeterStep(resolution))
+      : { lon: event.lngLat.lng, lat: event.lngLat.lat };
+    const first = state.measureMode === 'area' && !state.measureClosed ? state.measurePoints[0] : undefined;
+    if (first && state.measurePoints.length >= 3) {
+      const firstPx = map.project([first[0], first[1]]);
+      const dx = event.point.x - firstPx.x;
+      const dy = event.point.y - firstPx.y;
+      if (Math.hypot(dx, dy) <= MEASURE_CLOSE_TOLERANCE_PX) {
+        state.setMeasureClosed(true);
+        return;
+      }
+    }
+    state.pushMeasurePoint([snapped.lon, snapped.lat]);
+  });
+
+  // Measure vertex dragging: press-drag-release on a vertex repositions it
+  // with live recalculation in the dock; a plain click still appends.
+  // Panning is suspended mid-drag so the gesture moves the vertex instead.
+  map.on('mousedown', (event) => {
+    const state = useSurveyStore.getState();
+    if (!state.measureActive || event.originalEvent.button !== 0) return;
+    const hits = map.queryRenderedFeatures(event.point, { layers: [MEASURE_POINT_LAYER_ID] });
+    const index = (hits[0]?.properties as { vertexIndex?: unknown } | undefined)?.vertexIndex;
+    if (typeof index !== 'number') return;
+    dragState = { index, startPoint: { x: event.point.x, y: event.point.y } };
+    map.dragPan.disable();
+  });
+  map.on('mousemove', (event) => {
+    if (!dragState) return;
+    const state = useSurveyStore.getState();
+    const z = map.getZoom();
+    const center = map.getCenter();
+    const resolution = (156543.03392804097 * Math.cos((center.lat * Math.PI) / 180)) / 2 ** z;
+    const snapped = useMapStore.getState().snapToGrid
+      ? snapToUtmGrid(event.lngLat.lng, event.lngLat.lat, niceMeterStep(resolution))
+      : { lon: event.lngLat.lng, lat: event.lngLat.lat };
+    state.setMeasurePoint(dragState.index, [snapped.lon, snapped.lat]);
+  });
+  const endMeasureDrag = (dragged: boolean) => {
+    if (!dragState) return;
+    dragState = null;
+    if (dragged) dragSuppress = true;
+    map.dragPan.enable();
+  };
+  map.on('mouseup', (event) => {
+    if (!dragState) return;
+    const dx = event.point.x - dragState.startPoint.x;
+    const dy = event.point.y - dragState.startPoint.y;
+    endMeasureDrag(Math.hypot(dx, dy) > 4);
+  });
 }

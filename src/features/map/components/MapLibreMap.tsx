@@ -12,7 +12,8 @@ import {
 } from '../../../features/navigation';
 import { reverseNominatim } from '../../../features/search';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
-import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../features/map/store';
+import { useMapStore } from '../../../features/map/store';
+import { useSurveyStore, attachMeasureMapLibre } from '../../../features/survey';
 import { maplibreStyleFor } from '../../../features/map/maplibre/style';
 import { setContoursVisible } from '../../../core/map/maplibre/contours';
 import { setTrailsVisible } from '../../../core/map/maplibre/trails';
@@ -20,7 +21,6 @@ import { useTiltStore } from '../../../stores/tiltStore';
 import {
   niceMeterStep,
   snapToUtmGrid,
-  MEASURE_POINT_LAYER_ID,
   removeMeasureLayers,
   setMeasureVisible,
 } from '../../../features/survey';
@@ -155,71 +155,9 @@ export function MapLibreMap() {
       store.setZoom(z);
     });
 
-    // Geodesic measure tool: picks points while armed. With snap-to-grid
-    // armed, vertices land on the same UTM grid as the reported center.
-    map.on('click', (event) => {
-      if (measureDragSuppressRef.current) {
-        measureDragSuppressRef.current = false;
-        return;
-      }
-      const state = useMapStore.getState();
-      if (!state.measureActive) return;
-      const z = map.getZoom();
-      const center = map.getCenter();
-      const resolution = (156543.03392804097 * Math.cos((center.lat * Math.PI) / 180)) / 2 ** z;
-      const snapped = state.snapToGrid
-        ? snapToUtmGrid(event.lngLat.lng, event.lngLat.lat, niceMeterStep(resolution))
-        : { lon: event.lngLat.lng, lat: event.lngLat.lat };
-      const first = state.measureMode === 'area' && !state.measureClosed ? state.measurePoints[0] : undefined;
-      if (first && state.measurePoints.length >= 3) {
-        const firstPx = map.project([first[0], first[1]]);
-        const dx = event.point.x - firstPx.x;
-        const dy = event.point.y - firstPx.y;
-        if (Math.hypot(dx, dy) <= MEASURE_CLOSE_TOLERANCE_PX) {
-          state.setMeasureClosed(true);
-          return;
-        }
-      }
-      state.pushMeasurePoint([snapped.lon, snapped.lat]);
-    });
-
-    // Measure vertex dragging: press-drag-release on a vertex repositions it
-    // with live recalculation in the dock; a plain click still appends.
-    // Panning is suspended mid-drag so the gesture moves the vertex instead.
-    map.on('mousedown', (event) => {
-      const state = useMapStore.getState();
-      if (!state.measureActive || event.originalEvent.button !== 0) return;
-      const hits = map.queryRenderedFeatures(event.point, { layers: [MEASURE_POINT_LAYER_ID] });
-      const index = (hits[0]?.properties as { vertexIndex?: unknown } | undefined)?.vertexIndex;
-      if (typeof index !== 'number') return;
-      measureDragRef.current = { index, startPoint: { x: event.point.x, y: event.point.y } };
-      map.dragPan.disable();
-    });
-    map.on('mousemove', (event) => {
-      const drag = measureDragRef.current;
-      if (!drag) return;
-      const state = useMapStore.getState();
-      const z = map.getZoom();
-      const center = map.getCenter();
-      const resolution = (156543.03392804097 * Math.cos((center.lat * Math.PI) / 180)) / 2 ** z;
-      const snapped = state.snapToGrid
-        ? snapToUtmGrid(event.lngLat.lng, event.lngLat.lat, niceMeterStep(resolution))
-        : { lon: event.lngLat.lng, lat: event.lngLat.lat };
-      state.setMeasurePoint(drag.index, [snapped.lon, snapped.lat]);
-    });
-    const endMeasureDrag = (dragged: boolean) => {
-      if (!measureDragRef.current) return;
-      measureDragRef.current = null;
-      if (dragged) measureDragSuppressRef.current = true;
-      map.dragPan.enable();
-    };
-    map.on('mouseup', (event) => {
-      const drag = measureDragRef.current;
-      if (!drag) return;
-      const dx = event.point.x - drag.startPoint.x;
-      const dy = event.point.y - drag.startPoint.y;
-      endMeasureDrag(Math.hypot(dx, dy) > 4);
-    });
+    // Geodesic measure tool lives in features/survey (point picking and
+    // vertex dragging; see attachMeasureMapLibre).
+    attachMeasureMapLibre(map);
 
     // Evacuation pin placement while a Start/Destination pick is armed.
     map.on('click', (event) => {
@@ -312,10 +250,10 @@ export function MapLibreMap() {
   }, [theme, textPrimary, attributionText]);
 
   // Crosshair cursor while the measure tool is armed.
-  const measureActive = useMapStore((s) => s.measureActive);
-  const measurePoints = useMapStore((s) => s.measurePoints);
-  const measureMode = useMapStore((s) => s.measureMode);
-  const measureClosed = useMapStore((s) => s.measureClosed);
+  const measureActive = useSurveyStore((s) => s.measureActive);
+  const measurePoints = useSurveyStore((s) => s.measurePoints);
+  const measureMode = useSurveyStore((s) => s.measureMode);
+  const measureClosed = useSurveyStore((s) => s.measureClosed);
   const evacStart = useRouteStore((s) => s.start);
   const evacDestination = useRouteStore((s) => s.destination);
   const evacRoute = useRouteStore((s) => s.route);
@@ -327,8 +265,6 @@ export function MapLibreMap() {
   const routeTrafficSamples = useMemo(() => routeTraffic?.samples ?? [], [routeTraffic]);
   const avoidCircle = useRouteStore((s) => s.avoidCircle);
   const drawAvoidArmed = useRouteStore((s) => s.drawAvoidArmed);
-  const measureDragRef = useRef<{ index: number; startPoint: { x: number; y: number } } | null>(null);
-  const measureDragSuppressRef = useRef(false);
   const startMarkerRef = useRef<Marker | null>(null);
   const destinationMarkerRef = useRef<Marker | null>(null);
   const searchMarker = useSearchStore((s) => s.marker);

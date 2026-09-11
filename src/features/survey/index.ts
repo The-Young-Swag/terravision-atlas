@@ -5,7 +5,7 @@
 export { GeodeticPanel } from './components/GeodeticPanel';
 export { CoordinatePanel } from './components/CoordinatePanel';
 export { ModeDocks } from './components/ModeDocks';
-export { useSurveyStore } from './store';
+export { useSurveyStore, MEASURE_CLOSE_TOLERANCE_PX } from './store';
 export {
   geodesicKilometers,
   formatDistanceKilometers,
@@ -13,5 +13,10 @@ export {
 } from './geodetic/measurements/distance';
 export { geodesicAreaSqMeters, formatAreaSqMeters } from './geodetic/measurements/area';
 export { niceMeterStep, snapToUtmGrid } from './geodetic/grid/snap';
-export { createMeasureLayer } from './map/openlayers';
-export { MEASURE_POINT_LAYER_ID, removeMeasureLayers, setMeasureVisible } from './map/maplibre';
+export { createMeasureLayer, attachMeasureInteraction as attachMeasureOpenLayers } from './map/openlayers';
+export {
+  MEASURE_POINT_LAYER_ID,
+  removeMeasureLayers,
+  setMeasureVisible,
+  attachMeasureInteraction as attachMeasureMapLibre,
+} from './map/maplibre';

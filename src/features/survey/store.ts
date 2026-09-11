@@ -1,9 +1,13 @@
 import { create } from 'zustand';
 import { useMapStore } from '../map/store';
-import type { BasemapId, MapViewMode, MeasureMode } from '../map/store';
+import type { BasemapId, MapViewMode } from '../map/store';
 import type { SatelliteSourceId } from '../map/gibs';
 
 export type SurveyProjection = 'WGS84' | 'UTM' | 'PRS92' | 'NAD83' | 'ETRS89' | 'OSGB36';
+export type MeasureMode = 'distance' | 'area';
+
+/** Click tolerance in pixels for closing an area polygon on its first vertex. */
+export const MEASURE_CLOSE_TOLERANCE_PX = 12;
 
 export interface SurveyState {
   // GPS tracking
@@ -26,6 +30,18 @@ export interface SurveyState {
   // Survey-specific settings (persisted in URL)
   datumVizOpen: boolean;
   setDatumVizOpen: (open: boolean) => void;
+
+  // Measure Geodesic (owned here; mirrored into shareable sessions below)
+  measureActive: boolean;
+  measureMode: MeasureMode;
+  measurePoints: [number, number][];
+  measureClosed: boolean;
+  setMeasureActive: (active: boolean) => void;
+  setMeasureMode: (mode: MeasureMode) => void;
+  setMeasureClosed: (closed: boolean) => void;
+  pushMeasurePoint: (point: [number, number]) => void;
+  setMeasurePoint: (index: number, point: [number, number]) => void;
+  clearMeasure: () => void;
 }
 
 export interface SurveySessionState {
@@ -61,6 +77,10 @@ export const useSurveyStore = create<SurveyState>((set, get) => ({
   gpsError: null,
   sessionId: generateId(),
   datumVizOpen: false,
+  measureActive: false,
+  measurePoints: [],
+  measureMode: 'distance',
+  measureClosed: false,
 
   setGpsTracking: (tracking) =>
     // Stopping preserves a pending error message (the error callback stops
@@ -72,6 +92,30 @@ export const useSurveyStore = create<SurveyState>((set, get) => ({
 
   generateSessionId: () => set({ sessionId: generateId() }),
 
+  setMeasureMode: (measureMode) => set({ measureMode, measurePoints: [], measureClosed: false }),
+  setMeasureClosed: (measureClosed) => set({ measureClosed }),
+  setMeasureActive: (measureActive) =>
+    set((state) => ({ measureActive, measurePoints: measureActive ? state.measurePoints : [] })),
+  pushMeasurePoint: (point) =>
+    // Unbounded: distance mode sums every segment via turf.length on the
+    // full path; area mode collects vertices until explicitly closed, and a
+    // click after closing starts a fresh shape. (The old two-point cap also
+    // truncated shared session restores.)
+    set((state) => ({
+      measurePoints: state.measureClosed ? [point] : [...state.measurePoints, point],
+      measureClosed: false,
+    })),
+  setMeasurePoint: (index, point) =>
+    // Vertex drag repositioning; out-of-range indices are a no-op so a
+    // stale drag gesture can never corrupt the path.
+    set((state) => {
+      if (index < 0 || index >= state.measurePoints.length) return state;
+      const measurePoints = [...state.measurePoints];
+      measurePoints[index] = point;
+      return { measurePoints };
+    }),
+  clearMeasure: () => set({ measurePoints: [], measureClosed: false }),
+
   encodeSessionToUrl: (baseUrl) => {
     const mapState = useMapStore.getState();
     const state = get();
@@ -81,9 +125,9 @@ export const useSurveyStore = create<SurveyState>((set, get) => ({
       basemap: mapState.basemap,
       satelliteSource: mapState.satelliteSource,
       viewMode: mapState.viewMode,
-      measurePoints: mapState.measurePoints,
-      measureMode: mapState.measureMode,
-      measureClosed: mapState.measureClosed,
+      measurePoints: state.measurePoints,
+      measureMode: state.measureMode,
+      measureClosed: state.measureClosed,
       snapToGrid: mapState.snapToGrid,
       datumVizOpen: state.datumVizOpen,
       targetProjection: 'EPSG:32651',
@@ -111,13 +155,14 @@ export const useSurveyStore = create<SurveyState>((set, get) => ({
     mapStore.setBasemap(sessionState.basemap);
     mapStore.setSatelliteSource(sessionState.satelliteSource);
     mapStore.setViewMode(sessionState.viewMode);
-    mapStore.setMeasureActive(sessionState.measurePoints.length > 0);
-    mapStore.clearMeasure();
-    mapStore.setMeasureMode(sessionState.measureMode ?? 'distance');
+    const surveyStore = get();
+    surveyStore.setMeasureActive(sessionState.measurePoints.length > 0);
+    surveyStore.clearMeasure();
+    surveyStore.setMeasureMode(sessionState.measureMode ?? 'distance');
     for (const pt of sessionState.measurePoints) {
-      mapStore.pushMeasurePoint(pt);
+      surveyStore.pushMeasurePoint(pt);
     }
-    if (sessionState.measureClosed) mapStore.setMeasureClosed(true);
+    if (sessionState.measureClosed) surveyStore.setMeasureClosed(true);
     mapStore.setSnapToGrid(sessionState.snapToGrid);
     set({ datumVizOpen: sessionState.datumVizOpen });
   },

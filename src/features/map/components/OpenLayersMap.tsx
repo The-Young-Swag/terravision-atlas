@@ -5,7 +5,8 @@ import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { fromLonLat, toLonLat } from 'ol/proj';
-import { MEASURE_CLOSE_TOLERANCE_PX, useMapStore } from '../../../features/map/store';
+import { useMapStore } from '../../../features/map/store';
+import { useSurveyStore, attachMeasureOpenLayers } from '../../../features/survey';
 import { useDisasterStore } from '../../../features/disasters';
 import { createMap, updateBasemap } from '../../../features/map/openlayers/createMap';
 import { createHazardLayer } from '../../../features/disasters';
@@ -18,7 +19,6 @@ import {
   applyAvoidCursorOpenLayers,
   useRouteStore,
 } from '../../../features/navigation';
-import DragPan from 'ol/interaction/DragPan';
 import { createEvacPinLayer } from '../../../core/map/openlayers/pinLayer';
 import Translate from 'ol/interaction/Translate';
 import { createShelterLayer, useShelterStore, shelterPopupHtml } from '../../../features/shelters';
@@ -67,10 +67,10 @@ export function OpenLayersMap() {
   const isProgrammaticRef = useRef(false);
 
   const { center, zoom, basemap, satelliteSource, streetsSource, showHazards, showTraffic, showHikingTrails, setCenter, setZoom } = useMapStore();
-  const measureActive = useMapStore((s) => s.measureActive);
-  const measurePoints = useMapStore((s) => s.measurePoints);
-  const measureMode = useMapStore((s) => s.measureMode);
-  const measureClosed = useMapStore((s) => s.measureClosed);
+  const measureActive = useSurveyStore((s) => s.measureActive);
+  const measurePoints = useSurveyStore((s) => s.measurePoints);
+  const measureMode = useSurveyStore((s) => s.measureMode);
+  const measureClosed = useSurveyStore((s) => s.measureClosed);
   const searchMarker = useSearchStore((s) => s.marker);
   const searchMarkerLayerRef = useRef<ReturnType<typeof createSearchMarkerLayer> | null>(null);
   const reversePopupRef = useRef<Overlay | null>(null);
@@ -89,8 +89,6 @@ export function OpenLayersMap() {
   const evacDestination = useRouteStore((s) => s.destination);
   const pinLayerRef = useRef<ReturnType<typeof createEvacPinLayer> | null>(null);
   const pinTranslateRef = useRef<Translate | null>(null);
-  const measureDragRef = useRef<{ index: number; startPixel: [number, number] } | null>(null);
-  const measureDragSuppressRef = useRef(false);
   const shelters = useShelterStore((s) => s.shelters);
   const trafficStatus = useTrafficStore((s) => s.status);
   const trafficIncidents = useTrafficStore((s) => s.incidents);
@@ -325,90 +323,9 @@ export function OpenLayersMap() {
     };
     map.getViewport().addEventListener('contextmenu', handleContextMenu);
 
-    // Geodesic measure tool: picks points while armed. With snap-to-grid
-    // armed, vertices land on the same UTM grid as the reported center.
-    map.on('click', (event: MapBrowserEvent) => {
-      if (measureDragSuppressRef.current) {
-        measureDragSuppressRef.current = false;
-        return;
-      }
-      const state = useMapStore.getState();
-      if (!state.measureActive) return;
-      const [lon, lat] = toLonLat(event.coordinate);
-      const resolution = map.getView().getResolution() ?? 0;
-      const snapped =
-        state.snapToGrid && resolution > 0
-          ? snapToUtmGrid(lon, lat, niceMeterStep(resolution))
-          : { lon, lat };
-      const first = state.measureMode === 'area' && !state.measureClosed ? state.measurePoints[0] : undefined;
-      if (first && state.measurePoints.length >= 3) {
-        const firstPx = map.getPixelFromCoordinate(fromLonLat(first));
-        const dx = event.pixel[0] - firstPx[0];
-        const dy = event.pixel[1] - firstPx[1];
-        if (Math.hypot(dx, dy) <= MEASURE_CLOSE_TOLERANCE_PX) {
-          state.setMeasureClosed(true);
-          return;
-        }
-      }
-      state.pushMeasurePoint([snapped.lon, snapped.lat]);
-    });
-
-    // Measure vertex dragging: press-drag-release on a vertex repositions it
-    // with live recalculation in the dock; a plain click still appends.
-    // Raw viewport pointer events (not map.on) — OpenLayers has no
-    // pointerdown/pointerup map events, only pointermove/pointerdrag.
-    const measureViewport = map.getViewport();
-    const viewportPixel = (event: PointerEvent): [number, number] => {
-      const rect = measureViewport.getBoundingClientRect();
-      return [event.clientX - rect.left, event.clientY - rect.top];
-    };
-    const onMeasurePointerDown = (event: PointerEvent) => {
-      const state = useMapStore.getState();
-      if (!state.measureActive || event.button !== 0) return;
-      const pixel = viewportPixel(event);
-      const feature = map.forEachFeatureAtPixel(pixel, (found) => found, {
-        layerFilter: (layer) => layer.get('layerId') === 'measure',
-      });
-      const index = feature?.get('vertexIndex');
-      if (typeof index !== 'number') return;
-      measureDragRef.current = { index, startPixel: pixel };
-      const pan = map
-        .getInteractions()
-        .getArray()
-        .find((interaction): interaction is DragPan => interaction instanceof DragPan);
-      if (pan) pan.setActive(false);
-    };
-    const onMeasurePointerMove = (event: PointerEvent) => {
-      const drag = measureDragRef.current;
-      if (!drag || event.buttons === 0) return;
-      const state = useMapStore.getState();
-      const coordinate = map.getCoordinateFromPixel(viewportPixel(event));
-      if (!coordinate) return;
-      const [lon, lat] = toLonLat(coordinate);
-      const resolution = map.getView().getResolution() ?? 0;
-      const snapped =
-        state.snapToGrid && resolution > 0
-          ? snapToUtmGrid(lon, lat, niceMeterStep(resolution))
-          : { lon, lat };
-      state.setMeasurePoint(drag.index, [snapped.lon, snapped.lat]);
-    };
-    const onMeasurePointerUp = (event: PointerEvent) => {
-      const drag = measureDragRef.current;
-      if (!drag) return;
-      const pixel = viewportPixel(event);
-      const dx = pixel[0] - drag.startPixel[0];
-      const dy = pixel[1] - drag.startPixel[1];
-      measureDragRef.current = null;
-      if (Math.hypot(dx, dy) > 4) measureDragSuppressRef.current = true;
-      const pan = map
-        .getInteractions()
-        .getArray()
-        .find((interaction): interaction is DragPan => interaction instanceof DragPan);
-      if (pan) pan.setActive(true);
-    };
-    measureViewport.addEventListener('pointerdown', onMeasurePointerDown);
-    measureViewport.addEventListener('pointermove', onMeasurePointerMove);
-    measureViewport.addEventListener('pointerup', onMeasurePointerUp);
+    // Geodesic measure tool lives in features/survey (point picking and
+    // vertex dragging; see attachMeasureOpenLayers).
+    const detachMeasure = attachMeasureOpenLayers(map);
 
     // Evacuation pin placement: only while a Start/Destination pick is
     // armed. Clicks on traffic incident markers are left to the popup.
@@ -448,9 +365,7 @@ export function OpenLayersMap() {
       resizeObserver.disconnect();
       map.getViewport()?.removeEventListener('contextmenu', handleContextMenu);
       detachAvoidDraw();
-      measureViewport.removeEventListener('pointerdown', onMeasurePointerDown);
-      measureViewport.removeEventListener('pointermove', onMeasurePointerMove);
-      measureViewport.removeEventListener('pointerup', onMeasurePointerUp);
+      detachMeasure();
       map.setTarget(undefined);
       mapInstanceRef.current = null;
     };

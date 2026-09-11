@@ -16,6 +16,7 @@ import { useWeatherStore } from '../../features/weather';
 import { useRouteStore } from '../../features/navigation';
 import { useShelterStore } from '../../features/shelters';
 import { useUiPanelStore } from '../../stores/uiPanelStore';
+import { useSurveyStore } from '../../features/survey';
 import { describeWeatherCode, weatherColorForCode } from '../../features/weather';
 import { useEdgeDock } from '../../hooks/useEdgeDock';
 import type { AppMode } from '../../types';
@@ -106,9 +107,9 @@ export function NotchSidebar({ activeMode, onModeChange }: NotchSidebarProps) {
 
   const basemap = useMapStore((s) => s.basemap);
   const viewMode = useMapStore((s) => s.viewMode);
-  const measureActive = useMapStore((s) => s.measureActive);
-  const measurePoints = useMapStore((s) => s.measurePoints);
-  const measureMode = useMapStore((s) => s.measureMode);
+  const measureActive = useSurveyStore((s) => s.measureActive);
+  const measurePoints = useSurveyStore((s) => s.measurePoints);
+  const measureMode = useSurveyStore((s) => s.measureMode);
   const snapToGrid = useMapStore((s) => s.snapToGrid);
   const disasterEvents = useDisasterStore((s) => s.events);
   const weatherCurrent = useWeatherStore((s) => s.current);
