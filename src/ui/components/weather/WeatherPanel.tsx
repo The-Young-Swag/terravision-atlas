@@ -123,13 +123,18 @@ export function WeatherPanel() {
           <section aria-label="Current conditions">
             <p className={labelClass}>Now</p>
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <div className="min-w-0 flex-1">
                   <p className={`flex items-center gap-1.5 truncate text-[13px] font-medium ${isBrightBasemap ? 'text-slate-700' : 'text-slate-200'}`}>
                     <MapPin className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
                     <span className="truncate">{placeName ?? location?.label ?? '—'}</span>
                   </p>
-                  <p className={`mt-1 truncate text-[15px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>
+                  {location && placeName && placeName !== location.label && (
+                    <p className={`mt-0.5 truncate font-mono text-[10px] ${isBrightBasemap ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {location.label}
+                    </p>
+                  )}
+                  <p className={`mt-1.5 truncate text-[15px] font-semibold ${isBrightBasemap ? 'text-slate-800' : 'text-slate-100'}`}>
                     {current.temperatureC.toFixed(1)}°C · {describeWeatherCode(current.weatherCode)}
                   </p>
                   <p className={`mt-0.5 ${valueClass}`}>Wind {current.windSpeedKmh.toFixed(0)} km/h · {current.isDay ? 'Day' : 'Night'}</p>
