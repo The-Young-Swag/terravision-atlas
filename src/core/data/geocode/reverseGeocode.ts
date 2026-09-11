@@ -1,8 +1,12 @@
 // Reverse geocoding via OpenStreetMap Nominatim — free, open, no API key, no tier caps
 // OpenStreetMap data powers the Streets basemap (default source)
 // Docs: https://nominatim.org/release-docs/develop/api/Reverse/
-// Usage policy: 1 request/sec, cached aggressively to respect rate limits
+// Usage policy: 1 request/sec — enforced through the shared throttle in
+// features/search/geocode so reverse lookups (weather, event list) and
+// forward search-box geocoding never overlap and throttle each other.
+// Concurrent lookups for the same point share one in-flight request.
 // No new npm dependency — uses browser fetch
+import { respectNominatimRateLimit } from '../../../features/search/geocode';
 
 export interface LocationHierarchy {
   // raw fields
@@ -22,6 +26,10 @@ export interface LocationHierarchy {
 
 // Simple in-memory cache; hierarchy is stable, so we cache by rounded lat/lon
 const cache = new Map<string, LocationHierarchy>();
+// In-flight requests by cache key: concurrent lookups for the same point
+// (e.g. weather header + event list re-rendering on one map move) share
+// a single network call instead of firing duplicates.
+const inflight = new Map<string, Promise<LocationHierarchy | null>>();
 
 function cacheKey(lat: number, lon: number): string {
   // round to ~1km precision to improve cache hits for nearby events
@@ -92,32 +100,42 @@ export async function reverseGeocode(lat: number, lon: number): Promise<Location
   const key = cacheKey(lat, lon);
   const cached = cache.get(key);
   if (cached) return cached;
+  const ongoing = inflight.get(key);
+  if (ongoing) return ongoing;
 
-  // Throttle: small delay to respect Nominatim 1 req/sec if multiple concurrent
-  // (callers should ideally stagger, but we add a tiny jitter)
-  try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&zoom=10&addressdetails=1&accept-language=en`;
-    const res = await fetch(url, {
-      headers: {
-        Accept: 'application/json',
-      },
-    });
-    if (!res.ok) return null;
-    const json = (await res.json()) as {
-      display_name?: string;
-      address?: Record<string, string>;
-    };
-    if (!json.address) return null;
-    const hierarchy = buildHierarchy(json.address, json.display_name ?? '');
-    cache.set(key, hierarchy);
-    return hierarchy;
-  } catch {
-    return null;
-  }
+  const task = (async (): Promise<LocationHierarchy | null> => {
+    try {
+      // Shared throttle: reverse lookups queue behind forward searches
+      // (and vice versa) instead of bursting past Nominatim's 1 req/sec.
+      await respectNominatimRateLimit();
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&zoom=10&addressdetails=1&accept-language=en`;
+      const res = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+      if (!res.ok) return null;
+      const json = (await res.json()) as {
+        display_name?: string;
+        address?: Record<string, string>;
+      };
+      if (!json.address) return null;
+      const hierarchy = buildHierarchy(json.address, json.display_name ?? '');
+      cache.set(key, hierarchy);
+      return hierarchy;
+    } catch {
+      return null;
+    } finally {
+      inflight.delete(key);
+    }
+  })();
+  inflight.set(key, task);
+  return task;
 }
 
-// Batch helper with rate limiting (1 req/sec) — fetches hierarchies for a list of points
-// Returns a map from "lat,lon" key to hierarchy
+// Batch helper — fetches hierarchies for a list of points sequentially.
+// Spacing comes from the shared throttle inside reverseGeocode, so batch
+// traffic and search-box traffic coordinate through one gate.
 export async function batchReverseGeocode(
   points: Array<{ id: string; lat: number; lon: number }>,
 ): Promise<Map<string, LocationHierarchy>> {
@@ -126,12 +144,6 @@ export async function batchReverseGeocode(
     const key = `${p.lat},${p.lon}`;
     const h = await reverseGeocode(p.lat, p.lon);
     if (h) result.set(key, h);
-    // Respect 1 req/sec politeness — wait 1100ms between calls (skipped for cached)
-    const cacheHit = cache.has(cacheKey(p.lat, p.lon));
-    if (!cacheHit) {
-      // only delay if we actually made a network request and there are more to go
-      await new Promise((r) => setTimeout(r, 1100));
-    }
   }
   return result;
 }

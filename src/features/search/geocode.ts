@@ -34,7 +34,14 @@ const NOMINATIM_MIN_GAP_MS = 1000;
 
 let lastNominatimAt = 0;
 
-async function respectNominatimRateLimit(): Promise<void> {
+/**
+ * Process-wide Nominatim throttle (1 req/sec usage policy). Shared by
+ * every Nominatim caller — forward geocode here AND the reverse-geocode
+ * module in core/data — so bursts of reverse lookups (weather header,
+ * event list) can never starve or throttle the search box into a
+ * "Search unavailable" failure.
+ */
+export async function respectNominatimRateLimit(): Promise<void> {
   const wait = NOMINATIM_MIN_GAP_MS - (Date.now() - lastNominatimAt);
   if (wait > 0) {
     await new Promise((resolve) => setTimeout(resolve, wait));
