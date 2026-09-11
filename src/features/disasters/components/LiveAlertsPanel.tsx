@@ -4,7 +4,7 @@ import { FloatingPanel } from '../../../ui/components/common/FloatingPanel';
 import { useDisaster } from '../hooks/useDisaster';
 import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
 import { useMapStore } from '../../../features/map/store';
-import { useRouteStore } from '../../../features/navigation/store';
+import { useRouteStore } from '../../../features/navigation';
 import {
   reverseGeocode,
   getCachedHierarchy,
