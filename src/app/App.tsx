@@ -2,8 +2,8 @@ import { useState, lazy, Suspense, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, Box, BookOpen, X } from 'lucide-react';
 import type { AppMode } from '../types';
-import { OpenLayersMap } from '../ui/components/map/OpenLayersMap';
-import { MapLibreMap } from '../ui/components/map/MapLibreMap';
+import { OpenLayersMap } from '../features/map/components/OpenLayersMap';
+import { MapLibreMap } from '../features/map/components/MapLibreMap';
 import { useMapStore } from '../stores/mapStore';
 import { useSurveyStore } from '../stores/surveyStore';
 import { TopBar } from './components/TopBar';
@@ -23,7 +23,7 @@ import { FloatingPanel } from '../ui/components/common/FloatingPanel';
 import { NotchSidebar } from './components/NotchSidebar';
 import { MobileToolFab } from './components/MobileToolFab';
 
-const CesiumGlobe = lazy(() => import('../ui/components/map/CesiumGlobe').then((m) => ({ default: m.CesiumGlobe })));
+const CesiumGlobe = lazy(() => import('../features/map/components/CesiumGlobe').then((m) => ({ default: m.CesiumGlobe })));
 
 export default function App() {
   const [activeMode, setActiveMode] = useState<AppMode>('explore');
