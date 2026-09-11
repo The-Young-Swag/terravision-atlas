@@ -1,12 +1,12 @@
 import { Layers, Satellite, Map as MapIcon, Mountain, Moon, Check, RotateCcw, Info, X } from 'lucide-react';
-import { FloatingPanel } from '../../ui/components/common/FloatingPanel';
+import { FloatingPanel } from '../../shared/components/FloatingPanel';
 
 import { useMapStore } from '../../features/map/store';
 import { STREETS_SOURCES } from '../../features/map/streets';
-import { useBrightBasemap } from '../../hooks/useBrightBasemap';
+import { useBrightBasemap } from '../../shared/hooks/useBrightBasemap';
 import { GIBS_LAYERS, type SatelliteSourceId } from '../../features/map/gibs';
 import { useTiltStore } from '../../stores/tiltStore';
-import { BasemapIcon } from '../../ui/components/panels/BasemapIcon';
+import { BasemapIcon } from './BasemapIcon';
 import {
   TILT_MAX_DEGREES,
   cesiumTiltDegrees,

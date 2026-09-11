@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Navigation, ShieldAlert, MapPin, X, Check, TriangleAlert } from 'lucide-react';
 import * as turf from '@turf/turf';
-import { FloatingPanel } from '../../../ui/components/common/FloatingPanel';
+import { FloatingPanel } from '../../../shared/components/FloatingPanel';
 import { useMapStore } from '../../../features/map/store';
 import { useRouteStore } from '../store';
-import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { useBrightBasemap } from '../../../shared/hooks/useBrightBasemap';
 import { TRAVEL_COSTINGS, routeWithOptions, type TravelCosting } from '../valhalla';
 import { buildJogLoop, type Hilliness } from '../joggingLoop';
 import {
@@ -15,7 +15,7 @@ import {
 } from '../../../features/traffic';
 import { circleToRing, evacStep, EVAC_STEP_INSTRUCTIONS } from '../avoidZone';
 import type { EvacCircle } from '../store';
-import { PlaceAutocomplete } from '../../../ui/components/search/PlaceAutocomplete';
+import { PlaceAutocomplete } from '../../../shared/components/PlaceAutocomplete';
 import type { GeocodedPlace } from '../../../features/search';
 
 function parseCoordinate(text: string, label: string, min: number, max: number): number {

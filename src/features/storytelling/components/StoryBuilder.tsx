@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Play, Pause, Plus, MapPin, Trash2 } from 'lucide-react';
-import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { useBrightBasemap } from '../../../shared/hooks/useBrightBasemap';
 
 interface StoryScene {
   id: string;

@@ -1,7 +1,7 @@
 import { MapPin } from 'lucide-react';
 import * as turf from '@turf/turf';
-import { useMapStore } from '../../../features/map/store';
-import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { useMapStore } from '../../features/map/store';
+import { useBrightBasemap } from '../hooks/useBrightBasemap';
 import { useState } from 'react';
 
 /** Radius in meters within which the map still counts as "on" the last

@@ -18,7 +18,7 @@ import { useShelterStore } from '../../features/shelters';
 import { useUiPanelStore } from '../../stores/uiPanelStore';
 import { useSurveyStore } from '../../features/survey';
 import { describeWeatherCode, weatherColorForCode } from '../../features/weather';
-import { useEdgeDock } from '../../hooks/useEdgeDock';
+import { useEdgeDock } from '../../shared/hooks/useEdgeDock';
 import type { AppMode } from '../../types';
 
 interface NotchSidebarProps {

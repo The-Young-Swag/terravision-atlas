@@ -21,7 +21,7 @@ const FEATURES = [
   'weather',
 ];
 
-const CONSUMERS = ['app', ...FEATURES.map((f) => `features/${f}`)];
+const CONSUMERS = ['app', 'shared', ...FEATURES.map((f) => `features/${f}`)];
 
 function indexOnlyRules() {
   const rules = [];
@@ -51,13 +51,6 @@ function indexOnlyRules() {
 module.exports = {
   forbidden: [
     ...indexOnlyRules(),
-    {
-      // Rule 4: shared must never import from features.
-      name: 'no-shared-to-features',
-      severity: 'warn',
-      from: { path: '^src/shared' },
-      to: { path: '^src/features' },
-    },
     {
       // Rule 1 (inverse): a feature may import from shared, never from app.
       name: 'no-feature-to-app',

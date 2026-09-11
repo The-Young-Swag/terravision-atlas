@@ -42,7 +42,7 @@ import '../../../features/traffic/incidentPopup.css';
 import { TRAFFIC_FLOW_OPACITY_ML } from '../../../features/map/routeStyle';
 import { setSearchMarkerVisible } from '../../../core/map/maplibre/search';
 import { useSearchStore } from '../../../stores/searchStore';
-import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
+import { useMapOverlayContrast } from '../../../features/map/hooks/useMapOverlayContrast';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 // MapLibre loads its vector-tile parser in a Web Worker whose URL defaults

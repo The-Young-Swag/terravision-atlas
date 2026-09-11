@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
 import { Fuel } from 'lucide-react';
-import { FloatingPanel } from '../../../ui/components/common/FloatingPanel';
-import { GlassNumberInput } from '../../../ui/components/common/GlassNumberInput';
+import { FloatingPanel } from '../../../shared/components/FloatingPanel';
+import { GlassNumberInput } from './GlassNumberInput';
 import { calculateFuel as calcFuel } from '../calculator/fuelMath';
 import type { EfficiencyUnit, UnitSystem } from '../calculator/fuelMath';
 import { BreakdownBar } from './BreakdownBar';
-import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { useBrightBasemap } from '../../../shared/hooks/useBrightBasemap';
 
 interface FuelState {
   distance: number;

@@ -15,7 +15,7 @@ import {
   globeImageryCredit,
   type TerrainStatus,
 } from '../../../features/map/cesium/createCesiumViewer';
-import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
+import { useMapOverlayContrast } from '../../../features/map/hooks/useMapOverlayContrast';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 
 export function CesiumGlobe() {

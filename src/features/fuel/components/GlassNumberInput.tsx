@@ -1,5 +1,5 @@
 import { ChevronUp, ChevronDown } from 'lucide-react';
-import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { useBrightBasemap } from '../../../shared/hooks/useBrightBasemap';
 
 interface GlassNumberInputProps {
   value: number;

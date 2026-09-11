@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMapStore } from '../../features/map/store';
-import { useBrightBasemap } from '../../hooks/useBrightBasemap';
+import { useBrightBasemap } from '../../shared/hooks/useBrightBasemap';
 import { useDisaster } from '../../features/disasters';
 import type { AppMode } from '../../types';
 

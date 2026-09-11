@@ -48,7 +48,7 @@ import { TRAFFIC_FLOW_OPACITY } from '../../../features/map/routeStyle';
 import { createWeatherLayer, weatherPopupHtml, useWeatherStore } from '../../../features/weather';
 import '../../../features/weather/popup.css';
 import Overlay from 'ol/Overlay';
-import { useMapOverlayContrast } from '../../../hooks/useMapOverlayContrast';
+import { useMapOverlayContrast } from '../../../features/map/hooks/useMapOverlayContrast';
 import 'ol/ol.css';
 
 export function OpenLayersMap() {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Box, Download, MapPin, Layers } from 'lucide-react';
-import { useBrightBasemap } from '../../hooks/useBrightBasemap';
+import { useBrightBasemap } from '../../shared/hooks/useBrightBasemap';
 import { useMapStore } from '../../features/map/store';
 import { downloadBytes, exportMinecraftRegion } from './exportWorld';
 import { REGION_BLOCKS } from './terrain';

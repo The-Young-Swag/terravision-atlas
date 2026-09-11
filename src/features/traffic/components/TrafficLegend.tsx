@@ -1,4 +1,4 @@
-import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { useBrightBasemap } from '../../../shared/hooks/useBrightBasemap';
 import { FLOW_BANDS } from '../flowStatus';
 
 // Legend for the TomTom Traffic Flow overlay. This app requests the

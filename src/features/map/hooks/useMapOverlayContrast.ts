@@ -1,4 +1,4 @@
-import { useMapStore } from '../features/map/store';
+import { useMapStore } from '../store';
 
 // Map overlay contrast for in-map UI (markers, labels, badges, legends, icons on the canvas)
 // This is separate from panel/sidebar contrast which has its own fixed background

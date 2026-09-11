@@ -1,13 +1,13 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Grid2x2, Ruler, X, Move3d, Printer, Satellite, Link2, Copy, MapPin, ChevronsLeft, ChevronsRight, Telescope } from 'lucide-react';
-import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { useBrightBasemap } from '../../../shared/hooks/useBrightBasemap';
 import { useMapStore } from '../../../features/map/store';
 import { downloadA0Png, exportA0Png } from '../../../features/export-print';
 import { bearingDegrees, formatBearing, formatDistanceKilometers, geodesicKilometers } from '../geodetic/measurements/distance';
 import { formatAreaSqMeters, geodesicAreaSqMeters } from '../geodetic/measurements/area';
 import { useSurveyStore } from '../store';
-import { useEdgeDock } from '../../../hooks/useEdgeDock';
+import { useEdgeDock } from '../../../shared/hooks/useEdgeDock';
 import type { AppMode } from '../../../types';
 
 const SURVEY_DOCK_KEY = 'terravision.survey-toolbar.dock';

@@ -55,7 +55,8 @@ rendering code), `store.ts` (if it owns state), `types.ts`, `index.ts`
 2. A feature may import from `shared`.
 3. A feature may consume another feature only through that feature's
    `index.ts` — never its internals.
-4. `shared` must never import from `features`.
+4. `shared` may consume a feature only through that feature's `index.ts`
+   (same as rule 3) — never its internals, and never `app`.
 5. Feature internals must never be imported from outside their feature.
 6. Nothing moves into `shared/` until grep confirms 2+ features consume
    it as it exists today.

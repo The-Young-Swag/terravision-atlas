@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Settings2, Fuel, BookOpen, Box, Menu, X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useBrightBasemap } from '../../hooks/useBrightBasemap';
-import { MyLocationButton } from '../../ui/components/common/MyLocationButton';
+import { useBrightBasemap } from '../../shared/hooks/useBrightBasemap';
+import { MyLocationButton } from '../../shared/components/MyLocationButton';
 import { useMapStore } from '../../features/map/store';
 import { useSearchStore } from '../../stores/searchStore';
 import { useRouteStore } from '../../features/navigation';
 import { useUiPanelStore } from '../../stores/uiPanelStore';
-import { PlaceAutocomplete } from '../../ui/components/search/PlaceAutocomplete';
+import { PlaceAutocomplete } from '../../shared/components/PlaceAutocomplete';
 import type { GeocodedPlace } from '../../features/search';
 import type { AppMode } from '../../types';
 

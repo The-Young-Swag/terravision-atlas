@@ -3,8 +3,8 @@ import { useMapStore } from '../../../features/map/store';
 import { datumShiftMeters, transformCoordinate, getEpsgList } from '../geodetic/projections/epsg';
 import { ntv2ShiftMeters, parseNTv2, type NTv2Grid } from '../geodetic/ntv2/NTv2Grid';
 import { Upload, SlidersHorizontal } from 'lucide-react';
-import { FloatingPanel } from '../../../ui/components/common/FloatingPanel';
-import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { FloatingPanel } from '../../../shared/components/FloatingPanel';
+import { useBrightBasemap } from '../../../shared/hooks/useBrightBasemap';
 
 export function CoordinatePanel() {
   const { center } = useMapStore();

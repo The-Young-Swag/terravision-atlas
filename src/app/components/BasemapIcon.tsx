@@ -1,4 +1,4 @@
-import type { BasemapId } from '../../../features/map/store';
+import type { BasemapId } from '../../features/map/store';
 import { Satellite, Map as MapIcon, Mountain, Moon } from 'lucide-react';
 
 interface BasemapIconProps {

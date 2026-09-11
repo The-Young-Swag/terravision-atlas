@@ -7,7 +7,7 @@ import {
   ScriptableLineSegmentContext,
   ScriptableScaleContext,
 } from 'chart.js';
-import { useBrightBasemap } from '../../../hooks/useBrightBasemap';
+import { useBrightBasemap } from '../../../shared/hooks/useBrightBasemap';
 import { temperatureColorFor } from '../temperatureScale';
 import type { HourlyPoint } from '../openMeteo';
 
