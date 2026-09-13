@@ -11,6 +11,7 @@ export { GIBS_LAYERS, type SatelliteSourceId } from './gibs';
 export { STREETS_SOURCES } from './streets';
 export {
   TILT_MAX_DEGREES,
+  clampTiltDegrees,
   cesiumTiltDegrees,
   maplibreTiltDegrees,
   resetCesiumTiltToTopDown,

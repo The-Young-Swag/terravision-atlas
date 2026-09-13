@@ -9,17 +9,22 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 
 export const TILT_MAX_DEGREES = 80;
 
+/** Clamp a tilt value to the valid slider range (0° = top-down). */
+export function clampTiltDegrees(degrees: number): number {
+  return Math.max(0, Math.min(TILT_MAX_DEGREES, degrees));
+}
+
 /** Cesium: 0° tilt = top-down (camera.pitch = -90°), 80° = nearly horizon. */
 export function cesiumTiltDegrees(viewer: Cesium.Viewer | null): number {
   if (!viewer || viewer.isDestroyed()) return 0;
   const radians = viewer.camera.pitch;
   // pitch -90° (nadir) → 0° tilt, pitch -10° (horizon) → 80° tilt
-  return Math.max(0, Math.min(TILT_MAX_DEGREES, 90 + Cesium.Math.toDegrees(radians)));
+  return clampTiltDegrees(90 + Cesium.Math.toDegrees(radians));
 }
 
 export function setCesiumTiltDegrees(viewer: Cesium.Viewer | null, degrees: number): void {
   if (!viewer || viewer.isDestroyed()) return;
-  const clamped = Math.max(0, Math.min(TILT_MAX_DEGREES, degrees));
+  const clamped = clampTiltDegrees(degrees);
   const radians = Cesium.Math.toRadians(clamped - 90);
   // Immediate, no flyTo queue — keeps slider drag buttery smooth
   viewer.camera.setView({
@@ -40,12 +45,12 @@ export function resetCesiumTiltToTopDown(viewer: Cesium.Viewer | null): void {
 /** MapLibre: 0 pitch = top-down, 85° = the documented max-pitch cap. */
 export function maplibreTiltDegrees(map: MapLibreMap | null): number {
   if (!map) return 0;
-  return Math.max(0, Math.min(TILT_MAX_DEGREES, map.getPitch()));
+  return clampTiltDegrees(map.getPitch());
 }
 
 export function setMapLibreTiltDegrees(map: MapLibreMap | null, degrees: number): void {
   if (!map) return;
-  const clamped = Math.max(0, Math.min(TILT_MAX_DEGREES, degrees));
+  const clamped = clampTiltDegrees(degrees);
   // Immediate — no ease queue, slider stays 1:1 with thumb
   if (typeof (map as unknown as { setPitch?: (p: number) => void }).setPitch === 'function') {
     (map as unknown as { setPitch: (p: number) => void }).setPitch(clamped);
