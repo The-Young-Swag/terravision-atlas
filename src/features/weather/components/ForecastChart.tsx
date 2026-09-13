@@ -1,11 +1,14 @@
 import { useEffect, useRef } from 'react';
 import {
   Chart,
+  ChartDataset,
+  ChartOptions,
   Plugin,
   registerables,
   ScriptableContext,
   ScriptableLineSegmentContext,
   ScriptableScaleContext,
+  TooltipItem,
 } from 'chart.js';
 import { useBrightBasemap } from '../../../shared/hooks/useBrightBasemap';
 import { temperatureColorFor } from '../temperatureScale';
@@ -80,6 +83,203 @@ const centerYAxisTitlePlugin: Plugin<'bar'> = {
 // keeping all rain-related elements in one coherent color.
 export const PRECIPITATION_BLUE = '#38bdf8';
 const TEMPERATURE_ORANGE = '#FF9F1C';
+
+function formatHour(date: Date): string {
+  let hours = date.getHours();
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  return `${hours} ${suffix}`;
+}
+
+interface TimeLabels {
+  labels: (string | string[])[];
+  multiDay: boolean;
+}
+
+// Labels match the data granularity so they read at a glance:
+// single-day hourly data gets time-of-day labels ("6 AM"), while a
+// multi-day window gets one label per calendar day ("Sep 7") at each
+// midnight boundary — never bare numbers ("04") and never hours
+// leaking into a daily view.
+function buildTimeLabels(hourly: HourlyPoint[]): TimeLabels {
+  const dayKeys = hourly.map((point) => new Date(point.time).toDateString());
+  const multiDay = new Set(dayKeys).size > 1;
+  const labels: (string | string[])[] = hourly.map((point) => {
+    const date = new Date(point.time);
+    if (!multiDay) return formatHour(date);
+    // Center labels at midday (12:00) so they sit under the day's data,
+    // not at the 00:00 edge where the gridline is. Gridlines stay at 00:00.
+    if (date.getHours() !== 12) return '';
+    const month = date.toLocaleDateString(undefined, { month: 'short' });
+    const day = String(date.getDate());
+    return [month, day];
+  });
+  return { labels, multiDay };
+}
+
+// Gridlines at 00:00, labels at 12:00 — keeps chart vs labels justified.
+function buildDayGridSlots(hourly: HourlyPoint[]): Set<number> {
+  const dayGridSlots = new Set<number>();
+  hourly.forEach((point, idx) => {
+    const d = new Date(point.time);
+    if (d.getHours() === 0) dayGridSlots.add(idx);
+  });
+  return dayGridSlots;
+}
+
+function buildTemperatureDataset(hourly: HourlyPoint[]): ChartDataset<'line', (number | null)[]> {
+  return {
+    type: 'line',
+    label: 'Temperature (°C)',
+    data: hourly.map((point) => point.temperatureC),
+    // Per-point band colors from the shared threshold scale (nulls
+    // fall back so gaps never render a misleading band).
+    segment: {
+      borderColor: (ctx: ScriptableLineSegmentContext) =>
+        temperatureColorFor(hourly[ctx.p1DataIndex]?.temperatureC ?? null),
+    },
+    backgroundColor: (ctx: ScriptableContext<'line'>) =>
+      `${temperatureColorFor(hourly[ctx.dataIndex]?.temperatureC ?? null)}1F`,
+    fill: true,
+    borderWidth: 2,
+    pointRadius: 2,
+    pointBackgroundColor: (ctx: ScriptableContext<'line'>) =>
+      temperatureColorFor(hourly[ctx.dataIndex]?.temperatureC ?? null),
+    pointHoverRadius: 4,
+    pointHoverBackgroundColor: TEMPERATURE_ORANGE,
+    tension: 0.3,
+    yAxisID: 'y-temp',
+    spanGaps: false, // null values render as gaps, not interpolated
+  };
+}
+
+function buildPrecipitationDataset(hourly: HourlyPoint[]): ChartDataset<'bar', (number | null)[]> {
+  return {
+    type: 'bar',
+    label: 'Precipitation (mm)',
+    data: hourly.map((point) => point.precipitationMm),
+    backgroundColor: (ctx: ScriptableContext<'bar'>) => {
+      const value = ctx.raw as number | null;
+      return value && value > 0 ? `${PRECIPITATION_BLUE}B3` : 'transparent';
+    },
+    borderRadius: 4,
+    yAxisID: 'y-precip',
+    barPercentage: 0.5,
+    categoryPercentage: 0.7,
+  };
+}
+
+function buildTooltipOptions(hourly: HourlyPoint[], multiDay: boolean) {
+  return {
+    backgroundColor: 'rgba(13,27,42,0.95)',
+    titleColor: '#F8F9FA',
+    bodyColor: '#F8F9FA',
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    padding: 12,
+    titleFont: { family: 'IBM Plex Mono', size: 11 },
+    bodyFont: { family: 'IBM Plex Mono', size: 11 },
+    displayColors: true,
+    callbacks: {
+      // Axis labels are sparse by design (one per day in a
+      // multi-day view), so the tooltip always shows the full
+      // date + time of the hovered point.
+      title: (items: TooltipItem<'bar'>[]) => {
+        const point = hourly[items[0]?.dataIndex ?? -1];
+        if (!point) return '';
+        const date = new Date(point.time);
+        const day = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        return multiDay ? `${day}, ${formatHour(date)}` : `${day} · ${formatHour(date)}`;
+      },
+      label: (context: TooltipItem<'bar'>) => {
+        const value = context.raw as number | null;
+        if (value === null) return `${context.dataset.label}: no data`;
+        if (context.dataset.yAxisID === 'y-temp') {
+          return `Temp: ${value.toFixed(1)}°C`;
+        }
+        return `Precip: ${value.toFixed(1)} mm`;
+      },
+    },
+  };
+}
+
+interface AxisStyle {
+  multiDay: boolean;
+  tickColor: string;
+  gridColor: string;
+  axisTitleColor: string;
+  dayGridSlots: Set<number>;
+}
+
+function buildAxisScales({ multiDay, tickColor, gridColor, axisTitleColor, dayGridSlots }: AxisStyle): ChartOptions<'bar'>['scales'] {
+  return {
+    x: {
+      // Day separators: a faint vertical line only at labeled day
+      // boundaries groups each day's hours visually. Single-day
+      // views keep a clean axis with no gridlines at all.
+      grid: {
+        display: multiDay,
+        drawTicks: false,
+        color: (context: ScriptableScaleContext) =>
+          dayGridSlots.has(context.index ?? -1) ? gridColor : 'transparent',
+      },
+      ticks: {
+        color: tickColor,
+        font: { family: 'IBM Plex Mono', size: 10 },
+        maxTicksLimit: multiDay ? 7 : 6,
+        autoSkip: !multiDay,
+        autoSkipPadding: 16,
+        maxRotation: 0,
+        padding: 10,
+        // Push date labels slightly right so they sit centred over
+        // their day's data, not hugging the gridline. Y-axis labels
+        // keep their own padding (12) and are not moved.
+        labelOffset: 4,
+      },
+      border: { display: false },
+    },
+    'y-temp': {
+      type: 'linear',
+      position: 'left',
+      grid: { color: gridColor },
+      ticks: {
+        color: tickColor,
+        font: { size: 10 },
+        callback: (value) => `${value}°`,
+        padding: 12,
+      },
+      border: { display: false },
+      title: {
+        display: false, // drawn by centerYAxisTitlePlugin
+        text: 'Temperature (°C)',
+        color: axisTitleColor,
+        font: { family: 'IBM Plex Mono', size: 9, weight: 500 },
+        padding: { top: 8, bottom: 8 },
+      },
+    },
+    'y-precip': {
+      type: 'linear',
+      position: 'right',
+      beginAtZero: true,
+      grid: { display: false },
+      ticks: {
+        color: tickColor,
+        font: { size: 10 },
+        callback: (value) => value === 0 ? '' : `${value} mm`,
+        padding: 12,
+      },
+      border: { display: false },
+      title: {
+        display: false, // drawn by centerYAxisTitlePlugin
+        text: 'Precipitation (mm)',
+        color: axisTitleColor,
+        font: { family: 'IBM Plex Mono', size: 9, weight: 500 },
+        padding: { top: 8, bottom: 8 },
+      },
+    },
+  };
+}
 export function ForecastChart({ hourly, label }: ForecastChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
@@ -102,86 +302,18 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
       chartRef.current = null;
     }
 
-    // Labels match the data granularity so they read at a glance:
-    // single-day hourly data gets time-of-day labels ("6 AM"), while a
-    // multi-day window gets one label per calendar day ("Sep 7") at each
-    // midnight boundary — never bare numbers ("04") and never hours
-    // leaking into a daily view.
-    const dayKeys = hourly.map((point) => new Date(point.time).toDateString());
-    const multiDay = new Set(dayKeys).size > 1;
-    const formatHour = (date: Date) => {
-      let hours = date.getHours();
-      const suffix = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      if (hours === 0) hours = 12;
-      return `${hours} ${suffix}`;
-    };
-    const labels: (string | string[])[] = hourly.map((point) => {
-      const date = new Date(point.time);
-      if (!multiDay) return formatHour(date);
-      // Center labels at midday (12:00) so they sit under the day's data,
-      // not at the 00:00 edge where the gridline is. Gridlines stay at 00:00.
-      if (date.getHours() !== 12) return '';
-      const month = date.toLocaleDateString(undefined, { month: 'short' });
-      const day = String(date.getDate());
-      return [month, day];
-    });
-    // Gridlines at 00:00, labels at 12:00 — keeps chart vs labels justified.
-    const dayGridSlots = new Set<number>();
-    const dayLabelSlots = new Set<number>();
-    hourly.forEach((point, idx) => {
-      const d = new Date(point.time);
-      if (d.getHours() === 0) dayGridSlots.add(idx);
-    });
-    labels.forEach((text, idx) => {
-      const isLabeled = Array.isArray(text) ? text.length > 0 : text !== '';
-      if (isLabeled) dayLabelSlots.add(idx);
-    });
-    const tempData = hourly.map((point) => point.temperatureC);
-    const precipData = hourly.map((point) => point.precipitationMm);
+    const { labels, multiDay } = buildTimeLabels(hourly);
+    const dayGridSlots = buildDayGridSlots(hourly);
+    const temperatureDataset = buildTemperatureDataset(hourly);
+    const precipitationDataset = buildPrecipitationDataset(hourly);
+    const tooltip = buildTooltipOptions(hourly, multiDay);
+    const scales = buildAxisScales({ multiDay, tickColor, gridColor, axisTitleColor, dayGridSlots });
 
     chartRef.current = new Chart(ctx, {
       type: 'bar',
       data: {
         labels,
-        datasets: [
-          {
-            type: 'line',
-            label: 'Temperature (°C)',
-            data: tempData,
-            // Per-point band colors from the shared threshold scale (nulls
-            // fall back so gaps never render a misleading band).
-            segment: {
-              borderColor: (ctx: ScriptableLineSegmentContext) =>
-                temperatureColorFor(hourly[ctx.p1DataIndex]?.temperatureC ?? null),
-            },
-            backgroundColor: (ctx: ScriptableContext<'line'>) =>
-              `${temperatureColorFor(hourly[ctx.dataIndex]?.temperatureC ?? null)}1F`,
-            fill: true,
-            borderWidth: 2,
-            pointRadius: 2,
-            pointBackgroundColor: (ctx: ScriptableContext<'line'>) =>
-              temperatureColorFor(hourly[ctx.dataIndex]?.temperatureC ?? null),
-            pointHoverRadius: 4,
-            pointHoverBackgroundColor: TEMPERATURE_ORANGE,
-            tension: 0.3,
-            yAxisID: 'y-temp',
-            spanGaps: false, // null values render as gaps, not interpolated
-          },
-          {
-            type: 'bar',
-            label: 'Precipitation (mm)',
-            data: precipData,
-            backgroundColor: (ctx: ScriptableContext<'bar'>) => {
-              const value = ctx.raw as number | null;
-              return value && value > 0 ? `${PRECIPITATION_BLUE}B3` : 'transparent';
-            },
-            borderRadius: 4,
-            yAxisID: 'y-precip',
-            barPercentage: 0.5,
-            categoryPercentage: 0.7,
-          },
-        ],
+        datasets: [temperatureDataset, precipitationDataset],
       },
       options: {
         responsive: true,
@@ -192,104 +324,9 @@ export function ForecastChart({ hourly, label }: ForecastChartProps) {
         },
         plugins: {
           legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(13,27,42,0.95)',
-            titleColor: '#F8F9FA',
-            bodyColor: '#F8F9FA',
-            borderColor: 'rgba(255,255,255,0.1)',
-            borderWidth: 1,
-            padding: 12,
-            titleFont: { family: 'IBM Plex Mono', size: 11 },
-            bodyFont: { family: 'IBM Plex Mono', size: 11 },
-            displayColors: true,
-            callbacks: {
-              // Axis labels are sparse by design (one per day in a
-              // multi-day view), so the tooltip always shows the full
-              // date + time of the hovered point.
-              title: (items) => {
-                const point = hourly[items[0]?.dataIndex ?? -1];
-                if (!point) return '';
-                const date = new Date(point.time);
-                const day = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                return multiDay ? `${day}, ${formatHour(date)}` : `${day} · ${formatHour(date)}`;
-              },
-              label: (context) => {
-                const value = context.raw as number | null;
-                if (value === null) return `${context.dataset.label}: no data`;
-                if (context.dataset.yAxisID === 'y-temp') {
-                  return `Temp: ${value.toFixed(1)}°C`;
-                }
-                return `Precip: ${value.toFixed(1)} mm`;
-              },
-            },
-          },
+          tooltip,
         },
-        scales: {
-          x: {
-            // Day separators: a faint vertical line only at labeled day
-            // boundaries groups each day's hours visually. Single-day
-            // views keep a clean axis with no gridlines at all.
-            grid: {
-              display: multiDay,
-              drawTicks: false,
-              color: (context: ScriptableScaleContext) =>
-                dayGridSlots.has(context.index ?? -1) ? gridColor : 'transparent',
-            },
-            ticks: {
-              color: tickColor,
-              font: { family: 'IBM Plex Mono', size: 10 },
-              maxTicksLimit: multiDay ? 7 : 6,
-              autoSkip: !multiDay,
-              autoSkipPadding: 16,
-              maxRotation: 0,
-              padding: 10,
-              // Push date labels slightly right so they sit centred over
-              // their day's data, not hugging the gridline. Y-axis labels
-              // keep their own padding (12) and are not moved.
-              labelOffset: 4,
-            },
-            border: { display: false },
-          },
-          'y-temp': {
-            type: 'linear',
-            position: 'left',
-            grid: { color: gridColor },
-            ticks: {
-              color: tickColor,
-              font: { size: 10 },
-              callback: (value) => `${value}°`,
-              padding: 12,
-            },
-            border: { display: false },
-            title: {
-              display: false, // drawn by centerYAxisTitlePlugin
-              text: 'Temperature (°C)',
-              color: axisTitleColor,
-              font: { family: 'IBM Plex Mono', size: 9, weight: 500 },
-              padding: { top: 8, bottom: 8 },
-            },
-          },
-          'y-precip': {
-            type: 'linear',
-            position: 'right',
-            beginAtZero: true,
-            grid: { display: false },
-            ticks: {
-              color: tickColor,
-              font: { size: 10 },
-              callback: (value) => value === 0 ? '' : `${value} mm`,
-              padding: 12,
-            },
-            border: { display: false },
-            title: {
-              display: false, // drawn by centerYAxisTitlePlugin
-              text: 'Precipitation (mm)',
-              color: axisTitleColor,
-              font: { family: 'IBM Plex Mono', size: 9, weight: 500 },
-              padding: { top: 8, bottom: 8 },
-            },
-          },
-        },
+        scales,
         layout: {
           // Chart pushed slightly left (less left padding, more right) so
           // plot uses the reclaimed space; y-axis ticks keep 12px padding
