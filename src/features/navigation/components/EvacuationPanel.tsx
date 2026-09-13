@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Navigation, ShieldAlert, MapPin, X, Check, TriangleAlert } from 'lucide-react';
-import * as turf from '@turf/turf';
 import { FloatingPanel } from '../../../shared/components/FloatingPanel';
 import { useMapStore } from '../../../features/map';
 import { useRouteStore } from '../store';
@@ -13,7 +12,7 @@ import {
   useTrafficStore,
   TrafficLegend,
 } from '../../../features/traffic';
-import { circleToRing, evacStep, EVAC_STEP_INSTRUCTIONS } from '../avoidZone';
+import { circleToRing, evacStep, EVAC_STEP_INSTRUCTIONS, routeAvoidsRing } from '../avoidZone';
 import type { EvacCircle } from '../store';
 import { PlaceAutocomplete } from '../../../shared/components/PlaceAutocomplete';
 import { shortPlaceLabel, type GeocodedPlace } from '../../../features/search';
@@ -208,12 +207,7 @@ export function EvacuationPanel({ context = 'evacuation' }: { context?: 'general
     try {
       const ring = avoid ? circleToRing(avoid) : null;
       const route = await routeWithOptions(from, to, { avoidRing: ring, costing });
-      const verdict = ring
-        ? turf.booleanDisjoint(
-            turf.lineString(route.path.map((point) => [point.lon, point.lat])),
-            turf.polygon([ring.map((point) => [point.lon, point.lat])]),
-          )
-        : true;
+      const verdict = routeAvoidsRing(route.path, ring);
       setEvacuationRoute({ ...route, avoidsArea: verdict });
       setResult({ distanceKm: route.distanceKm, durationMinutes: route.durationMinutes, avoidsArea: verdict });
       // Deterministic traffic adjustment from real TomTom flow speeds —

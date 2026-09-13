@@ -43,6 +43,20 @@ export function circleToRing(circle: EvacCircle): EvacRoutePoint[] {
   return (polygon.geometry.coordinates[0] as [number, number][]).map(([lon, lat]) => ({ lon, lat }));
 }
 
+/**
+ * Avoidance verdict for a routed path: true when the path stays disjoint
+ * from the avoid ring, or when no ring was requested. A route that cuts
+ * through the exclusion zone fails the verdict even though Valhalla
+ * returned it.
+ */
+export function routeAvoidsRing(path: EvacRoutePoint[], ring: EvacRoutePoint[] | null): boolean {
+  if (!ring) return true;
+  return turf.booleanDisjoint(
+    turf.lineString(path.map((point) => [point.lon, point.lat])),
+    turf.polygon([ring.map((point) => [point.lon, point.lat])]),
+  );
+}
+
 export type EvacStep = 'start' | 'destination' | 'avoid' | 'ready';
 
 /** Derived step — never stored, always computed from pins + route. */
