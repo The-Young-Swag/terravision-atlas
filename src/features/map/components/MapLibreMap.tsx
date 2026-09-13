@@ -9,6 +9,7 @@ import {
   setAvoidVisible,
   attachAvoidDrawMapLibre,
   applyAvoidCursorMapLibre,
+  type EvacPin,
 } from '../../../features/navigation';
 import { reverseNominatim } from '../../../features/search';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
@@ -94,6 +95,16 @@ function applyMapControlStyles(
   }
 }
 
+// Pick-clicks and marker drags share one reverse-geocode → pin → store
+// sequence; only the final store update differs (pick-mode advance vs
+// role-based set), so the finale arrives as a callback.
+function resolveEvacPin(lon: number, lat: number, apply: (pin: EvacPin) => void): void {
+  void reverseNominatim(lat, lon)
+    .then((place) => ({ lon, lat, label: shortPlaceLabel(place?.displayName, 'Pinned location') }))
+    .then(apply)
+    .catch(() => undefined);
+}
+
 export function MapLibreMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibre | null>(null);
@@ -163,19 +174,16 @@ export function MapLibreMap() {
       const routeState = useRouteStore.getState();
       if (!routeState.pickMode) return;
       const { lng, lat } = event.lngLat;
-      void reverseNominatim(lat, lng)
-        .then((place) => ({ lon: lng, lat, label: shortPlaceLabel(place?.displayName, 'Pinned location') }))
-        .then((pin) => {
-          const live = useRouteStore.getState();
-          if (live.pickMode === 'start') {
-            live.setStart(pin);
-            live.setPickMode(live.destination ? null : 'destination');
-          } else if (live.pickMode === 'destination') {
-            live.setDestination(pin);
-            live.setPickMode(null);
-          }
-        })
-        .catch(() => undefined);
+      resolveEvacPin(lng, lat, (pin) => {
+        const live = useRouteStore.getState();
+        if (live.pickMode === 'start') {
+          live.setStart(pin);
+          live.setPickMode(live.destination ? null : 'destination');
+        } else if (live.pickMode === 'destination') {
+          live.setDestination(pin);
+          live.setPickMode(null);
+        }
+      });
     });
 
     // Disaster and weather popups share one global click handler (registered
@@ -494,14 +502,11 @@ export function MapLibreMap() {
         marker.addTo(map);
         marker.on('dragend', () => {
           const { lng, lat } = marker.getLngLat();
-          void reverseNominatim(lat, lng)
-        .then((place) => ({ lon: lng, lat, label: shortPlaceLabel(place?.displayName, 'Pinned location') }))
-            .then((moved) => {
-              const live = useRouteStore.getState();
-              if (role === 'start') live.setStart(moved);
-              else live.setDestination(moved);
-            })
-            .catch(() => undefined);
+          resolveEvacPin(lng, lat, (moved) => {
+            const live = useRouteStore.getState();
+            if (role === 'start') live.setStart(moved);
+            else live.setDestination(moved);
+          });
         });
         ref.current = marker;
       } else {
